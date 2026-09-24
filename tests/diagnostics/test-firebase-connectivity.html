@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connectivity Test | MentorBridge</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f4f6fb;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4A1547;
+            margin-bottom: 2rem;
+        }
+        .test-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 1px solid #e8eaf0;
+            border-radius: 8px;
+        }
+        .success { border-color: #10b981; background-color: #f0fdf4; }
+        .error { border-color: #ef4444; background-color: #fef2f2; }
+        .loading { border-color: #3b82f6; background-color: #eff6ff; }
+        pre {
+            background: #f8f9fc;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+        button {
+            background: #4A1547;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+        button:hover {
+            background: #3a1138;
+        }
+    </style>
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="public/js/firebase-config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase Connectivity Test</h1>
+        
+        <div class="test-section loading" id="configTest">
+            <h3>Configuration Loading Test</h3>
+            <p>Testing Firebase configuration loading...</p>
+            <pre id="configResult">Loading...</pre>
+        </div>
+        
+        <div class="test-section loading" id="initTest">
+            <h3>Firebase App Initialization Test</h3>
+            <p>Testing Firebase app initialization...</p>
+            <pre id="initResult">Waiting for configuration...</pre>
+        </div>
+        
+        <div class="test-section loading" id="firestoreTest">
+            <h3>Firestore Connectivity Test</h3>
+            <p>Testing connection to Firestore database...</p>
+            <pre id="firestoreResult">Waiting for initialization...</pre>
+        </div>
+        
+        <div class="test-section" id="controls">
+            <button onclick="runFullTest()">Run Full Test</button>
+            <button onclick="testConnectivity()">Test Connectivity Only</button>
+        </div>
+        
+        <div class="test-section" id="summary">
+            <h3>Test Summary</h3>
+            <ul id="summaryList">
+                <li>Configuration: <span id="configStatus">⏳ Pending</span></li>
+                <li>App Initialization: <span id="initStatus">⏳ Pending</span></li>
+                <li>Firestore Connection: <span id="firestoreStatus">⏳ Pending</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(testId, status, className) {
+            document.getElementById(testId + 'Status').innerHTML = status;
+            document.getElementById(testId + 'Test').className = 'test-section ' + className;
+        }
+        
+        function updateResult(resultId, content) {
+            document.getElementById(resultId).textContent = content;
+        }
+        
+        async function testFirebaseConfig() {
+            try {
+                updateStatus('config', '🔄 Testing...', 'loading');
+                const config = await loadFirebaseConfig();
+                
+                updateResult('configResult', JSON.stringify(config, null, 2));
+                updateStatus('config', '✅ Loaded', 'success');
+                return config;
+            } catch (error) {
+                updateResult('configResult', 'Error: ' + error.message);
+                updateStatus('config', '❌ Failed', 'error');
+                throw error;
+            }
+        }
+        
+        async function testFirebaseInit(config) {
+            try {
+                updateStatus('init', '🔄 Testing...', 'loading');
+                
+                // Check if already initialized
+                if (window.firebaseApp) {
+                    updateResult('initResult', 'Firebase app already initialized:\n' + 
+                        'Project ID: ' + config.projectId + '\n' +
+                        'Auth Domain: ' + config.authDomain + '\n' +
+                        'App Name: ' + window.firebaseApp.name);
+                    updateStatus('init', '✅ Initialized', 'success');
+                    return window.firebaseApp;
+                }
+                
+                // Initialize if not already done
+                const app = firebase.initializeApp(config);
+                window.firebaseApp = app;
+                window.firebaseAuth = firebase.auth();
+                window.firebaseFirestore = firebase.firestore();
+                
+                updateResult('initResult', 'Firebase app initialized successfully:\n' +
+                    'Project ID: ' + config.projectId + '\n' +
+                    'Auth Domain: ' + config.authDomain + '\n' +
+                    'App Name: ' + app.name);
+                updateStatus('init', '✅ Initialized', 'success');
+                return app;
+            } catch (error) {
+                updateResult('initResult', 'Error: ' + error.message);
+                updateStatus('init', '❌ Failed', 'error');
+                throw error;
+            }
+        }
+        
+        async function testFirestoreConnection() {
+            try {
+                updateStatus('firestore', '🔄 Testing...', 'loading');
+                
+                if (!window.firebaseFirestore) {
+                    throw new Error('Firestore not initialized');
+                }
+                
+                // Try to access Firestore with a simple read operation
+                const testRef = window.firebaseFirestore.collection('_connectivity_test');
+                await testRef.limit(1).get();
+                
+                updateResult('firestoreResult', 'Firestore connection successful!\n' +
+                    'Database URL: https://firestore.googleapis.com/\n' +
+                    'Project ID: ' + window.firebaseApp.options.projectId + '\n' +
+                    'Test collection access: ✅');
+                updateStatus('firestore', '✅ Connected', 'success');
+                return true;
+            } catch (error) {
+                let errorMsg = 'Error: ' + error.message;
+                if (error.code === 'permission-denied') {
+                    errorMsg += '\n\nNote: This is expected for a test collection. ' +
+                                'Connection to Firestore is working, but security rules ' +
+                                'are properly preventing access to test collections.';
+                    updateStatus('firestore', '✅ Connected (Rules Active)', 'success');
+                } else {
+                    updateStatus('firestore', '❌ Failed', 'error');
+                }
+                updateResult('firestoreResult', errorMsg);
+                return error.code === 'permission-denied';
+            }
+        }
+        
+        async function runFullTest() {
+            try {
+                const config = await testFirebaseConfig();
+                await testFirebaseInit(config);
+                await testFirestoreConnection();
+                console.log('✅ All Firebase tests completed successfully!');
+            } catch (error) {
+                console.error('❌ Firebase test failed:', error);
+            }
+        }
+        
+        async function testConnectivity() {
+            try {
+                const result = await testFirebaseConnectivity();
+                updateResult('firestoreResult', JSON.stringify(result, null, 2));
+                
+                if (result.success) {
+                    updateStatus('firestore', '✅ Connected', 'success');
+                } else {
+                    updateStatus('firestore', '❌ Failed', 'error');
+                }
+            } catch (error) {
+                updateResult('firestoreResult', 'Error: ' + error.message);
+                updateStatus('firestore', '❌ Failed', 'error');
+            }
+        }
+        
+        // Run tests automatically when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔥 Starting Firebase connectivity tests...');
+            runFullTest();
+        });
+    </script>
+</body>
+</html>

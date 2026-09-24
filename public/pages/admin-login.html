@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Access | MentorBridge</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --adm-navy: #0B1F3A;
+      --adm-deep: #071527;
+      --adm-blue: #1B62DE;
+      --adm-blue-dark: #0D4BC2;
+      --adm-blue-light: #EAF1FF;
+      --adm-accent: #4C7BE8;
+      --adm-text: #1C2430;
+      --adm-muted: #6B7280;
+      --adm-border: #E4E1DA;
+      --adm-white: #FFFFFF;
+      --adm-radius: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem 1.5rem;
+      background-color: var(--adm-deep);
+      background-image:
+        linear-gradient(rgba(27, 98, 222, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(27, 98, 222, 0.06) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 0%, rgba(27, 98, 222, 0.18) 0%, transparent 55%);
+      background-size: 48px 48px, 48px 48px, 100% 100%;
+    }
+
+    .adm-login-wrap {
+      width: 100%;
+      max-width: 420px;
+      animation: admFadeUp 0.45s ease-out;
+    }
+
+    @keyframes admFadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .adm-login-card {
+      background: var(--adm-navy);
+      border: 1px solid rgba(76, 123, 232, 0.35);
+      border-radius: var(--adm-radius);
+      padding: 2rem 1.75rem 1.5rem;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 40px rgba(27, 98, 222, 0.12);
+    }
+
+    .adm-shield-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .adm-shield {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(27, 98, 222, 0.15);
+      border: 1px solid rgba(76, 123, 232, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px rgba(27, 98, 222, 0.35);
+    }
+
+    .adm-shield svg {
+      width: 30px;
+      height: 30px;
+      color: var(--adm-blue-light);
+    }
+
+    .adm-login-card h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--adm-white);
+      text-align: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .adm-subtitle {
+      text-align: center;
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .adm-route-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin-bottom: 1.75rem;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .adm-route-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      flex-shrink: 0;
+    }
+
+    .adm-route-badge code {
+      font-family: 'Inter', monospace;
+      font-size: 0.7rem;
+      color: rgba(248, 113, 113, 0.85);
+      background: rgba(239, 68, 68, 0.08);
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+    }
+
+    .adm-field { margin-bottom: 1rem; }
+
+    .adm-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 0.4rem;
+    }
+
+    .adm-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .adm-input-icon {
+      position: absolute;
+      left: 0.85rem;
+      width: 18px;
+      height: 18px;
+      color: var(--adm-blue);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .adm-input {
+      width: 100%;
+      padding: 0.72rem 0.85rem 0.72rem 2.65rem;
+      background: rgba(7, 21, 39, 0.65);
+      border: 1px solid rgba(76, 123, 232, 0.3);
+      border-radius: 10px;
+      font-size: 0.84rem;
+      font-family: inherit;
+      color: var(--adm-white);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .adm-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+    .adm-input:focus {
+      border-color: var(--adm-blue);
+      box-shadow: 0 0 0 3px rgba(27, 98, 222, 0.2);
+    }
+
+    .adm-input.has-toggle { padding-right: 2.75rem; }
+
+    .adm-eye-btn {
+      position: absolute;
+      right: 0.65rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.4);
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .adm-eye-btn:hover { color: var(--adm-blue-light); }
+
+    .adm-check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin: 1.1rem 0 1.25rem;
+    }
+
+    .adm-check-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      accent-color: var(--adm-blue);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .adm-check-row label {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.45;
+      cursor: pointer;
+    }
+
+    .adm-feedback {
+      font-size: 0.78rem;
+      min-height: 1.1rem;
+      text-align: center;
+      margin-bottom: 0.65rem;
+    }
+
+    .adm-feedback.error { color: #f87171; }
+    .adm-feedback.success { color: #4ade80; }
+
+    .adm-submit {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.82rem 1rem;
+      background: var(--adm-blue);
+      color: var(--adm-white);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(27, 98, 222, 0.4);
+    }
+
+    .adm-submit:hover:not(:disabled) {
+      background: var(--adm-blue-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(27, 98, 222, 0.5);
+    }
+
+    .adm-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .adm-card-foot {
+      margin-top: 1.5rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+    .adm-card-foot svg { color: var(--adm-blue); flex-shrink: 0; }
+
+    .adm-page-foot {
+      margin-top: 1.25rem;
+      text-align: center;
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.28);
+    }
+
+    .adm-back {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .adm-back:hover { color: var(--adm-blue-light); }
+
+    @media (max-width: 480px) {
+      .adm-login-card { padding: 1.5rem 1.25rem 1.25rem; }
+      .adm-login-card h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="adm-login-wrap">
+    <div class="adm-login-card">
+      <div class="adm-shield-wrap">
+        <div class="adm-shield" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.1,7 14,7.9 14,9S13.1,11 12,11 10,10.1 10,9 10.9,7 12,7M12,14C13.5,14 15.91,14.66 16,16.5H8C8.09,14.66 10.5,14 12,14Z"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1>Admin Access</h1>
+      <p class="adm-subtitle">Restricted area — Authorized personnel only</p>
+
+      <div class="adm-route-badge">
+        <span class="adm-route-dot" aria-hidden="true"></span>
+        <span>Protected Route</span>
+        <code>/admin/login</code>
+      </div>
+
+      <form id="adminLoginForm" novalidate>
+        <div class="adm-field">
+          <label class="adm-label" for="adminKey">Access Key</label>
+          <div class="adm-input-wrap">
+            <span class="adm-input-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7,14A3,3 0 0,0 10,17A3,3 0 0,0 13,14A3,3 0 0,0 10,11A3,3 0 0,0 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18H21V14H23V10H12.65Z"/>
+              </svg>
+            </span>
+            <input class="adm-input" id="adminKey" type="password" placeholder="Enter secret access key" autocomplete="off" aria-required="true" />
+          </div>
+        </div>
+
+        <div class="adm-field">
+          <label class="adm-label" for="adminEmail">Admin Gmail</label>
+          <div class="adm-input-wrap">
+            <span class="adm-input-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20,4H4C2.9,4 2.01,4.9 2.01,6L2,18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.9 21.1,4 20,4M20,8L12,13L4,8V6L12,11L20,6V8Z"/>
+              </svg>
+            </span>
+            <input class="adm-input" id="adminEmail" type="email" value="admin@mentorbridge.com" placeholder="admin@mentorbridge.com" autocomplete="email" aria-required="true" />
+          </div>
+        </div>
+
+        <div class="adm-field">
+          <label class="adm-label" for="adminPassword">Password</label>
+          <div class="adm-input-wrap">
+            <span class="adm-input-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
+              </svg>
+            </span>
+            <input class="adm-input has-toggle" id="adminPassword" type="password" placeholder="Enter your password" autocomplete="current-password" aria-required="true" />
+            <button class="adm-eye-btn" type="button" id="showAdminPw" aria-label="Toggle password visibility">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" id="eyeIcon">
+                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="adm-check-row">
+          <input type="checkbox" id="admAcknowledge" required />
+          <label for="admAcknowledge">I understand this is a monitored secure area.</label>
+        </div>
+
+        <p class="adm-feedback" id="adminFeedback" role="alert"></p>
+
+        <button class="adm-submit" type="submit" id="adminLoginBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
+          </svg>
+          Unlock Admin Panel
+        </button>
+      </form>
+
+      <div class="adm-card-foot">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
+        </svg>
+        Encrypted &amp; Monitored — All login attempts are logged
+      </div>
+    </div>
+
+    <p class="adm-page-foot">System secured with end-to-end encryption.</p>
+    <a href="/admin/setup" class="adm-back" style="margin-top:0.5rem">First time? Set up admin account</a>
+    <a href="../index.html" class="adm-back">← Return to public site</a>
+  </div>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-service.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var existing = null;
+    try { existing = JSON.parse(sessionStorage.getItem('mb_session') || 'null'); } catch (e) {}
+    if (existing && existing.role === 'admin') {
+      window.location.replace('/admin/dashboard');
+      return;
+    }
+
+    var showBtn = document.getElementById('showAdminPw');
+    var pwInput = document.getElementById('adminPassword');
+    var eyeIcon = document.getElementById('eyeIcon');
+    var eyeOpen = 'M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z';
+    var eyeOff = 'M11.83,9L15.25,12.42L15.27,12.42C15.46,12.22 15.75,11.92 16.03,11.55C16.41,11.05 16.75,10.46 17,9.68C16.16,6.86 14.21,4.75 12,4.75C11.17,4.75 10.38,4.92 9.65,5.23L11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3L2,4.27M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.37C10.74,7.13 11.35,7 12,7Z';
+
+    if (showBtn) {
+      showBtn.addEventListener('click', function () {
+        var show = pwInput.type === 'password';
+        pwInput.type = show ? 'text' : 'password';
+        eyeIcon.querySelector('path').setAttribute('d', show ? eyeOff : eyeOpen);
+      });
+    }
+
+    var form = document.getElementById('adminLoginForm');
+    var feedback = document.getElementById('adminFeedback');
+    var btn = document.getElementById('adminLoginBtn');
+    var ADMIN_KEY = 'mb-admin-2026';
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var email = document.getElementById('adminEmail').value.trim();
+      var pass = document.getElementById('adminPassword').value;
+      var key = document.getElementById('adminKey').value.trim();
+      var ack = document.getElementById('admAcknowledge').checked;
+
+      feedback.textContent = '';
+      feedback.className = 'adm-feedback';
+
+      if (!email || !pass || !key) {
+        feedback.textContent = 'Please fill in all fields.';
+        feedback.className = 'adm-feedback error';
+        return;
+      }
+
+      if (!ack) {
+        feedback.textContent = 'Please confirm you understand this is a monitored secure area.';
+        feedback.className = 'adm-feedback error';
+        return;
+      }
+
+      if (key !== ADMIN_KEY) {
+        feedback.textContent = 'Invalid access key. Access denied.';
+        feedback.className = 'adm-feedback error';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg> Unlocking…';
+      feedback.textContent = 'Authenticating…';
+
+      try {
+        if (!window.mentorBridgeAuth || !window.mentorBridgeAuth.initialized) {
+          if (window.mentorBridgeAuth) {
+            await window.mentorBridgeAuth.initialize();
+          } else {
+            await initializeFirebaseConfig();
+          }
+        }
+
+        var result = null;
+        if (window.mentorBridgeAuth && window.mentorBridgeAuth.initialized) {
+          result = await window.mentorBridgeAuth.signInUser(email, pass);
+        } else if (typeof signInUser === 'function') {
+          result = await signInUser(email, pass);
+        }
+
+        if (result && result.success && result.user) {
+          sessionStorage.setItem('mb_session', JSON.stringify({
+            name: result.user.displayName || 'Admin User',
+            email: result.user.email,
+            role: 'admin',
+            uid: result.user.uid,
+            loginTime: new Date().toISOString(),
+            accessKey: 'verified',
+            authMethod: 'firebase'
+          }));
+
+          feedback.textContent = 'Access granted. Redirecting…';
+          feedback.className = 'adm-feedback success';
+          setTimeout(function () { window.location.href = '/admin/dashboard'; }, 800);
+          return;
+        }
+
+        throw new Error(result && result.message ? result.message : 'Invalid email or password');
+      } catch (error) {
+        var msg = error.message || 'Login failed.';
+        if (msg.includes('user-not-found')) msg = 'No admin account found with this email.';
+        if (msg.includes('wrong-password')) msg = 'Incorrect password.';
+        if (msg.includes('too-many-requests')) msg = 'Too many attempts. Try again later.';
+        if (msg.includes('invalid-login-credentials') || msg.includes('Incorrect email or password')) {
+          msg = 'Incorrect email or password. The admin account may not exist yet — ';
+          msg += '<a href="/admin/setup" style="color:#EAF1FF">create it here</a> first.';
+          feedback.innerHTML = msg;
+          feedback.className = 'adm-feedback error';
+        } else {
+          feedback.textContent = msg;
+          feedback.className = 'adm-feedback error';
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg> Unlock Admin Panel';
+      }
+    });
+  });
+  </script>
+</body>
+</html>

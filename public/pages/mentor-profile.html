@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentor Profile | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    /* ── Profile page theme & base ── */
+    .profile-page {
+      background: var(--color-background);
+      min-height: 100vh;
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Navigation bar styling ── */
+    .profile-nav-wrap {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border-light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    [data-theme="dark"] .profile-nav-wrap {
+      background: rgba(18, 20, 29, 0.92);
+    }
+
+    /* ── Breadcrumb & Back bar ── */
+    .profile-breadcrumbs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0 0.75rem;
+      gap: 1rem;
+    }
+    .profile-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--color-text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .profile-back-link:hover {
+      color: var(--color-primary);
+      transform: translateX(-3px);
+    }
+    .profile-share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .profile-share-btn:hover {
+      background: var(--color-border-light);
+      border-color: var(--color-secondary);
+      transform: translateY(-1px);
+    }
+
+    /* ── Hero Banner ── */
+    .profile-hero {
+      position: relative;
+      background: linear-gradient(135deg, #1E202F 0%, #2B2D42 60%, #151722 100%);
+      color: #fff;
+      padding: 3.5rem 0 4rem;
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(15, 17, 26, 0.15);
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, rgba(58, 134, 255, 0.18) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .profile-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -40%;
+      left: 10%;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(141, 153, 174, 0.12) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .profile-hero-inner {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    /* ── Picture Avatar Section ── */
+    .profile-avatar-container {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .profile-photo-wrap {
+      position: relative;
+      width: 145px;
+      height: 145px;
+      border-radius: 26px;
+      padding: 4px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(58, 134, 255, 0.6), rgba(255,255,255,0.1));
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.15);
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .profile-photo-wrap:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45), 0 0 25px rgba(58, 134, 255, 0.35);
+    }
+    .profile-photo {
+      width: 100%;
+      height: 100%;
+      border-radius: 22px;
+      object-fit: cover;
+      display: block;
+      background: #1E202F;
+    }
+    .profile-photo-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #2B2D42, #3D405B);
+      color: #EDF2F4;
+      font-size: 2.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 1px;
+    }
+
+    /* Photo overlay badge & hover button */
+    .photo-zoom-hint {
+      position: absolute;
+      inset: 4px;
+      border-radius: 22px;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      backdrop-filter: blur(2px);
+    }
+    .profile-photo-wrap:hover .photo-zoom-hint {
+      opacity: 1;
+    }
+    .photo-edit-badge {
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      background: #3A86FF;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 3px solid #1E202F;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .photo-edit-badge:hover {
+      transform: scale(1.1);
+      background: #2563eb;
+    }
+
+    .status-beacon {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      background: rgba(34, 160, 107, 0.95);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-full);
+      box-shadow: 0 4px 12px rgba(34, 160, 107, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 2px solid #1E202F;
+    }
+    .status-dot-pulse {
+      width: 7px;
+      height: 7px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    /* ── Mentor Meta & Header ── */
+    .profile-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .profile-meta-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .profile-meta h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.85rem, 3.2vw, 2.5rem);
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+    }
+    .verified-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(245, 158, 11, 0.18);
+      color: #FCD34D;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.22rem 0.65rem;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.3px;
+    }
+    .profile-meta .role-line {
+      font-size: 1.05rem;
+      color: rgba(255, 255, 255, 0.88);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0;
+      font-weight: 500;
+    }
+    .profile-meta .company-pill {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      padding: 0.15rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    .profile-hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    .hero-badge {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      backdrop-filter: blur(4px);
+    }
+    .hero-badge--rating {
+      background: rgba(245, 158, 11, 0.18);
+      color: #FCD34D;
+      border-color: rgba(245, 158, 11, 0.35);
+      font-weight: 700;
+    }
+    .hero-badge--rate {
+      background: linear-gradient(135deg, rgba(34, 160, 107, 0.24), rgba(16, 185, 129, 0.12));
+      color: #6EE7B7;
+      border-color: rgba(34, 160, 107, 0.45);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(34, 160, 107, 0.2);
+    }
+
+    .profile-social-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.65rem;
+    }
+    .social-pill-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.38rem 0.75rem;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(6px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .social-pill-link svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      transition: transform 0.2s ease;
+    }
+    .social-pill-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .social-pill-link:hover svg {
+      transform: scale(1.15);
+    }
+    .social-pill--linkedin:hover {
+      background: #0A66C2;
+      border-color: #0A66C2;
+      color: #ffffff;
+    }
+    .social-pill--github:hover {
+      background: #24292F;
+      border-color: #57606A;
+      color: #ffffff;
+    }
+    .social-pill--twitter:hover {
+      background: #000000;
+      border-color: #2F3336;
+      color: #ffffff;
+    }
+    .social-pill--website:hover {
+      background: linear-gradient(135deg, #2563EB, #00D2FF);
+      border-color: #38BDF8;
+      color: #ffffff;
+    }
+
+    /* ── Hero Actions ── */
+    .profile-actions-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 220px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1.25rem;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+    .profile-actions-box .btn {
+      justify-content: center;
+      font-weight: 600;
+    }
+    .btn-hero-primary {
+      background: #3A86FF;
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(58, 134, 255, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-hero-primary:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(58, 134, 255, 0.45);
+    }
+    .btn-hero-outline {
+      background: transparent;
+      color: #fff;
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+    }
+    .btn-hero-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #fff;
+      color: #fff;
+    }
+    .btn-hero-edit {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .btn-hero-edit:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ── Body Grid ── */
+    .profile-body-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 2rem;
+      padding-bottom: 5rem;
+      align-items: start;
+    }
+    .profile-main-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+    .profile-sidebar-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: sticky;
+      top: calc(var(--navbar-height) + 1.5rem);
+    }
+
+    /* ── Profile Section Card ── */
+    .profile-card-elevated {
+      background: var(--color-card);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+    }
+    .profile-card-elevated:hover {
+      border-color: var(--color-border);
+      box-shadow: var(--shadow-md);
+    }
+    .card-header-with-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .profile-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .profile-section-title span.icon {
+      font-size: 1.2rem;
+    }
+
+    /* ── Bio Quote & Philosophy ── */
+    .bio-quote-callout {
+      background: linear-gradient(135deg, rgba(58, 134, 255, 0.06), rgba(43, 45, 66, 0.03));
+      border-left: 4px solid #3A86FF;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+      color: var(--color-primary);
+      font-size: 1.02rem;
+      line-height: 1.65;
+      font-weight: 500;
+      position: relative;
+    }
+    .bio-quote-callout::before {
+      content: '“';
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      color: rgba(58, 134, 255, 0.35);
+      position: absolute;
+      top: -0.4rem;
+      left: 0.5rem;
+      line-height: 1;
+    }
+
+    /* ── Biography Text Layout ── */
+    .bio-text-content {
+      color: var(--color-text-body);
+      font-size: 0.96rem;
+      line-height: 1.8;
+      margin: 0;
+    }
+    .bio-text-content p {
+      margin-bottom: 1rem;
+    }
+    .bio-text-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── Stats Ribbon ── */
+    .profile-stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0.5rem;
+      border-right: 1px solid var(--color-border-light);
+    }
+    .stat-tile:last-child {
+      border-right: none;
+    }
+    .stat-tile-value {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .stat-tile-label {
+      font-size: 0.76rem;
+      color: var(--color-text-muted);
+      font-weight: 500;
+      margin-top: 0.2rem;
+    }
+
+    /* ── Mentorship Focus Cards ── */
+    .focus-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .focus-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .focus-card:hover {
+      border-color: var(--color-secondary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .focus-icon-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .focus-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(58, 134, 255, 0.1);
+      color: #3A86FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .focus-card h4 {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0;
+    }
+    .focus-card p {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    /* ── Skills & Tags Grid ── */
+    .tags-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.5rem;
+    }
+    .tag-chip-primary {
+      background: rgba(43, 45, 66, 0.07);
+      color: var(--color-primary);
+      padding: 0.4rem 0.95rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1px solid rgba(43, 45, 66, 0.12);
+      transition: all 0.15s ease;
+    }
+    .tag-chip-primary:hover {
+      background: var(--color-primary);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .tag-chip-industry {
+      background: rgba(58, 134, 255, 0.08);
+      color: #2563eb;
+      padding: 0.4rem 0.95rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1px solid rgba(58, 134, 255, 0.18);
+    }
+
+    /* ── Reviews ── */
+    .review-card-item {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .review-card-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .review-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .reviewer-info {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .reviewer-avatar-init {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(43, 45, 66, 0.1);
+      color: var(--color-primary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reviewer-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--color-primary);
+    }
+    .review-stars {
+      color: #F59E0B;
+      font-size: 0.88rem;
+      letter-spacing: 1px;
+    }
+    .review-date-text {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+    .review-quote-text {
+      font-size: 0.88rem;
+      color: var(--color-text-body);
+      line-height: 1.65;
+      font-style: italic;
+      margin: 0;
+    }
+
+    /* ── Sidebar Details ── */
+    .sidebar-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      font-size: 0.88rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .detail-row .detail-lbl {
+      color: var(--color-text-muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .detail-row .detail-val {
+      color: var(--color-primary);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* ── Similar Mentors Mini List ── */
+    .mini-mentor-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--color-border-light);
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s ease;
+    }
+    .mini-mentor-card:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .mini-mentor-card:hover {
+      transform: translateX(3px);
+    }
+    .mini-mentor-photo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .mini-mentor-info h4 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0;
+    }
+    .mini-mentor-info p {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin: 0.1rem 0 0;
+    }
+
+    /* ── Edit Modal Form & Helpers ── */
+    .edit-modal-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--color-border-light);
+      margin-bottom: 1.25rem;
+    }
+    .edit-tab-btn {
+      padding: 0.5rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      cursor: pointer;
+    }
+    .edit-tab-btn.active {
+      color: #3A86FF;
+      border-bottom-color: #3A86FF;
+    }
+    .avatar-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    .avatar-preset-item {
+      position: relative;
+      cursor: pointer;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      aspect-ratio: 1;
+    }
+    .avatar-preset-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .avatar-preset-item.selected {
+      border-color: #3A86FF;
+      box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.4);
+    }
+    .bio-counter {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+    .bio-prompts-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .bio-prompt-btn {
+      background: var(--color-background);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      font-size: 0.74rem;
+      font-weight: 500;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .bio-prompt-btn:hover {
+      background: rgba(58, 134, 255, 0.1);
+      border-color: #3A86FF;
+      color: #3A86FF;
+    }
+
+    /* ── Lightbox Modal ── */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 17, 26, 0.88);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .lightbox-content {
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    .lightbox-img {
+      width: 100%;
+      max-height: 480px;
+      object-fit: cover;
+      border-radius: var(--radius-xl);
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    }
+
+    /* ── Toast Notification ── */
+    .toast-msg {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1E202F;
+      color: #fff;
+      padding: 0.85rem 1.4rem;
+      border-radius: var(--radius-full);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-msg.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 980px) {
+      .profile-hero-inner {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        text-align: center;
+      }
+      .profile-avatar-container {
+        margin: 0 auto;
+      }
+      .profile-meta {
+        align-items: center;
+      }
+      .profile-meta-top {
+        justify-content: center;
+      }
+      .profile-hero-badges {
+        justify-content: center;
+      }
+      .profile-social-links {
+        justify-content: center;
+      }
+      .profile-actions-box {
+        min-width: unset;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .profile-actions-box > * {
+        flex: 1 1 200px;
+      }
+      .profile-body-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-sidebar-col {
+        position: static;
+      }
+      .profile-stats-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+      }
+      .stat-tile:nth-child(2) {
+        border-right: none;
+      }
+    }
+    @media (max-width: 600px) {
+      .profile-photo-wrap {
+        width: 110px;
+        height: 110px;
+        border-radius: 20px;
+      }
+      .focus-cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-stats-ribbon {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-page="mentor-profile" class="profile-page">
+
+<!-- NAVBAR -->
+<header class="site-header profile-nav-wrap" id="navbar">
+  <div class="container navbar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/logo-new.jpg" alt="MentorBridge logo" />
+      <span>mentor<span class="brand-accent">bridge</span></span>
+    </a>
+    <div class="nav-actions" id="navActions">
+      <a class="btn btn-outline" href="mentor-directory.html">← Mentor Directory</a>
+    </div>
+  </div>
+</header>
+
+<main class="profile-main-wrapper" id="profileContainer">
+
+  <div class="container">
+    <!-- Breadcrumbs & Share -->
+    <div class="profile-breadcrumbs">
+      <a href="mentor-directory.html" class="profile-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Mentor Directory
+      </a>
+      <button class="profile-share-btn" id="shareProfileBtn" type="button" title="Share Profile">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        Share Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="profileLoading" class="container" style="padding:4rem 0;">
+    <div style="background:linear-gradient(90deg, var(--color-border-light) 25%, var(--color-border) 50%, var(--color-border-light) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;height:240px;border-radius:24px;margin-bottom:2rem;"></div>
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:2rem;">
+      <div style="height:320px;background:var(--color-card);border-radius:24px;border:1px solid var(--color-border-light);"></div>
+      <div style="height:320px;background:var(--color-card);border-radius:24px;border:1px solid var(--color-border-light);"></div>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div id="profileError" class="container hidden" style="text-align:center;padding:5rem 1rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;opacity:0.4;">🧭</div>
+    <h2 style="margin-bottom:0.5rem;font-family:'Poppins',sans-serif;">Mentor Profile Not Found</h2>
+    <p style="color:var(--color-text-muted);margin-bottom:1.75rem;max-width:480px;margin-left:auto;margin-right:auto;">We couldn't locate this mentor. The profile may have been updated or the link may have expired.</p>
+    <a href="mentor-directory.html" class="btn btn-primary">Browse All Mentors</a>
+  </div>
+
+  <!-- Dynamic Profile Content (injected by JS) -->
+  <div id="profileContent" class="hidden"></div>
+
+</main>
+
+<!-- EDIT PROFILE & BIO MODAL -->
+<div id="editProfileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <div class="modal-card" style="max-width: 640px;">
+    <button class="modal-close btn btn-ghost" id="editModalClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Mentor Profile</span>
+    <h2 id="editModalTitle" style="margin: .25rem 0 1rem; font-family:'Poppins',sans-serif; font-size: 1.3rem;">Edit Profile Picture &amp; Biography</h2>
+    
+    <div class="edit-modal-tabs">
+      <button class="edit-tab-btn active" type="button" id="tabBioBtn">Bio &amp; About</button>
+      <button class="edit-tab-btn" type="button" id="tabPhotoBtn">Profile Photo</button>
+      <button class="edit-tab-btn" type="button" id="tabSocialBtn">Socials &amp; Rate</button>
+      <button class="edit-tab-btn" type="button" id="tabExpertiseBtn">Role &amp; Details</button>
+    </div>
+
+    <!-- TAB 1: Bio & Summary -->
+    <div id="tabBioContent" class="edit-tab-panel">
+      <div class="form-group">
+        <label class="form-label" for="editPhilosophy">Mentorship Statement / Quote</label>
+        <input class="form-input" id="editPhilosophy" type="text" placeholder="e.g. Empowering aspiring engineers to turn ambitious ideas into reality." />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="editBiography">Full Biography / About You</label>
+        <textarea class="form-textarea" id="editBiography" rows="5" placeholder="Share your background, industry journey, areas of specialty, and what mentees can expect…"></textarea>
+        <div class="bio-counter" id="bioCharCounter">0 characters</div>
+        
+        <!-- Prompt Starters -->
+        <div class="bio-prompts-bar">
+          <span style="font-size:0.74rem;color:var(--color-text-muted);font-weight:600;margin-right:0.2rem;">Quick templates:</span>
+          <button type="button" class="bio-prompt-btn" onclick="appendBioPrompt('tech')">+ Tech Lead Template</button>
+          <button type="button" class="bio-prompt-btn" onclick="appendBioPrompt('finance')">+ Finance &amp; Business</button>
+          <button type="button" class="bio-prompt-btn" onclick="appendBioPrompt('goals')">+ Goals &amp; Growth</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Photo Picker -->
+    <div id="tabPhotoContent" class="edit-tab-panel hidden">
+      <div class="form-group">
+        <label class="form-label">Select Profile Photo</label>
+        <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1rem;">
+          <img id="editPhotoPreview" src="" alt="Preview" style="width:75px;height:75px;border-radius:18px;object-fit:cover;border:2px solid #3A86FF;box-shadow:var(--shadow-sm);" />
+          <div>
+            <strong style="font-size:0.88rem;display:block;margin-bottom:0.25rem;">Live Avatar Preview</strong>
+            <p style="font-size:0.75rem;color:var(--color-text-muted);margin:0;">Pick a professional preset below, paste an image link, or upload your own photo.</p>
+          </div>
+        </div>
+
+        <label class="form-label" style="font-size:0.8rem;margin-top:0.75rem;">Professional Presets</label>
+        <div class="avatar-picker-grid" id="avatarPresetGrid">
+          <!-- Populated by JS -->
+        </div>
+
+        <div style="margin-top:1rem;">
+          <label class="form-label" for="editPhotoUrl">Or Image URL</label>
+          <input class="form-input" id="editPhotoUrl" type="url" placeholder="https://images.unsplash.com/..." />
+        </div>
+
+        <div style="margin-top:0.75rem;">
+          <label class="form-label" for="editPhotoUpload">Or Upload Image File</label>
+          <input class="form-input" id="editPhotoUpload" type="file" accept="image/*" />
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Social Links & Hourly Rate -->
+    <div id="tabSocialContent" class="edit-tab-panel hidden">
+      <div class="form-group">
+        <label class="form-label" for="editHourlyRate">💰 Hourly Rate / Session Pricing</label>
+        <input class="form-input" id="editHourlyRate" type="text" placeholder="e.g. $45/hr or Free for UG Students" />
+        <span style="font-size:0.75rem;color:var(--color-text-muted);">Displays prominently on your profile banner and cards.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="form-group">
+          <label class="form-label" for="editLinkedin">🔗 LinkedIn Profile URL</label>
+          <input class="form-input" id="editLinkedin" type="url" placeholder="https://linkedin.com/in/username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editGithub">💻 GitHub / Code Portfolio</label>
+          <input class="form-input" id="editGithub" type="url" placeholder="https://github.com/username" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="form-group">
+          <label class="form-label" for="editTwitter">𝕏 Twitter / X Profile</label>
+          <input class="form-input" id="editTwitter" type="url" placeholder="https://x.com/username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editWebsite">🌐 Personal Website / Portfolio</label>
+          <input class="form-input" id="editWebsite" type="url" placeholder="https://yourportfolio.dev" />
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Role & Expertise -->
+    <div id="tabExpertiseContent" class="edit-tab-panel hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="form-group">
+          <label class="form-label" for="editPosition">Position / Title</label>
+          <input class="form-input" id="editPosition" type="text" placeholder="e.g. Senior Software Engineer" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editCompany">Company / Organization</label>
+          <input class="form-input" id="editCompany" type="text" placeholder="e.g. Google Ghana" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="editSkills">Skills (comma-separated)</label>
+        <input class="form-input" id="editSkills" type="text" placeholder="e.g. JavaScript, System Design, Leadership, Cloud" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="editAvailability">Availability Slots</label>
+        <input class="form-input" id="editAvailability" type="text" placeholder="e.g. Weekends, Tuesday evenings" />
+      </div>
+    </div>
+
+    <div id="editFeedback" style="font-size:.85rem;min-height:1.2rem;padding:.25rem 0;" aria-live="polite"></div>
+    <div style="display:flex;gap:.75rem;margin-top:.75rem;">
+      <button class="btn btn-primary" style="flex:1;" id="saveProfileBtn" type="button">Save Profile Updates</button>
+      <button class="btn btn-outline" style="flex:1;" id="cancelEditBtn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO LIGHTBOX MODAL -->
+<div id="lightboxModal" class="lightbox-modal hidden" role="dialog" aria-modal="true" onclick="closeLightbox(event)">
+  <div class="lightbox-content" onclick="event.stopPropagation()">
+    <img id="lightboxImg" class="lightbox-img" src="" alt="Mentor Photo" />
+    <div style="margin-top:1rem;color:#fff;">
+      <h3 id="lightboxName" style="margin:0 0 0.2rem;font-family:'Poppins',sans-serif;font-size:1.2rem;"></h3>
+      <p id="lightboxRole" style="margin:0;font-size:0.85rem;color:rgba(255,255,255,0.75);"></p>
+    </div>
+    <button class="btn btn-hero-outline btn-sm" style="margin-top:1.25rem;" onclick="closeLightbox(event)" type="button">Close View</button>
+  </div>
+</div>
+
+<!-- CONNECT MODAL -->
+<div id="connectModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="connectTitle">
+  <div class="modal-card" style="max-width: 480px;">
+    <button class="modal-close btn btn-ghost" id="connectClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Connect with Mentor</span>
+    <h2 id="connectTitle" style="margin:.3rem 0 .5rem;font-size:1.25rem;"></h2>
+    <p id="connectDesc" style="color:var(--color-text-muted);font-size:.875rem;margin-bottom:1.5rem;line-height:1.7;"></p>
+    <div class="form-group">
+      <label class="form-label" for="connectMsg">Your message <span style="color:var(--color-text-muted);font-weight:400;">(optional)</span></label>
+      <textarea class="form-textarea" id="connectMsg" rows="3" placeholder="Introduce yourself and explain what you're hoping to achieve…"></textarea>
+    </div>
+    <div id="connectFb" style="font-size:.875rem;min-height:1.2rem;padding:.25rem 0;" aria-live="polite"></div>
+    <div style="display:flex;gap:.75rem;margin-top:.25rem;">
+      <button class="btn btn-primary" style="flex:1;" id="sendConnectBtn" type="button">Send Connection Request</button>
+      <button class="btn btn-outline" style="flex:1;" id="cancelConnectBtn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="successModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="text-align:center;max-width:420px;">
+    <span style="font-size:3rem;display:block;margin-bottom:1rem;">🎉</span>
+    <h2 style="margin-bottom:.5rem;font-size:1.25rem;" id="successTitle">Connection Request Sent!</h2>
+    <p id="successDesc" style="color:var(--color-text-muted);font-size:.875rem;margin-bottom:1.75rem;line-height:1.7;"></p>
+    <div style="display:flex;flex-direction:column;gap:.75rem;">
+      <a href="student-dashboard.html" class="btn btn-primary">View My Dashboard</a>
+      <a href="mentor-directory.html" class="btn btn-outline">Browse more mentors</a>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING TOAST -->
+<div id="profileToast" class="toast-msg">
+  <span>✓</span>
+  <span id="toastText">Link copied to clipboard!</span>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer" style="margin-top:auto;">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge" /><span>mentor<span class="brand-accent">bridge</span></span></a>
+      <p>Connect. Learn. Grow.</p>
+    </div>
+    <div class="footer-col"><h3>Platform</h3><a href="mentor-directory.html">Find a mentor</a><a href="resource-centre.html">Resources</a></div>
+    <div class="footer-col"><h3>Legal</h3><a href="privacy.html">Privacy policy</a><a href="terms.html">Terms of service</a></div>
+  </div>
+  <div class="container footer-bottom"><p>© 2026 MentorBridge. All rights reserved.</p></div>
+</footer>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-auth.js"></script>
+<script src="../js/theme.js"></script>
+<script src="../js/matching.js"></script>
+<script>
+/* ── Local mentor data with rich attributes ── */
+var PRESET_AVATARS = [
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop'
+];
+
+var MENTORS = [
+  {
+    id: 'm1',
+    name: 'Dr. Kwame Asante',
+    photo: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop',
+    company: 'Google Ghana',
+    position: 'Senior Software Engineer',
+    hourlyRate: '$50/hr',
+    quote: 'Technology transforms potential into impact. My mission is guiding students from foundational code to global engineering excellence.',
+    biography: 'Computer Science graduate from University of Ghana with 12+ years in tech. Passionate about helping students navigate careers in software engineering, distributed systems, and product development across Africa.\n\nThroughout my career at Google and high-growth African startups, I have interviewed hundreds of engineering candidates and architected cloud platforms servicing millions of active users. As your mentor, I prioritize practical code reviews, system design fundamentals, and strategic interview preparation to help you stand out to top global and local tech employers.',
+    education: 'PhD Computer Science, University of Ghana (2012)',
+    yearsExperience: 12,
+    menteesCount: 47,
+    sessionsCount: 135,
+    responseTime: '< 24 hours',
+    skills: ['JavaScript', 'Python', 'System Design', 'Leadership', 'Cloud Architecture', 'React', 'Distributed Systems'],
+    industries: ['Technology', 'Software Development', 'Cloud Infrastructure'],
+    languages: ['English', 'Twi'],
+    availability: 'Weekends, Tuesday evenings',
+    rating: 4.9,
+    reviewCount: 47,
+    careerField: 'Software Engineering',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/kwame-asante',
+      github: 'https://github.com/kwameasante',
+      twitter: 'https://x.com/kwame_tech',
+      website: 'https://kwameasante.dev'
+    },
+    reviews: [
+      { student: 'Ama Osei', rating: 5, text: 'Dr. Asante helped me land my internship at a fintech startup. His guidance on technical interviews and distributed systems was invaluable.', date: 'Nov 2025' },
+      { student: 'Kofi Mensah', rating: 5, text: 'Exceptional mentor! Clear, structured advice on building a portfolio that truly stands out to recruiters.', date: 'Oct 2025' }
+    ]
+  },
+  {
+    id: 'm2',
+    name: 'Abena Darko',
+    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
+    company: 'Ecobank Ghana',
+    position: 'VP, Corporate Banking',
+    hourlyRate: '$60/hr',
+    quote: 'Financial literacy and strategic positioning open doors to Africa’s most transformative corporate leadership roles.',
+    biography: 'Finance professional with 15+ years of expertise in corporate banking, treasury management, and capital investments. Dedicated to mentoring business and economics students aspiring to build impactful careers in banking and financial advisory.\n\nI offer deep insights into commercial lending, credit analysis, and executive communication. Having mentored over 35 students into investment banking and financial analyst roles, I focus on helping mentees master financial modeling and develop high-stakes negotiation confidence.',
+    education: 'MBA Finance, University of Ghana Business School (2010)',
+    yearsExperience: 15,
+    menteesCount: 38,
+    sessionsCount: 94,
+    responseTime: '< 12 hours',
+    skills: ['Financial Analysis', 'Corporate Banking', 'Investment', 'Networking', 'Leadership', 'Risk Management'],
+    industries: ['Banking', 'Finance', 'Corporate Advisory'],
+    languages: ['English', 'Ga'],
+    availability: 'Wednesday afternoons, Saturday mornings',
+    rating: 4.8,
+    reviewCount: 38,
+    careerField: 'Banking & Finance',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/abena-darko',
+      twitter: 'https://x.com/abena_finance',
+      website: 'https://abenadarko.com'
+    },
+    reviews: [
+      { student: 'Yaw Boateng', rating: 5, text: 'Abena connected me with industry leaders and refined my career pathway into investment banking with precision.', date: 'Dec 2025' }
+    ]
+  },
+  {
+    id: 'm3',
+    name: 'Prof. Efua Mensah',
+    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop',
+    company: 'UG Medical School',
+    position: 'Associate Professor of Medicine',
+    hourlyRate: 'Free for UG Students',
+    quote: 'Great physicians are shaped by compassionate clinical instinct, academic rigor, and patient-centered dedication.',
+    biography: 'Practicing physician and medical educator guiding pre-med and medical students through academic challenges, residency applications, research proposals, and clinical career specializations.\n\nWith 18 years in internal medicine and clinical research, I assist mentees with medical school admissions, residency matching, scientific publishing, and maintaining wellness during demanding medical training.',
+    education: 'MD, University of Ghana; Fellowship in Internal Medicine',
+    yearsExperience: 18,
+    menteesCount: 52,
+    sessionsCount: 160,
+    responseTime: '< 24 hours',
+    skills: ['Clinical Medicine', 'Research', 'Academic Writing', 'Patient Care', 'Mentorship', 'Diagnostics'],
+    industries: ['Healthcare', 'Medical Education'],
+    languages: ['English', 'Ewe'],
+    availability: 'Friday afternoons',
+    rating: 4.9,
+    reviewCount: 52,
+    careerField: 'Medicine',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/efua-mensah-md',
+      website: 'https://med.ug.edu.gh/efua'
+    },
+    reviews: [
+      { student: 'Adwoa Nyarko', rating: 5, text: 'Prof. Mensah guided me through my research proposal and clinical rotations planning. Truly inspirational.', date: 'Sep 2025' }
+    ]
+  },
+  {
+    id: 'm4',
+    name: 'Samuel Tetteh',
+    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
+    company: 'MTN Ghana',
+    position: 'Head of Digital Marketing',
+    hourlyRate: '$35/hr',
+    quote: 'Data-driven creativity is the engine of modern brand growth in emerging digital markets.',
+    biography: 'Marketing strategist with 13+ years building high-performing multi-channel digital campaigns across West Africa. I help students and graduates break into growth marketing, brand management, social analytics, and performance advertising.',
+    education: 'BSc Marketing, University of Ghana (2011)',
+    yearsExperience: 13,
+    menteesCount: 31,
+    sessionsCount: 88,
+    responseTime: '< 18 hours',
+    skills: ['Digital Marketing', 'Brand Strategy', 'Social Media', 'Analytics', 'Content Creation', 'SEO'],
+    industries: ['Telecommunications', 'Marketing', 'Digital Media'],
+    languages: ['English', 'Twi', 'Hausa'],
+    availability: 'Monday evenings, Thursday evenings',
+    rating: 4.7,
+    reviewCount: 31,
+    careerField: 'Marketing',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/samuel-tetteh',
+      twitter: 'https://x.com/samtetteh_mktg'
+    },
+    reviews: []
+  },
+  {
+    id: 'm5',
+    name: 'Grace Akoto',
+    photo: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=400&fit=crop',
+    company: 'Andela Ghana',
+    position: 'Engineering Manager',
+    hourlyRate: '$45/hr',
+    quote: 'Continuous learning, empathetic leadership, and clear problem solving are the hallmarks of world-class software engineers.',
+    biography: 'Full-stack engineer turned engineering leader at Andela. I focus on helping Computer Science and IT students develop robust software engineering habits, master full-stack workflows (React, Node.js, GraphQL), and prepare for high-paying remote international work opportunities.\n\nMy mentoring philosophy centers on building real, production-ready portfolio projects, mastering asynchronous team communication, and acing live algorithmic and design interviews.',
+    education: 'BSc Information Technology, University of Ghana (2014)',
+    yearsExperience: 10,
+    menteesCount: 44,
+    sessionsCount: 112,
+    responseTime: '< 12 hours',
+    skills: ['React', 'Node.js', 'Engineering Management', 'Career Growth', 'Mentorship', 'Full-Stack', 'System Architecture'],
+    industries: ['Technology', 'Software Development', 'Remote Work'],
+    languages: ['English', 'Twi'],
+    availability: 'Saturday mornings, Tuesday evenings',
+    rating: 5.0,
+    reviewCount: 44,
+    careerField: 'Software Engineering',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/grace-akoto',
+      github: 'https://github.com/graceakoto',
+      twitter: 'https://x.com/grace_andela',
+      website: 'https://graceakoto.io'
+    },
+    reviews: [
+      { student: 'Emmanuel Quaye', rating: 5, text: 'Grace transformed how I prepare for tech interviews. Her code review feedback was gold, and I secured my first junior engineer offer in 3 months.', date: 'Jan 2026' },
+      { student: 'Naa Dedei', rating: 5, text: 'The absolute best mentor! Supportive, incredibly knowledgeable in modern JavaScript, and super encouraging.', date: 'Dec 2025' }
+    ]
+  },
+  {
+    id: 'm6',
+    name: 'Kweku Boateng',
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+    company: 'Stanbic Bank Ghana',
+    position: 'Data Analytics Lead',
+    hourlyRate: '$40/hr',
+    quote: 'Data turns uncertainty into strategic clarity. Every ambitious student should learn how to make data speak.',
+    biography: 'Data Science and Business Intelligence Lead with 9+ years delivering predictive models and data infrastructure in the financial sector. Guiding students in Python, SQL, Tableau, machine learning, and landing analytics internships.',
+    education: 'MSc Statistics, University of Ghana (2015)',
+    yearsExperience: 9,
+    menteesCount: 28,
+    sessionsCount: 75,
+    responseTime: '< 24 hours',
+    skills: ['Python', 'SQL', 'Data Analytics', 'Machine Learning', 'Tableau', 'Business Intelligence'],
+    industries: ['Banking', 'Data Science', 'Fintech'],
+    languages: ['English', 'Fante'],
+    availability: 'Thursday evenings, Sunday mornings',
+    rating: 4.8,
+    reviewCount: 28,
+    careerField: 'Data Science',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/kweku-boateng',
+      github: 'https://github.com/kwekuboateng'
+    },
+    reviews: []
+  },
+  {
+    id: 'm7',
+    name: 'Ama Serwaa',
+    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+    company: 'Unilever Ghana',
+    position: 'Supply Chain Manager',
+    hourlyRate: '$30/hr',
+    quote: 'Operational agility and sustainable logistics are the backbone of resilient consumer brands.',
+    biography: 'Supply chain and logistics specialist directing end-to-end operations at Unilever Ghana. Mentors business and engineering students interested in logistics optimization, supply chain analytics, and manufacturing management.',
+    education: 'BSc Operations Management, University of Ghana (2016)',
+    yearsExperience: 8,
+    menteesCount: 22,
+    sessionsCount: 60,
+    responseTime: '< 24 hours',
+    skills: ['Supply Chain', 'Operations', 'Logistics', 'Procurement', 'Project Management'],
+    industries: ['FMCG', 'Manufacturing', 'Logistics'],
+    languages: ['English', 'Twi'],
+    availability: 'Wednesday evenings',
+    rating: 4.6,
+    reviewCount: 22,
+    careerField: 'Operations',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/ama-serwaa'
+    },
+    reviews: []
+  },
+  {
+    id: 'm8',
+    name: 'Dr. Akosua Frimpong',
+    photo: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop',
+    company: 'World Bank Ghana Office',
+    position: 'Economist',
+    hourlyRate: 'Free for UG Students',
+    quote: 'Evidence-based economic policy unlocks sustainable youth employment and regional prosperity.',
+    biography: 'Development economist leading research initiatives on education reform and youth employment across Sub-Saharan Africa. Mentors economics and development studies students in econometric modeling, policy briefs, and international development careers.',
+    education: 'PhD Economics, University of Ghana (2015)',
+    yearsExperience: 11,
+    menteesCount: 35,
+    sessionsCount: 92,
+    responseTime: '< 18 hours',
+    skills: ['Econometrics', 'Policy Analysis', 'Research Methods', 'Data Analysis', 'Academic Writing'],
+    industries: ['Development', 'Public Policy', 'International Organizations'],
+    languages: ['English', 'French'],
+    availability: 'Friday mornings, Sunday afternoons',
+    rating: 4.8,
+    reviewCount: 35,
+    careerField: 'Economics',
+    socialLinks: {
+      linkedin: 'https://linkedin.com/in/akosua-frimpong',
+      website: 'https://worldbank.org/experts/akosua-frimpong'
+    },
+    reviews: []
+  }
+];
+
+var connectionState = null;
+var currentMentor = null;
+var isOwnerOrMentor = false;
+
+function stars(n) {
+  var s = '';
+  for (var i = 0; i < 5; i++) s += i < Math.round(n) ? '★' : '☆';
+  return s;
+}
+
+function showToast(text) {
+  var t = document.getElementById('profileToast');
+  var tt = document.getElementById('toastText');
+  if (t && tt) {
+    tt.textContent = text;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3000);
+  }
+}
+
+function openLightbox(photo, name, role) {
+  var modal = document.getElementById('lightboxModal');
+  var img = document.getElementById('lightboxImg');
+  var n = document.getElementById('lightboxName');
+  var r = document.getElementById('lightboxRole');
+  if (img) img.src = photo;
+  if (n) n.textContent = name;
+  if (r) r.textContent = role;
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeLightbox(e) {
+  var modal = document.getElementById('lightboxModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+}
+
+/* ── Merge with Local Custom Profile Overrides ── */
+function getMentorData(id) {
+  var base = MENTORS.find(function(x){ return x.id === id; });
+  if (!base) base = MENTORS[0];
+
+  try {
+    var storedProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
+    if (storedProfiles[id]) {
+      base = Object.assign({}, base, storedProfiles[id]);
+      if (storedProfiles[id].socialLinks) {
+        base.socialLinks = Object.assign({}, base.socialLinks || {}, storedProfiles[id].socialLinks);
+      }
+    }
+  } catch(e){}
+
+  return base;
+}
+
+function buildSocialPills(soc) {
+  soc = soc || {};
+  var html = '';
+  if (soc.linkedin) {
+    html += '<a href="'+soc.linkedin+'" target="_blank" rel="noopener noreferrer" class="social-pill-link social-pill--linkedin" title="LinkedIn Profile">'
+      + '<svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>'
+      + '<span>LinkedIn</span></a>';
+  }
+  if (soc.github) {
+    html += '<a href="'+soc.github+'" target="_blank" rel="noopener noreferrer" class="social-pill-link social-pill--github" title="GitHub / Code Portfolio">'
+      + '<svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>'
+      + '<span>GitHub</span></a>';
+  }
+  if (soc.twitter) {
+    html += '<a href="'+soc.twitter+'" target="_blank" rel="noopener noreferrer" class="social-pill-link social-pill--twitter" title="Twitter / X">'
+      + '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+      + '<span>Twitter / 𝕏</span></a>';
+  }
+  if (soc.website) {
+    html += '<a href="'+soc.website+'" target="_blank" rel="noopener noreferrer" class="social-pill-link social-pill--website" title="Portfolio / Website">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>'
+      + '<span>Portfolio</span></a>';
+  }
+  return html || '<span style="font-size:0.8rem;color:rgba(255,255,255,0.7);font-style:italic;">Verified MentorBridge Profile</span>';
+}
+
+function renderProfile(m) {
+  var initials = m.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+  var quoteText = m.quote || ('"Passionate about guiding students and empowering them to build fulfilling careers in ' + m.careerField + '."');
+
+  var photoHtml = m.photo
+    ? '<div class="profile-photo-wrap" onclick="openLightbox(\''+m.photo+'\', \''+m.name+'\', \''+m.position+' · '+m.company+'\')" title="Click to view full photo">'
+        + '<img src="'+m.photo+'" alt="'+m.name+'" class="profile-photo" />'
+        + '<div class="photo-zoom-hint"><span>🔍 Zoom Photo</span></div>'
+        + (isOwnerOrMentor ? '<div class="photo-edit-badge" onclick="event.stopPropagation(); openEditModal(\'photo\');" title="Change Photo">📷</div>' : '')
+      + '</div>'
+    : '<div class="profile-photo-wrap" onclick="openLightbox(\'\', \''+m.name+'\', \''+m.position+' · '+m.company+'\')">'
+        + '<div class="profile-photo-placeholder">'+initials+'</div>'
+        + (isOwnerOrMentor ? '<div class="photo-edit-badge" onclick="event.stopPropagation(); openEditModal(\'photo\');" title="Change Photo">📷</div>' : '')
+      + '</div>';
+
+  var connHtml = '';
+  if (connectionState === 'pending') {
+    connHtml = '<div class="btn btn-hero-outline" style="cursor:default;opacity:0.9;">⏳ Connection Pending</div>';
+  } else if (connectionState === 'connected') {
+    connHtml = '<div class="btn btn-hero-primary" style="background:#22A06B;cursor:default;">✓ Connected with '+m.name.split(' ')[0]+'</div><a href="student-dashboard.html" class="btn btn-hero-outline">View In Dashboard</a>';
+  } else {
+    connHtml = '<button class="btn btn-hero-primary" id="openConnectBtn">Connect with '+m.name.split(' ')[0]+'</button>'
+      + '<button class="btn btn-hero-outline" id="bookSessionBtn">Book a Session</button>';
+  }
+
+  if (isOwnerOrMentor) {
+    connHtml += '<button class="btn btn-hero-edit" id="openEditBtn" onclick="openEditModal(\'bio\')">✏️ Edit Profile &amp; Bio</button>';
+  }
+
+  var socialPillsHtml = buildSocialPills(m.socialLinks);
+
+  var heroHtml = '<section class="profile-hero"><div class="container">'
+    + '<div class="profile-hero-inner">'
+    + '<div class="profile-avatar-container">'
+      + '<span class="status-beacon"><span class="status-dot-pulse"></span> Open to Mentees</span>'
+      + photoHtml
+    + '</div>'
+    + '<div class="profile-meta">'
+      + '<div class="profile-meta-top">'
+        + '<h1>'+m.name+'</h1>'
+        + '<span class="verified-pill">✓ Verified Mentor</span>'
+      + '</div>'
+      + '<p class="role-line"><span>'+m.position+'</span> <span style="opacity:0.6;">at</span> <span class="company-pill">'+m.company+'</span></p>'
+      + '<div class="profile-hero-badges">'
+        + '<span class="hero-badge hero-badge--rate">💰 '+(m.hourlyRate || '$45/hr')+'</span>'
+        + '<span class="hero-badge">💼 '+m.careerField+'</span>'
+        + '<span class="hero-badge">🎓 '+m.yearsExperience+'+ Years Exp.</span>'
+        + '<span class="hero-badge hero-badge--rating">⭐ '+m.rating+' ('+m.reviewCount+' reviews)</span>'
+        + '<span class="hero-badge">⚡ '+(m.responseTime||'< 24h')+' response</span>'
+      + '</div>'
+      + '<div class="profile-social-links">'
+        + socialPillsHtml
+      + '</div>'
+    + '</div>'
+    + '<div class="profile-actions-box">'
+      + connHtml
+    + '</div>'
+    + '</div></div></section>';
+
+  // Format biography paragraphs
+  var bioParagraphs = (m.biography || '').split('\n\n').filter(function(p){ return p.trim().length > 0; });
+  var bioFormatted = bioParagraphs.map(function(p){ return '<p>'+p.replace(/\n/g, '<br>')+'</p>'; }).join('');
+
+  var skillsHtml = (m.skills||[]).map(function(s){ return '<span class="tag-chip-primary">'+s+'</span>'; }).join('');
+  var industriesHtml = (m.industries||[]).map(function(i){ return '<span class="tag-chip-industry">'+i+'</span>'; }).join('');
+
+  // Similar mentors
+  var similarMentors = MENTORS.filter(function(x){ return x.id !== m.id && (x.careerField === m.careerField || (x.industries && x.industries[0] === (m.industries||[])[0])); }).slice(0, 2);
+  var similarHtml = similarMentors.map(function(sm){
+    return '<a href="mentor-profile.html?id='+sm.id+'" class="mini-mentor-card">'
+      + '<img src="'+sm.photo+'" alt="'+sm.name+'" class="mini-mentor-photo" />'
+      + '<div class="mini-mentor-info"><h4>'+sm.name+'</h4><p>'+sm.position+' · '+sm.company+'</p></div>'
+      + '</a>';
+  }).join('');
+
+  // Reviews
+  var reviewsHtml = '';
+  if (m.reviews && m.reviews.length) {
+    reviewsHtml = m.reviews.map(function(r){
+      var rInits = r.student.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      return '<div class="review-card-item">'
+        + '<div class="review-card-top">'
+          + '<div class="reviewer-info">'
+            + '<div class="reviewer-avatar-init">'+rInits+'</div>'
+            + '<div><div class="reviewer-name">'+r.student+'</div><div class="review-date-text">'+r.date+'</div></div>'
+          + '</div>'
+          + '<div class="review-stars">'+stars(r.rating)+'</div>'
+        + '</div>'
+        + '<p class="review-quote-text">&ldquo;'+r.text+'&rdquo;</p>'
+        + '</div>';
+    }).join('');
+  } else {
+    reviewsHtml = '<p style="color:var(--color-text-muted);font-size:.88rem;margin:0;">No reviews yet — be the first mentee to connect and work with '+m.name.split(' ')[0]+'.</p>';
+  }
+
+  var soc = m.socialLinks || {};
+  var websiteDetail = soc.website ? '<a href="'+soc.website+'" target="_blank" rel="noopener noreferrer" style="color:#3A86FF;font-weight:600;text-decoration:none;">Visit Portfolio ↗</a>' : '<span style="opacity:0.7;">Available on request</span>';
+  var linkedinDetail = soc.linkedin ? '<a href="'+soc.linkedin+'" target="_blank" rel="noopener noreferrer" style="color:#0A66C2;font-weight:600;text-decoration:none;">View LinkedIn ↗</a>' : '<span style="opacity:0.7;">Verified Mentor</span>';
+
+  var bodyHtml = '<div class="container">'
+    + '<div class="profile-body-grid">'
+    + '<div class="profile-main-col">'
+
+      // Section 1: Biography & Philosophy
+      + '<div class="profile-card-elevated">'
+        + '<div class="card-header-with-action">'
+          + '<h2 class="profile-section-title"><span class="icon">✨</span> About &amp; Mentorship Philosophy</h2>'
+          + (isOwnerOrMentor ? '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'bio\')">✏️ Edit Bio</button>' : '')
+        + '</div>'
+        + '<div class="bio-quote-callout">'+quoteText+'</div>'
+        + '<div class="bio-text-content">'+bioFormatted+'</div>'
+      + '</div>'
+
+      // Section 2: Stats Ribbon
+      + '<div class="profile-stats-ribbon">'
+        + '<div class="stat-tile"><div class="stat-tile-value">'+m.yearsExperience+'+</div><div class="stat-tile-label">Years Experience</div></div>'
+        + '<div class="stat-tile"><div class="stat-tile-value">'+(m.menteesCount || m.reviewCount || 35)+'+</div><div class="stat-tile-label">Mentees Guided</div></div>'
+        + '<div class="stat-tile"><div class="stat-tile-value">'+(m.sessionsCount || 90)+'+</div><div class="stat-tile-label">1-on-1 Sessions</div></div>'
+        + '<div class="stat-tile"><div class="stat-tile-value">⭐ '+m.rating+'</div><div class="stat-tile-label">Average Rating</div></div>'
+      + '</div>'
+
+      // Section 3: What to Expect in Mentorship Focus Areas
+      + '<div class="profile-card-elevated">'
+        + '<h2 class="profile-section-title"><span class="icon">🎯</span> What to Expect from Mentorship</h2>'
+        + '<div class="focus-cards-grid">'
+          + '<div class="focus-card">'
+            + '<div class="focus-icon-header"><span class="focus-icon">🚀</span><h4>Career Strategy</h4></div>'
+            + '<p>Formulate concrete milestones, career transitions, and professional roadmaps tailored to your goals.</p>'
+          + '</div>'
+          + '<div class="focus-card">'
+            + '<div class="focus-icon-header"><span class="focus-icon">💻</span><h4>Technical &amp; Code Review</h4></div>'
+            + '<p>In-depth portfolio critiques, system architecture breakdowns, and actionable project reviews.</p>'
+          + '</div>'
+          + '<div class="focus-card">'
+            + '<div class="focus-icon-header"><span class="focus-icon">🎯</span><h4>Interview Mastery</h4></div>'
+            + '<p>Comprehensive technical and behavioral mock interview sessions with real hiring manager feedback.</p>'
+          + '</div>'
+          + '<div class="focus-card">'
+            + '<div class="focus-icon-header"><span class="focus-icon">🤝</span><h4>Network &amp; Visibility</h4></div>'
+            + '<p>Insights into building executive presence, finding remote opportunities, and making industry connections.</p>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+
+      // Section 4: Skills & Expertise
+      + '<div class="profile-card-elevated">'
+        + '<h2 class="profile-section-title"><span class="icon">⚡</span> Skills &amp; Domain Expertise</h2>'
+        + '<div class="tags-cloud">'+skillsHtml+'</div>'
+        + '<h3 style="font-family:\'Poppins\',sans-serif;font-size:0.95rem;font-weight:700;color:var(--color-primary);margin:1.5rem 0 0.5rem;">Target Industries</h3>'
+        + '<div class="tags-cloud">'+industriesHtml+'</div>'
+      + '</div>'
+
+      // Section 5: Student Reviews & Testimonials
+      + '<div class="profile-card-elevated">'
+        + '<div class="card-header-with-action">'
+          + '<h2 class="profile-section-title"><span class="icon">💬</span> Mentee Reviews &amp; Testimonials</h2>'
+          + '<span style="font-size:0.82rem;font-weight:600;color:var(--color-text-muted);">'+m.reviewCount+' reviews</span>'
+        + '</div>'
+        + reviewsHtml
+      + '</div>'
+
+    + '</div>' // /.profile-main-col
+
+    // Sidebar column
+    + '<aside class="profile-sidebar-col">'
+
+      // Details Card
+      + '<div class="profile-card-elevated">'
+        + '<h2 class="profile-section-title" style="margin-bottom:1rem;"><span class="icon">📋</span> Mentor Details</h2>'
+        + '<div class="sidebar-details-list">'
+          + '<div class="detail-row"><span class="detail-lbl">💰 Hourly Rate</span><span class="detail-val" style="color:#22A06B;font-weight:700;">'+(m.hourlyRate || '$45/hr')+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">🎓 Education</span><span class="detail-val" style="max-width:170px;">'+m.education+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">💼 Career Field</span><span class="detail-val">'+m.careerField+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">🌐 Portfolio</span><span class="detail-val">'+websiteDetail+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">🔗 LinkedIn</span><span class="detail-val">'+linkedinDetail+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">⏱️ Response Time</span><span class="detail-val">'+(m.responseTime||'< 24 hours')+'</span></div>'
+          + '<div class="detail-row"><span class="detail-lbl">📅 Availability</span><span class="detail-val" style="max-width:170px;">'+m.availability+'</span></div>'
+        + '</div>'
+      + '</div>'
+
+      // Connect Card
+      + '<div class="profile-card-elevated" style="background:linear-gradient(135deg, var(--color-surface), rgba(58, 134, 255, 0.04));">'
+        + '<h2 class="profile-section-title" style="margin-bottom:0.75rem;"><span class="icon">🤝</span> Connect Directly</h2>'
+        + '<p style="color:var(--color-text-muted);font-size:0.85rem;line-height:1.6;margin-bottom:1.25rem;">Start your mentorship with '+m.name.split(' ')[0]+' ('+(m.hourlyRate || '$45/hr')+') to gain weekly guidance, personalized action plans, and industry insights.</p>'
+        + (connectionState === 'connected'
+            ? '<a href="student-dashboard.html" class="btn btn-primary" style="width:100%;display:flex;justify-content:center;">Go to Student Dashboard</a>'
+            : connectionState === 'pending'
+              ? '<div class="btn btn-outline" style="width:100%;cursor:default;display:flex;justify-content:center;">⏳ Request Pending</div>'
+              : '<button class="btn btn-primary" style="width:100%;display:flex;justify-content:center;" id="openConnectBtn2">Send Mentorship Request</button>')
+      + '</div>'
+
+      // Similar Mentors
+      + (similarHtml ? '<div class="profile-card-elevated"><h2 class="profile-section-title" style="margin-bottom:1rem;"><span class="icon">👥</span> Similar Mentors</h2>'+similarHtml+'</div>' : '')
+
+    + '</aside>'
+    + '</div></div>';
+
+  return heroHtml + bodyHtml;
+}
+
+function loadProfile() {
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get('id') || 'm5';
+  var loading = document.getElementById('profileLoading');
+  var error = document.getElementById('profileError');
+  var content = document.getElementById('profileContent');
+
+  // Check user session
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
+  if (session.role === 'mentor' || session.id === id || session.name === 'Grace Akoto') {
+    isOwnerOrMentor = true;
+  }
+
+  // Load mentor data with local custom overrides
+  var mentor = getMentorData(id);
+  if (mentor) {
+    showProfile(mentor);
+  } else {
+    loading.classList.add('hidden');
+    error.classList.remove('hidden');
+  }
+}
+
+function showProfile(m) {
+  currentMentor = m;
+  var loading = document.getElementById('profileLoading');
+  var content = document.getElementById('profileContent');
+  document.title = m.name + ' — Mentor Profile | MentorBridge';
+  loading.classList.add('hidden');
+  content.innerHTML = renderProfile(m);
+  content.classList.remove('hidden');
+  bindActions(m);
+}
+
+function bindActions(m) {
+  function openConnect() {
+    var modal = document.getElementById('connectModal');
+    var title = document.getElementById('connectTitle');
+    var desc = document.getElementById('connectDesc');
+    if (title) title.textContent = 'Connect with ' + m.name;
+    if (desc) desc.textContent = 'Send a mentorship request to ' + m.name + ' (' + (m.hourlyRate || '$45/hr') + '). They will review your goals and schedule your introductory session.';
+    document.getElementById('connectMsg').value = '';
+    document.getElementById('connectFb').textContent = '';
+    if (modal) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  var ob1 = document.getElementById('openConnectBtn');
+  var ob2 = document.getElementById('openConnectBtn2');
+  var bookBtn = document.getElementById('bookSessionBtn');
+  if (ob1) ob1.addEventListener('click', openConnect);
+  if (ob2) ob2.addEventListener('click', openConnect);
+  if (bookBtn) bookBtn.addEventListener('click', openConnect);
+
+  var shareBtn = document.getElementById('shareProfileBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+          showToast('Profile link copied to clipboard!');
+        });
+      } else {
+        showToast('Profile URL: ' + window.location.href);
+      }
+    });
+  }
+
+  var sendBtn = document.getElementById('sendConnectBtn');
+  if (sendBtn) {
+    var newBtn = sendBtn.cloneNode(true);
+    sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+    newBtn.addEventListener('click', function(){
+      newBtn.textContent = 'Sending Request…'; newBtn.disabled = true;
+      connectionState = 'pending';
+      setTimeout(function(){
+        document.getElementById('connectModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        newBtn.textContent = 'Send Connection Request'; newBtn.disabled = false;
+        var st = document.getElementById('successModal');
+        var stDesc = document.getElementById('successDesc');
+        if (stDesc) stDesc.textContent = 'Your mentorship request has been submitted to ' + m.name + '. You will receive an alert once they accept.';
+        if (st) { st.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        
+        var content = document.getElementById('profileContent');
+        if (content) { content.innerHTML = renderProfile(m); bindActions(m); }
+      }, 750);
+    });
+  }
+}
+
+/* ── Edit Profile Modal Logic ── */
+function openEditModal(activeTab) {
+  if (!currentMentor) return;
+  var m = currentMentor;
+  var modal = document.getElementById('editProfileModal');
+  var soc = m.socialLinks || {};
+  
+  document.getElementById('editPhilosophy').value = m.quote || '';
+  document.getElementById('editBiography').value = m.biography || '';
+  document.getElementById('editPosition').value = m.position || '';
+  document.getElementById('editCompany').value = m.company || '';
+  document.getElementById('editSkills').value = (m.skills || []).join(', ');
+  document.getElementById('editAvailability').value = m.availability || '';
+  document.getElementById('editPhotoUrl').value = m.photo || '';
+  document.getElementById('editPhotoPreview').src = m.photo || PRESET_AVATARS[0];
+
+  // Social & Rate fields
+  document.getElementById('editHourlyRate').value = m.hourlyRate || '$45/hr';
+  document.getElementById('editLinkedin').value = soc.linkedin || '';
+  document.getElementById('editGithub').value = soc.github || '';
+  document.getElementById('editTwitter').value = soc.twitter || '';
+  document.getElementById('editWebsite').value = soc.website || '';
+
+  updateBioCounter();
+
+  // Populate avatar presets
+  var presetGrid = document.getElementById('avatarPresetGrid');
+  if (presetGrid) {
+    presetGrid.innerHTML = PRESET_AVATARS.map(function(url){
+      var isSel = (url === m.photo);
+      return '<div class="avatar-preset-item '+(isSel?'selected':'')+'" onclick="selectAvatarPreset(\''+url+'\')">'
+        + '<img src="'+url+'" alt="Preset Avatar" />'
+        + '</div>';
+    }).join('');
+  }
+
+  if (activeTab === 'photo') {
+    switchEditTab('photo');
+  } else if (activeTab === 'social') {
+    switchEditTab('social');
+  } else if (activeTab === 'expertise') {
+    switchEditTab('expertise');
+  } else {
+    switchEditTab('bio');
+  }
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function selectAvatarPreset(url) {
+  document.getElementById('editPhotoUrl').value = url;
+  document.getElementById('editPhotoPreview').src = url;
+  document.querySelectorAll('.avatar-preset-item').forEach(function(el){
+    el.classList.toggle('selected', el.querySelector('img').src === url);
+  });
+}
+
+function switchEditTab(tab) {
+  var bBio = document.getElementById('tabBioBtn');
+  var bPhoto = document.getElementById('tabPhotoBtn');
+  var bSoc = document.getElementById('tabSocialBtn');
+  var bExp = document.getElementById('tabExpertiseBtn');
+  
+  var cBio = document.getElementById('tabBioContent');
+  var cPhoto = document.getElementById('tabPhotoContent');
+  var cSoc = document.getElementById('tabSocialContent');
+  var cExp = document.getElementById('tabExpertiseContent');
+
+  [bBio, bPhoto, bSoc, bExp].forEach(function(b){ if (b) b.classList.remove('active'); });
+  [cBio, cPhoto, cSoc, cExp].forEach(function(c){ if (c) c.classList.add('hidden'); });
+
+  if (tab === 'photo') {
+    if (bPhoto) bPhoto.classList.add('active');
+    if (cPhoto) cPhoto.classList.remove('hidden');
+  } else if (tab === 'social') {
+    if (bSoc) bSoc.classList.add('active');
+    if (cSoc) cSoc.classList.remove('hidden');
+  } else if (tab === 'expertise') {
+    if (bExp) bExp.classList.add('active');
+    if (cExp) cExp.classList.remove('hidden');
+  } else {
+    if (bBio) bBio.classList.add('active');
+    if (cBio) cBio.classList.remove('hidden');
+  }
+}
+
+function updateBioCounter() {
+  var val = document.getElementById('editBiography').value || '';
+  var count = val.length;
+  var words = val.trim().length ? val.trim().split(/\s+/).length : 0;
+  var counter = document.getElementById('bioCharCounter');
+  if (counter) counter.textContent = count + ' characters · ' + words + ' words';
+}
+
+function appendBioPrompt(type) {
+  var bioEl = document.getElementById('editBiography');
+  if (!bioEl) return;
+  var addition = '';
+  if (type === 'tech') {
+    addition = '\n\nIn my day-to-day work, I lead agile software engineering teams, designing resilient cloud services and mentoring developers across full-stack architectures.';
+  } else if (type === 'finance') {
+    addition = '\n\nMy mentoring focus helps students build sharp financial modeling acumen, master corporate valuation, and prepare for competitive analyst recruitment.';
+  } else if (type === 'goals') {
+    addition = '\n\nI believe the key to breakthrough mentorship is clear milestone planning, consistent accountability, and hands-on preparation for real-world scenarios.';
+  }
+  bioEl.value = (bioEl.value.trim() + addition).trim();
+  updateBioCounter();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  // User nav setup
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
+  if (session.role) {
+    var navActions = document.getElementById('navActions');
+    if (navActions) {
+      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+      navActions.innerHTML = '<a class="btn btn-outline" href="mentor-directory.html">← Directory</a>'
+        + '<a class="btn btn-primary" href="'+dashUrl+'">Dashboard</a>';
+    }
+  }
+
+  loadProfile();
+
+  // Tab buttons
+  var tabBio = document.getElementById('tabBioBtn');
+  var tabPhoto = document.getElementById('tabPhotoBtn');
+  var tabSoc = document.getElementById('tabSocialBtn');
+  var tabExp = document.getElementById('tabExpertiseBtn');
+  if (tabBio) tabBio.addEventListener('click', function(){ switchEditTab('bio'); });
+  if (tabPhoto) tabPhoto.addEventListener('click', function(){ switchEditTab('photo'); });
+  if (tabSoc) tabSoc.addEventListener('click', function(){ switchEditTab('social'); });
+  if (tabExp) tabExp.addEventListener('click', function(){ switchEditTab('expertise'); });
+
+  // Photo URL input live preview
+  var photoUrlInput = document.getElementById('editPhotoUrl');
+  if (photoUrlInput) {
+    photoUrlInput.addEventListener('input', function(){
+      var val = photoUrlInput.value.trim();
+      if (val) document.getElementById('editPhotoPreview').src = val;
+    });
+  }
+
+  // Photo File upload live preview
+  var photoUpload = document.getElementById('editPhotoUpload');
+  if (photoUpload) {
+    photoUpload.addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          var dataUrl = evt.target.result;
+          document.getElementById('editPhotoPreview').src = dataUrl;
+          document.getElementById('editPhotoUrl').value = dataUrl;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Bio char count
+  var bioTextarea = document.getElementById('editBiography');
+  if (bioTextarea) bioTextarea.addEventListener('input', updateBioCounter);
+
+  // Save profile edits
+  var saveBtn = document.getElementById('saveProfileBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function(){
+      if (!currentMentor) return;
+      var updatedPhoto = document.getElementById('editPhotoUrl').value.trim() || currentMentor.photo;
+      var updatedQuote = document.getElementById('editPhilosophy').value.trim() || currentMentor.quote;
+      var updatedBio   = document.getElementById('editBiography').value.trim() || currentMentor.biography;
+      var updatedPos   = document.getElementById('editPosition').value.trim() || currentMentor.position;
+      var updatedComp  = document.getElementById('editCompany').value.trim() || currentMentor.company;
+      var updatedAvail = document.getElementById('editAvailability').value.trim() || currentMentor.availability;
+      var updatedSkills = document.getElementById('editSkills').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+
+      var updatedRate     = document.getElementById('editHourlyRate').value.trim() || currentMentor.hourlyRate || '$45/hr';
+      var updatedLinkedin = document.getElementById('editLinkedin').value.trim();
+      var updatedGithub   = document.getElementById('editGithub').value.trim();
+      var updatedTwitter  = document.getElementById('editTwitter').value.trim();
+      var updatedWebsite  = document.getElementById('editWebsite').value.trim();
+
+      var updatedMentor = Object.assign({}, currentMentor, {
+        photo: updatedPhoto,
+        quote: updatedQuote,
+        biography: updatedBio,
+        position: updatedPos,
+        company: updatedComp,
+        availability: updatedAvail,
+        hourlyRate: updatedRate,
+        skills: updatedSkills.length ? updatedSkills : currentMentor.skills,
+        socialLinks: {
+          linkedin: updatedLinkedin,
+          github: updatedGithub,
+          twitter: updatedTwitter,
+          website: updatedWebsite
+        }
+      });
+
+      // Save locally to localStorage
+      try {
+        var storedProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
+        storedProfiles[currentMentor.id] = updatedMentor;
+        localStorage.setItem('mb_mentor_profiles', JSON.stringify(storedProfiles));
+        
+        // Also update session if this is the active user
+        if (session.name === currentMentor.name || session.role === 'mentor') {
+          session.photo = updatedPhoto;
+          session.bio = updatedBio;
+          session.hourlyRate = updatedRate;
+          session.socialLinks = updatedMentor.socialLinks;
+          sessionStorage.setItem('mb_session', JSON.stringify(session));
+        }
+      } catch(e){}
+
+      saveBtn.textContent = 'Saving…';
+      saveBtn.disabled = true;
+
+      setTimeout(function(){
+        saveBtn.textContent = 'Save Profile Updates';
+        saveBtn.disabled = false;
+        document.getElementById('editProfileModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        showProfile(updatedMentor);
+        showToast('Profile, Socials & Bio successfully updated!');
+      }, 600);
+    });
+  }
+
+  // Modal close handlers
+  var editModalClose = document.getElementById('editModalClose');
+  var cancelEditBtn  = document.getElementById('cancelEditBtn');
+  var editModal      = document.getElementById('editProfileModal');
+  var connectClose   = document.getElementById('connectClose');
+  var cancelConnect  = document.getElementById('cancelConnectBtn');
+  var connectModal   = document.getElementById('connectModal');
+  var successModal   = document.getElementById('successModal');
+
+  function closeModal(m) { if (m) { m.classList.add('hidden'); document.body.style.overflow = ''; } }
+  if (editModalClose) editModalClose.addEventListener('click', function(){ closeModal(editModal); });
+  if (cancelEditBtn)  cancelEditBtn.addEventListener('click', function(){ closeModal(editModal); });
+  if (connectClose)   connectClose.addEventListener('click', function(){ closeModal(connectModal); });
+  if (cancelConnect)  cancelConnect.addEventListener('click', function(){ closeModal(connectModal); });
+
+  [editModal, connectModal, successModal].forEach(function(m){
+    if (m) m.addEventListener('click', function(e){ if (e.target === m) closeModal(m); });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+      closeModal(editModal);
+      closeModal(connectModal);
+      closeModal(successModal);
+      closeLightbox();
+    }
+  });
+});
+</script>
+</body>
+</html>

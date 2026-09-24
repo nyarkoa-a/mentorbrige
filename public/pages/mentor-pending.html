@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Application Under Review | MentorBridge</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: linear-gradient(135deg, #2B2D42 0%, #1E202F 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif; padding: 1.5rem;
+    }
+    .pending-card {
+      background: #fff; border-radius: 24px;
+      padding: 3rem 2.5rem; width: 100%; max-width: 520px;
+      box-shadow: 0 32px 80px rgba(30,0,27,0.35); text-align: center;
+    }
+    .pending-icon { font-size: 3.5rem; margin-bottom: 1.25rem; display: block; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(245,158,11,0.10); color: #b45309;
+      font-size: .72rem; font-weight: 700; padding: .3rem .85rem;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: .09em;
+      margin-bottom: 1.25rem;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 700; color: #2B2D42; margin: 0 0 .75rem; }
+    .mentor-name { color: #2B2D42; }
+    p { font-size: .9rem; color: #6B6570; line-height: 1.75; margin: 0 0 1rem; }
+    .steps { text-align: left; background: #EDF2F4; border-radius: 14px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+    .step { display: flex; align-items: flex-start; gap: .75rem; padding: .55rem 0; border-bottom: 1px solid #D5D8DC; }
+    .step:last-child { border-bottom: none; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; background: #2B2D42; color: #fff; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-num.done { background: #22A06B; }
+    .step-text { font-size: .82rem; color: #242124; line-height: 1.5; }
+    .step-text span { display: block; font-size: .72rem; color: #9C97A0; margin-top: .15rem; }
+    .btn-back { display: inline-flex; align-items: center; gap: .4rem; margin-top: .5rem; padding: .75rem 1.75rem; background: #2B2D42; color: #fff; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: .875rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: background .15s; }
+    .btn-back:hover { background: #3D405B; }
+    .contact-note { font-size: .78rem; color: #9C97A0; margin-top: 1.25rem; }
+    .contact-note a { color: #2B2D42; }
+
+    /* Approved state */
+    .approved-card { display: none; }
+    .approved-card .status-badge { background: rgba(34,160,107,0.10); color: #22A06B; }
+    /* Declined state */
+    .declined-card { display: none; }
+    .declined-card .status-badge { background: rgba(220,53,69,0.10); color: #DC3545; }
+  </style>
+</head>
+<body>
+
+  <!-- PENDING STATE (default) -->
+  <div class="pending-card" id="pendingState">
+    <span class="pending-icon">⏳</span>
+    <div class="status-badge">⏳ Under Review</div>
+    <h1>Your application is being reviewed</h1>
+    <p>Thank you for applying to become a mentor on <strong>MentorBridge</strong>, <span class="mentor-name" id="mentorNameDisplay">valued applicant</span>. Our team will review your profile and credentials shortly.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num done">✓</div>
+        <div class="step-text">Application submitted<span>Your mentor profile has been received</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Admin review in progress<span>Our team is reviewing your expertise and credentials</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Decision notification<span>You will receive a message with the outcome</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Access granted (if approved)<span>You'll receive a link to sign in to your mentor dashboard</span></div>
+      </div>
+    </div>
+
+    <p style="font-size:.82rem;color:#9C97A0;">This process typically takes 1–3 business days. You do not need to stay on this page.</p>
+
+    <a href="../index.html" class="btn-back">← Return to MentorBridge</a>
+    <p class="contact-note">Questions? <a href="../index.html#contact">Contact us</a></p>
+  </div>
+
+  <!-- APPROVED STATE -->
+  <div class="pending-card approved-card" id="approvedState">
+    <span class="pending-icon">🎉</span>
+    <div class="status-badge" style="background:rgba(34,160,107,0.10);color:#22A06B;">✓ Approved</div>
+    <h1>Welcome to MentorBridge!</h1>
+    <p>Congratulations, <span class="mentor-name" id="approvedNameDisplay">mentor</span>! Your application has been approved. You can now sign in to your mentor dashboard and start connecting with mentees.</p>
+    <a href="auth.html?mode=signin" class="btn-back" style="background:#22A06B;">Sign in to Mentor Dashboard →</a>
+    <p class="contact-note">Need help? <a href="../index.html#contact">Contact us</a></p>
+  </div>
+
+  <!-- DECLINED STATE -->
+  <div class="pending-card declined-card" id="declinedState">
+    <span class="pending-icon">😔</span>
+    <div class="status-badge" style="background:rgba(220,53,69,0.10);color:#DC3545;">✗ Not Approved</div>
+    <h1>Application not approved</h1>
+    <p>Thank you for your interest, <span class="mentor-name" id="declinedNameDisplay">applicant</span>. After reviewing your application, we are unable to approve your mentor account at this time.</p>
+    <p style="font-size:.82rem;">This may be because the profile does not currently match our mentorship requirements. You are welcome to reapply in the future with updated credentials.</p>
+    <a href="../index.html" class="btn-back" style="background:#6B6570;">Return to MentorBridge</a>
+    <p class="contact-note">Questions? <a href="../index.html#contact">Contact us</a></p>
+  </div>
+
+  <script src="../js/theme.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Read pending application from storage
+    var pending = null;
+    try { pending = JSON.parse(sessionStorage.getItem('mb_mentor_pending') || 'null'); } catch(e) {}
+
+    if (pending && pending.name) {
+      document.getElementById('mentorNameDisplay').textContent = pending.name.split(' ')[0];
+      document.getElementById('approvedNameDisplay').textContent = pending.name.split(' ')[0];
+      document.getElementById('declinedNameDisplay').textContent = pending.name.split(' ')[0];
+    }
+
+    // Check for decision — first from URL param, then from localStorage (admin decision)
+    var params = new URLSearchParams(window.location.search);
+    var decision = params.get('decision');
+
+    // Check localStorage for admin decision if no URL param
+    if (!decision && pending && pending.email) {
+      try {
+        var decisions = JSON.parse(localStorage.getItem('mb_mentor_decisions') || '{}');
+        if (decisions[pending.email]) {
+          decision = decisions[pending.email].decision;
+        }
+      } catch(e) {}
+    }
+
+    if (decision === 'approved') {
+      document.getElementById('pendingState').style.display = 'none';
+      document.getElementById('approvedState').style.display = 'block';
+      // Set session so mentor can log in
+      if (pending) {
+        try { sessionStorage.setItem('mb_session', JSON.stringify({ name: pending.name, email: pending.email, role: 'mentor' })); } catch(e) {}
+      }
+    } else if (decision === 'declined') {
+      document.getElementById('pendingState').style.display = 'none';
+      document.getElementById('declinedState').style.display = 'block';
+      // Clear any session
+      try { sessionStorage.removeItem('mb_session'); } catch(e) {}
+    }
+    // Default: show pending state
+
+    // Auto-check every 10 seconds for a decision (simulates real-time notification)
+    if (!decision) {
+      var checkInterval = setInterval(function() {
+        if (!pending || !pending.email) return;
+        try {
+          var decisions = JSON.parse(localStorage.getItem('mb_mentor_decisions') || '{}');
+          if (decisions[pending.email]) {
+            clearInterval(checkInterval);
+            window.location.reload();
+          }
+        } catch(e) {}
+      }, 10000);
+    }
+  });
+  </script>
+</body>
+</html>

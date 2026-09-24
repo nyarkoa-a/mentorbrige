@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Firebase Configuration and Services (load order is critical) -->
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-service.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script src="../js/firebase-messaging.js"></script>
+  <script src="../js/firebase-profiles.js"></script>
+  <script src="../js/firebase-notifications.js"></script>
+  
+  <!-- Firebase Configuration and Services (load order is critical) -->
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-service.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script src="../js/firebase-messaging.js"></script>
+  <script src="../js/firebase-profiles.js"></script>
+  <script src="../js/firebase-notifications.js"></script>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6fb; font-family: 'Inter', sans-serif; }
+    .db-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .db-sidebar { width: 260px; flex-shrink: 0; background: #1E202F; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform 0.3s ease; }
+    .db-sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-decoration: none; }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
+    .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
+    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #fff; }
+    .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .db-sidebar-overlay.open { display: block; }
+
+    /* ── Main ── */
+    .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .db-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0 2rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .db-header-left { display: flex; align-items: center; gap: 1rem; }
+    .db-menu-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #1E202F; padding: 0.3rem; }
+    .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
+    .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .db-icon-btn { position: relative; background: #f4f6fb; border: 1px solid #e8eaf0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.15s; text-decoration: none; color: inherit; }
+    .db-icon-btn:hover { background: #e8eaf0; }
+    .db-notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+
+    /* ── Messaging shell ── */
+    .msg-shell { display: flex; flex: 1; height: calc(100vh - 68px); overflow: hidden; }
+
+    /* ── Conversation list ── */
+    .conv-list-panel { width: 320px; flex-shrink: 0; border-right: 1px solid #e8eaf0; background: #fff; display: flex; flex-direction: column; }
+    .conv-list-header { padding: 1.1rem 1.25rem; border-bottom: 1px solid #f0f2f7; }
+    .conv-list-header h2 { font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 700; color: #1E202F; margin: 0 0 0.85rem; }
+    .conv-search { display: flex; align-items: center; gap: 0.5rem; background: #f4f6fb; border: 1px solid #e8eaf0; border-radius: 10px; padding: 0.5rem 0.85rem; }
+    .conv-search span { color: #9ca3af; font-size: 0.9rem; flex-shrink: 0; }
+    .conv-search input { border: none; background: transparent; outline: none; font-size: 0.82rem; font-family: inherit; color: #1E202F; width: 100%; }
+    .conv-search input::placeholder { color: #9ca3af; }
+    .conv-list { flex: 1; overflow-y: auto; }
+    .conv-item { display: flex; align-items: center; gap: 0.85rem; padding: 0.9rem 1.25rem; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid #f8f9fc; position: relative; }
+    .conv-item:hover { background: #f8f9fc; }
+    .conv-item.active { background: rgba(43, 45, 66,0.07); }
+    .conv-item.unread { background: rgba(43, 45, 66,0.04); }
+    .conv-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .conv-avatar-initials { width: 44px; height: 44px; border-radius: 50%; background: rgba(26,0,26,0.08); color: #1E202F; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .conv-info { flex: 1; min-width: 0; }
+    .conv-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+    .conv-name { font-size: 0.875rem; font-weight: 700; color: #1E202F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-time { font-size: 0.68rem; color: #9ca3af; flex-shrink: 0; margin-left: 0.4rem; }
+    .conv-preview { font-size: 0.78rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-item.unread .conv-name { color: #1E202F; }
+    .conv-item.unread .conv-preview { color: #1E202F; font-weight: 500; }
+    .conv-unread-dot { width: 9px; height: 9px; border-radius: 50%; background: #2B2D42; flex-shrink: 0; }
+    .conv-unread-badge { position: absolute; top: 0.6rem; right: 0.85rem; background: #2B2D42; color: #1E202F; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 20px; }
+
+    /* ── Chat panel ── */
+    .chat-panel { flex: 1; display: flex; flex-direction: column; background: #f8f9fc; min-width: 0; }
+    .chat-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0.9rem 1.5rem; display: flex; align-items: center; gap: 0.85rem; flex-shrink: 0; }
+    .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .chat-header-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(26,0,26,0.08); color: #1E202F; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chat-header-info { flex: 1; }
+    .chat-header-info strong { display: block; font-size: 0.9rem; font-weight: 700; color: #1E202F; }
+    .chat-header-info span { font-size: 0.72rem; color: #9ca3af; }
+    .chat-back-btn { display: none; background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem; color: #6b7280; font-size: 1rem; border-radius: 8px; font-family: inherit; }
+    .chat-back-btn:hover { background: #f0f2f7; color: #1E202F; }
+
+    /* ── Messages area ── */
+    .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .msg-bubble-wrap { display: flex; flex-direction: column; max-width: 68%; }
+    .msg-bubble-wrap.mine { align-self: flex-end; align-items: flex-end; }
+    .msg-bubble-wrap.theirs { align-self: flex-start; align-items: flex-start; }
+    .msg-bubble { padding: 0.7rem 1rem; border-radius: 16px; font-size: 0.875rem; line-height: 1.6; word-break: break-word; }
+    .msg-bubble-wrap.mine .msg-bubble { background: #1E202F; color: #fff; border-bottom-right-radius: 4px; }
+    .msg-bubble-wrap.theirs .msg-bubble { background: #fff; color: #1E202F; border: 1px solid #e8eaf0; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .msg-meta { font-size: 0.65rem; color: #9ca3af; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.3rem; }
+    .msg-meta.mine { flex-direction: row-reverse; }
+    .msg-status { font-size: 0.65rem; }
+    .msg-status.sending { color: #9ca3af; }
+    .msg-status.sent { color: #9ca3af; }
+    .msg-status.failed { color: #c0392b; }
+    .msg-retry-btn { font-size: 0.65rem; color: #2B2D42; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; font-weight: 600; }
+
+    /* ── Composer ── */
+    .chat-composer { background: #fff; border-top: 1px solid #e8eaf0; padding: 1rem 1.25rem; display: flex; align-items: flex-end; gap: 0.75rem; flex-shrink: 0; }
+    .composer-input { flex: 1; border: 1.5px solid #e8eaf0; border-radius: 12px; padding: 0.7rem 1rem; font-size: 0.875rem; font-family: inherit; color: #1E202F; outline: none; resize: none; min-height: 42px; max-height: 120px; overflow-y: auto; transition: border-color 0.15s; line-height: 1.5; }
+    .composer-input:focus { border-color: #1E202F; }
+    .composer-input::placeholder { color: #9ca3af; }
+    .composer-send { width: 42px; height: 42px; border-radius: 12px; background: #1E202F; color: #2B2D42; border: none; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+    .composer-send:hover { background: #152d55; }
+    .composer-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .composer-error { font-size: 0.78rem; color: #c0392b; padding: 0 1.25rem 0.5rem; }
+
+    /* ── Empty / placeholder states ── */
+    .chat-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.75rem; color: #9ca3af; text-align: center; padding: 2rem; }
+    .chat-placeholder-icon { font-size: 3rem; opacity: 0.3; }
+    .chat-placeholder h3 { font-size: 1rem; font-weight: 600; color: #6b7280; margin: 0; }
+    .chat-placeholder p { font-size: 0.82rem; margin: 0; }
+    .conv-empty { padding: 2rem 1.25rem; text-align: center; color: #9ca3af; }
+    .conv-empty p { font-size: 0.82rem; margin-bottom: 1rem; }
+    .msg-date-divider { text-align: center; font-size: 0.68rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0.5rem 0; }
+    .msg-conv-empty { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #9ca3af; text-align: center; gap: 0.5rem; }
+    .msg-conv-empty p { font-size: 0.875rem; }
+
+    /* ── Loading skeleton ── */
+    .conv-skel { padding: 0.9rem 1.25rem; display: flex; align-items: center; gap: 0.85rem; border-bottom: 1px solid #f8f9fc; }
+    .conv-skel-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(90deg,#f0f2f7 25%,#e8eaf0 50%,#f0f2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; flex-shrink: 0; }
+    .conv-skel-lines { flex: 1; }
+    .conv-skel-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg,#f0f2f7 25%,#e8eaf0 50%,#f0f2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; margin-bottom: 6px; }
+    .conv-skel-line:last-child { width: 60%; margin-bottom: 0; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) { .conv-list-panel { width: 280px; } }
+    @media (max-width: 900px) {
+      .db-sidebar { transform: translateX(-100%); }
+      .db-sidebar.open { transform: translateX(0); }
+      .db-main { margin-left: 0; }
+      .db-menu-btn { display: flex; }
+    }
+    @media (max-width: 700px) {
+      .conv-list-panel { width: 100%; position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 10; border-right: none; }
+      .conv-list-panel.hidden-mobile { display: none; }
+      .chat-panel { width: 100%; }
+      .chat-back-btn { display: inline-flex; }
+    }
+  </style>
+</head>
+<body data-page="messages">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay"></div>
+<div class="db-shell">
+
+  <aside class="db-sidebar" id="dbSidebar" aria-label="Dashboard navigation">
+    <a class="db-sidebar-brand" href="../index.html">
+      <img src="../assets/logo-new.jpg" alt="MentorBridge" />
+      <span>mentor<span class="brand-accent">bridge</span></span>
+    </a>
+    <nav class="db-nav" id="sidebarNav" aria-label="Main"></nav>
+    <div class="db-sidebar-footer">
+      <div class="db-user-row">
+        <div class="db-user-avatar-initials" id="sidebarInitials">AB</div>
+        <div class="db-user-info">
+          <strong id="sidebarName">Loading…</strong>
+          <span id="sidebarRole">Mentee</span>
+        </div>
+      </div>
+      <button class="db-logout-btn" id="logoutBtn" type="button"><span>🚪</span> Log out</button>
+    </div>
+  </aside>
+
+  <div class="db-main">
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="menuBtn" type="button" aria-label="Toggle sidebar">☰</button>
+        <div class="db-welcome">
+          <h1>Messages</h1>
+          <p>Stay connected with your mentors and mentees.</p>
+        </div>
+      </div>
+      <div class="db-header-right">
+        <a href="notifications.html" class="db-icon-btn" aria-label="Notifications">🔔<span class="db-notif-dot"></span></a>
+        <div class="db-header-avatar" id="headerAvatar">AB</div>
+      </div>
+    </header>
+
+    <!-- MESSAGING SHELL -->
+    <div class="msg-shell">
+
+      <!-- CONVERSATION LIST -->
+      <div class="conv-list-panel" id="convListPanel">
+        <div class="conv-list-header">
+          <h2>Conversations</h2>
+          <div class="conv-search">
+            <span>🔍</span>
+            <input type="search" id="convSearch" placeholder="Search messages or conversations…" aria-label="Search conversations" />
+          </div>
+        </div>
+        <div class="conv-list" id="convList">
+          <!-- Skeleton loading -->
+          <div class="conv-skel"><div class="conv-skel-avatar"></div><div class="conv-skel-lines"><div class="conv-skel-line"></div><div class="conv-skel-line"></div></div></div>
+          <div class="conv-skel"><div class="conv-skel-avatar"></div><div class="conv-skel-lines"><div class="conv-skel-line"></div><div class="conv-skel-line"></div></div></div>
+        </div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div class="chat-panel" id="chatPanel">
+        <div class="chat-placeholder" id="chatPlaceholder">
+          <div class="chat-placeholder-icon">💬</div>
+          <h3>Select a conversation</h3>
+          <p>Choose a conversation from the left to start messaging.</p>
+        </div>
+
+        <!-- Active conversation (hidden until selected) -->
+        <div id="activeConv" style="display:none;flex:1;flex-direction:column;height:100%;">
+          <div class="chat-header" id="chatHeader">
+            <button class="chat-back-btn" id="chatBackBtn" type="button">← Back</button>
+            <div class="chat-header-avatar-initials" id="convAvatarEl"></div>
+            <div class="chat-header-info">
+              <strong id="convNameEl">—</strong>
+              <span id="convRoleEl">—</span>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="composer-error hidden" id="composerError"></div>
+          <div class="chat-composer">
+            <textarea class="composer-input" id="msgInput" placeholder="Write a message…" rows="1" aria-label="Message input"></textarea>
+            <button class="composer-send" id="sendBtn" type="button" disabled aria-label="Send message">➤</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-service.js"></script>
+<script src="../js/firebase-messaging.js"></script>
+<script>
+/* ── Initialize Firebase and Messaging Service when page loads ── */
+document.addEventListener('DOMContentLoaded', function(){
+  // Initialize Firebase configuration
+  initializeFirebaseConfig()
+    .then(function(config) {
+      console.log('Firebase initialized successfully in messages.html');
+      console.log('Project ID:', config.projectId);
+      
+      // Initialize Firebase messaging service
+      if (window.mentorBridgeMessaging) {
+        return window.mentorBridgeMessaging.initialize();
+      }
+    })
+    .then(function() {
+      console.log('Firebase messaging service initialized');
+    })
+    .catch(function(error) {
+      console.error('Failed to initialize Firebase in messages.html:', error);
+    });
+});
+
+/* ── Real-time Messaging with Firebase Integration ── */
+var activeConvId = null;
+var currentRole = 'student';
+var currentUserId = null;
+var currentUserName = null;
+var searchQuery = '';
+var conversations = [];
+var activeListeners = new Map();
+
+/* ── Helpers ── */
+var $ = function(id){ return document.getElementById(id); };
+function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTs(ts){
+  var now = Date.now(), d = new Date(ts), diff = now - ts;
+  if(diff < 60000) return 'Just now';
+  if(diff < 3600000) return Math.floor(diff/60000)+' min ago';
+  var today = new Date(); var yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  if(d.toDateString()===today.toDateString()) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(d.toDateString()===yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+function fmtDateDivider(ts){
+  var d = new Date(ts), today = new Date(), yesterday = new Date(today);
+  yesterday.setDate(today.getDate()-1);
+  if(d.toDateString()===today.toDateString()) return 'Today';
+  if(d.toDateString()===yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+}
+function getConvs(){ return conversations; }
+function getTotalUnread(){ return conversations.reduce(function(s,c){return s+(c.unreadCount||0);},0); }
+function initials(name){ return name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase(); }
+function avatarHtml(photo, name, cls){
+  cls = cls||'conv-avatar';
+  if(photo) return '<img class="'+cls+'" src="'+esc(photo)+'" alt="'+esc(name)+'" />';
+  return '<div class="'+cls+'-initials">'+initials(name)+'</div>';
+}
+
+/* ── Firebase Messaging Integration ── */
+async function loadConversations() {
+  try {
+    if (!window.mentorBridgeMessaging || !window.mentorBridgeMessaging.isInitialized()) {
+      console.warn('Messaging service not initialized, using fallback');
+      loadFallbackConversations();
+      return;
+    }
+
+    // Get conversations from Firebase
+    const userConversations = await window.mentorBridgeMessaging.getUserConversations();
+    conversations = userConversations;
+    renderConvList();
+    
+  } catch (error) {
+    console.error('Error loading conversations:', error);
+    loadFallbackConversations();
+  }
+}
+
+function loadFallbackConversations() {
+  // Fallback mock data if Firebase isn't working
+  if (currentRole === 'mentor') {
+    conversations = [
+      {
+        id: 'mc1',
+        participantId: 's1',
+        participantName: 'Amina Boateng',
+        participantPhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face',
+        participantRole: 'Mentee',
+        unreadCount: 1,
+        lastMessageAt: Date.now() - 600000,
+        messages: [
+          { id:'m1', senderId:'s1', text:"Hi Grace! Could you review my CV before our session?", ts: Date.now() - 600000, status:'sent', unread: true }
+        ]
+      }
+    ];
+  } else {
+    conversations = [
+      {
+        id: 'c1',
+        participantId: 'm5',
+        participantName: 'Grace Akoto',
+        participantPhoto: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=80&h=80&fit=crop&crop=face',
+        participantRole: 'Mentor',
+        unreadCount: 2,
+        lastMessageAt: Date.now() - 3600000,
+        messages: [
+          { id:'msg1', senderId:'m5', text:"Welcome to MentorBridge! I'm really looking forward to working with you.", ts: Date.now() - 3*24*3600000, status:'sent' },
+          { id:'msg2', senderId:'s1', text:"Thank you! I'm excited to get started. I've been working on my CV this week.", ts: Date.now() - 3*24*3600000 + 300000, status:'sent' },
+          { id:'msg3', senderId:'m5', text:"That's great to hear. Before our next session, could you send me a draft so I can review it beforehand?", ts: Date.now() - 2*24*3600000, status:'sent' },
+          { id:'msg4', senderId:'s1', text:"Of course! I'll have it ready by Thursday.", ts: Date.now() - 2*24*3600000 + 600000, status:'sent' },
+          { id:'msg5', senderId:'m5', text:"Let's review your CV during our next session. Have it ready!", ts: Date.now() - 7200000, status:'sent', unread: true },
+          { id:'msg6', senderId:'m5', text:"Also, I've shared some interview preparation resources in the Resource Centre — check them out when you get a chance.", ts: Date.now() - 3600000, status:'sent', unread: true }
+        ]
+      }
+    ];
+  }
+  renderConvList();
+}
+
+/* ── Render conversation list ── */
+function renderConvList(){
+  var convs = getConvs().filter(function(c){
+    if(!searchQuery) return true;
+    var q = searchQuery.toLowerCase();
+    return c.participantName.toLowerCase().includes(q) ||
+      (c.messages && c.messages.length && c.messages[c.messages.length-1].text.toLowerCase().includes(q));
+  });
+  var html = '';
+  if(!convs.length){
+    html = '<div class="conv-empty"><p>'+(searchQuery?'No results for "'+esc(searchQuery)+'"':'No conversations yet.')+'</p>'
+      + (!searchQuery && currentRole==='mentor' ? '<a href="mentor-dashboard.html" class="btn btn-outline btn-sm">View My Mentees →</a>' : '')
+      + (!searchQuery && currentRole!=='mentor' ? '<a href="mentor-directory.html" class="btn btn-outline btn-sm">Find a Mentor →</a>' : '')
+      + '</div>';
+    $('convList').innerHTML = html; return;
+  }
+  convs.forEach(function(c){
+    var lastMsg = c.messages && c.messages.length ? c.messages[c.messages.length-1] : null;
+    var preview = lastMsg ? esc(lastMsg.text.slice(0,55)+(lastMsg.text.length>55?'…':'')) : 'No messages yet';
+    var time = lastMsg ? fmtTs(lastMsg.ts) : '';
+    var unreadCount = c.unreadCount || 0;
+    var unreadHtml = unreadCount>0 ? '<span class="conv-unread-badge">'+unreadCount+'</span>' : '';
+    var isActive = c.id===activeConvId ? ' active' : '';
+    var isUnread = unreadCount>0 ? ' unread' : '';
+    html += '<div class="conv-item'+isActive+isUnread+'" data-conv-id="'+c.id+'">'
+      + avatarHtml(c.participantPhoto, c.participantName)
+      + '<div class="conv-info">'
+      + '<div class="conv-name-row"><span class="conv-name">'+esc(c.participantName)+'</span><span class="conv-time">'+time+'</span></div>'
+      + '<div class="conv-preview">'+preview+'</div>'
+      + '</div>'
+      + unreadHtml
+      +'</div>';
+  });
+  $('convList').innerHTML = html;
+  $('convList').querySelectorAll('.conv-item').forEach(function(el){
+    el.addEventListener('click', function(){ openConv(el.dataset.convId); });
+  });
+}
+
+/* ── Open conversation ── */
+async function openConv(convId){
+  var convs = getConvs();
+  var conv = convs.find(function(c){return c.id===convId;});
+  if(!conv) return;
+  activeConvId = convId;
+  
+  // Mark as read
+  conv.unreadCount = 0;
+  if (conv.messages) {
+    conv.messages.forEach(function(m){ delete m.unread; });
+  }
+
+  // Update header
+  var ph = conv.participantPhoto;
+  var el = $('convAvatarEl');
+  if(el){
+    if(ph){ el.outerHTML='<img class="chat-header-avatar" id="convAvatarEl" src="'+esc(ph)+'" alt="'+esc(conv.participantName)+'" />'; }
+    else { el.className='chat-header-avatar-initials'; el.id='convAvatarEl'; el.textContent=initials(conv.participantName); }
+  }
+  $('convNameEl').textContent = conv.participantName;
+  $('convRoleEl').textContent = conv.participantRole;
+
+  // Show active conv, hide placeholder
+  $('chatPlaceholder').style.display='none';
+  var ac = $('activeConv'); ac.style.display='flex';
+
+  // Load messages from Firebase if available
+  if (window.mentorBridgeMessaging && window.mentorBridgeMessaging.isInitialized()) {
+    try {
+      const messages = await window.mentorBridgeMessaging.getConversationMessages(convId);
+      conv.messages = messages;
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  }
+
+  renderMessages(conv);
+  renderConvList();
+
+  // Mobile: hide conv list
+  var clp = $('convListPanel');
+  if(window.innerWidth<=700) clp.classList.add('hidden-mobile');
+}
+
+/* ── Render messages ── */
+function renderMessages(conv){
+  var area = $('chatMessages');
+  if(!conv.messages.length){
+    area.innerHTML='<div class="msg-conv-empty"><p>Start the conversation with '+esc(conv.participantName)+'.</p></div>';
+    return;
+  }
+  var html='', lastDate='';
+  conv.messages.forEach(function(msg){
+    var d = fmtDateDivider(msg.ts);
+    if(d!==lastDate){ html+='<div class="msg-date-divider">'+d+'</div>'; lastDate=d; }
+    var mine = msg.senderId===currentUserId;
+    var wrapCls = 'msg-bubble-wrap '+(mine?'mine':'theirs');
+    var statusHtml='';
+    if(mine){
+      if(msg.status==='sending') statusHtml='<span class="msg-status sending">Sending…</span>';
+      else if(msg.status==='failed') statusHtml='<span class="msg-status failed">Failed. <button class="msg-retry-btn" data-msg-id="'+msg.id+'">Retry</button></span>';
+      else statusHtml='<span class="msg-status sent">✓</span>';
+    }
+    html+='<div class="'+wrapCls+'" id="msgwrap-'+msg.id+'">'
+      +'<div class="msg-bubble">'+esc(msg.text)+'</div>'
+      +'<div class="msg-meta '+(mine?'mine':'')+'"><span>'+fmtTs(msg.ts)+'</span>'+statusHtml+'</div>'
+      +'</div>';
+  });
+  area.innerHTML=html;
+  area.scrollTop=area.scrollHeight;
+  // Bind retry buttons
+  area.querySelectorAll('.msg-retry-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ retryMessage(conv, btn.dataset.msgId); });
+  });
+}
+
+/* ── Send message ── */
+async function sendMessage(){
+  var input=$('msgInput'), errorEl=$('composerError');
+  var text=input.value.trim();
+  if(!text){ errorEl.textContent='Please enter a message.'; errorEl.classList.remove('hidden'); return; }
+  if(text.length>2000){ errorEl.textContent='Message is too long (max 2000 characters).'; errorEl.classList.remove('hidden'); return; }
+  errorEl.classList.add('hidden');
+  var convs=getConvs(), conv=convs.find(function(c){return c.id===activeConvId;});
+  if(!conv) return;
+
+  var msgId='msg'+Date.now();
+  var msg={id:msgId, senderId:currentUserId, text:text, ts:Date.now(), status:'sending'};
+  
+  // Add to local conversation immediately
+  if (!conv.messages) conv.messages = [];
+  conv.messages.push(msg);
+  input.value=''; input.style.height='42px';
+  $('sendBtn').disabled=true;
+  renderMessages(conv);
+
+  // Send via Firebase if available
+  if (window.mentorBridgeMessaging && window.mentorBridgeMessaging.isInitialized()) {
+    try {
+      await window.mentorBridgeMessaging.sendMessage(convId, text);
+      msg.status='sent';
+      renderMessages(conv);
+      renderConvList();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      msg.status='failed';
+      renderMessages(conv);
+      errorEl.textContent='Failed to send message. Please try again.';
+      errorEl.classList.remove('hidden');
+    }
+  } else {
+    // Fallback: simulate API send
+    setTimeout(function(){
+      msg.status='sent';
+      renderMessages(conv);
+      renderConvList();
+      // Simulate reply for demo
+      if(conv.id==='c1' && Math.random()<0.4){
+        setTimeout(function(){
+          var replies=["Got it, thanks!","I'll take a look.","See you at our next session!","Great work, keep it up!","Let's discuss this further."];
+          conv.messages.push({id:'reply'+Date.now(), senderId:conv.participantId, text:replies[Math.floor(Math.random()*replies.length)], ts:Date.now(), status:'sent'});
+          renderMessages(conv); renderConvList();
+        }, 2000+Math.random()*3000);
+      }
+    }, 600+Math.random()*400);
+  }
+}
+
+function retryMessage(conv, msgId){
+  var msg=conv.messages.find(function(m){return m.id===msgId;});
+  if(!msg) return;
+  msg.status='sending';
+  renderMessages(conv);
+  setTimeout(function(){ msg.status='sent'; renderMessages(conv); renderConvList(); }, 800);
+}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', function(){
+  var session={};
+  try{ session=JSON.parse(sessionStorage.getItem('mb_session')||'{}'); }catch(e){}
+  var role=session.role||'student';
+  currentRole=role;
+  currentUserId=session.userId||(role==='mentor'?'m5':'s1');
+  currentUserName=session.name||(role==='mentor'?'Grace Akoto':'Amina Boateng');
+  var inits=initials(currentUserName);
+
+  if(!session.role){ window.location.replace('auth.html'); return; }
+
+  $('sidebarInitials').textContent=inits;
+  $('sidebarName').textContent=currentUserName;
+  $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
+  $('headerAvatar').textContent=inits;
+
+  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var menteeLinks=[
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentor',icon:'👤',label:'My Mentor'},
+    {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress'},
+    {href:'#opportunities',icon:'💼',label:'Opportunities'},{href:'messages.html',icon:'💬',label:'Messages',active:true},
+    {href:'resource-centre.html',icon:'📚',label:'Resources'},{href:'notifications.html',icon:'🔔',label:'Notifications'},
+    {href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  var mentorLinks=[
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentees',icon:'👥',label:'My Mentees'},
+    {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress'},
+    {href:'messages.html',icon:'💬',label:'Messages',active:true},{href:'resource-centre.html',icon:'📚',label:'Resources'},
+    {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  $('sidebarNav').innerHTML=(role==='mentor'?mentorLinks:menteeLinks).map(function(l){
+    return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';
+  }).join('');
+
+  // Mobile sidebar
+  var menuBtn=$('menuBtn'),sidebar=$('dbSidebar'),overlay=$('sidebarOverlay');
+  if(menuBtn) menuBtn.addEventListener('click',function(){ sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+  if(overlay) overlay.addEventListener('click',function(){ sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+  (function(){
+    var lBtn = document.getElementById('logoutBtn');
+    var lModal = document.getElementById('logoutConfirmModal');
+    var lConfirm = document.getElementById('logoutConfirmBtn');
+    var lCancel = document.getElementById('logoutCancelBtn');
+    if(lBtn && lModal){
+      lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+      if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+      if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+      lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+    }
+  })();
+
+  // Back button (mobile)
+  if($('chatBackBtn')) $('chatBackBtn').addEventListener('click',function(){
+    $('convListPanel').classList.remove('hidden-mobile');
+    activeConvId=null;
+    $('chatPlaceholder').style.display='flex';
+    $('activeConv').style.display='none';
+  });
+
+  // Load conversations from Firebase or fallback
+  loadConversations();
+
+  // Search
+  var searchEl=$('convSearch'), deb;
+  if(searchEl) searchEl.addEventListener('input',function(){
+    clearTimeout(deb); searchQuery=searchEl.value.trim();
+    deb=setTimeout(renderConvList,200);
+  });
+
+  // Composer
+  var msgInput=$('msgInput'), sendBtn=$('sendBtn');
+  if(msgInput){
+    msgInput.addEventListener('input',function(){
+      sendBtn.disabled = !msgInput.value.trim();
+      // Auto-resize
+      msgInput.style.height='42px';
+      msgInput.style.height=Math.min(msgInput.scrollHeight,120)+'px';
+      $('composerError').classList.add('hidden');
+    });
+    msgInput.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); if(!sendBtn.disabled) sendMessage(); }
+    });
+  }
+  if(sendBtn) sendBtn.addEventListener('click', sendMessage);
+
+  // Open specific conversation from URL param ?conv=c1
+  var urlParams=new URLSearchParams(window.location.search);
+  var convParam=urlParams.get('conv');
+  if(convParam) setTimeout(function(){ openConv(convParam); },100);
+  // Auto-open first conversation on desktop
+  else if(window.innerWidth>700){
+    setTimeout(function(){
+      var convs=getConvs();
+      if(convs.length) openConv(convs[0].id);
+    }, 500);
+  }
+});
+</script>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

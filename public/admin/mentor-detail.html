@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentor Detail | MentorBridge Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
+  <!-- <script src="/js/admin-auth.js"></script> -->
+  <script>(function(){AdminAuth.guardAdminPage();})();</script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/firebase-service.js"></script>
+  <script src="/js/firebase-auth.js"></script>
+</head>
+<body class="adm-body">
+  <div id="adm-app"></div>
+  <script src="/js/admin-data.js"></script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/admin-page.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    var params = new URLSearchParams(window.location.search);
+    var uid = params.get('id');
+    AdminPage.mountListPage({
+      activeNav: 'applications',
+      title: 'Mentor Review',
+      subtitle: 'Review mentor application details',
+      contentHtml: '<div class="adm-card"><div class="adm-card-body" id="admPageBody"><p class="adm-kpi-loading">Loading…</p></div></div>',
+      load: async function (el) {
+        if (!uid) {
+          el.innerHTML = '<div class="adm-empty">No mentor selected. <a class="adm-link" href="/admin/applications">Back to applications</a></div>';
+          return;
+        }
+        await AdminData.init();
+        var user = null;
+        try {
+          var doc = await firebase.firestore().collection('users').doc(uid).get();
+          if (doc.exists) user = { uid: uid, ...doc.data() };
+        } catch (e) { /* ignore */ }
+        if (!user) {
+          var all = await AdminData.fetchAllUsers();
+          user = all.users.find(function (u) { return u.uid === uid || u.id === uid; });
+        }
+        if (!user) {
+          el.innerHTML = '<div class="adm-empty">Mentor not found.</div>';
+          return;
+        }
+        el.innerHTML =
+          '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">' +
+          '<div class="adm-avatar" style="width:56px;height:56px;font-size:1rem">' + AdminAuth.getInitials(user.name) + '</div>' +
+          '<div><h2 style="margin:0;font-family:Poppins,sans-serif;color:#0B1F3A">' + AdminPage.esc(user.name || 'Mentor') + '</h2>' +
+          '<p style="margin:0.25rem 0 0;color:#6B7280;font-size:0.85rem">' + AdminPage.esc(user.email) + '</p></div></div>' +
+          '<p><strong>Role:</strong> ' + AdminPage.esc(user.title || user.industry || 'Mentor') + '</p>' +
+          '<p><strong>Experience:</strong> ' + AdminPage.esc(user.experience || user.yearsExperience || '—') + '</p>' +
+          '<p><strong>Skills:</strong> ' + AdminPage.esc((user.skills || []).join(', ') || '—') + '</p>' +
+          '<p><strong>Bio:</strong> ' + AdminPage.esc(user.bio || '—') + '</p>' +
+          '<p><strong>Status:</strong> ' + AdminPage.esc(user.accountStatus || user.mentorApprovalStatus || '—') + '</p>' +
+          '<p><strong>Applied:</strong> ' + AdminData.formatDate(user.createdAt) + '</p>' +
+          '<div style="margin-top:1.5rem;display:flex;gap:0.5rem">' +
+          '<button type="button" class="adm-btn adm-btn-primary" id="admApproveDetail">Approve Mentor</button>' +
+          '<a class="adm-btn adm-btn-outline" href="/admin/applications">Back to Applications</a>' +
+          '</div>';
+        document.getElementById('admApproveDetail').addEventListener('click', async function () {
+          try {
+            await AdminData.approveMentor(uid);
+            alert('Mentor approved successfully.');
+            window.location.href = '/admin/mentors';
+          } catch (e) { alert(e.message); }
+        });
+      }
+    });
+  });
+  </script>
+</body>
+</html>

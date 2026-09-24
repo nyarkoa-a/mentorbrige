@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help & Support | MentorBridge Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
+  <!-- <script src="/js/admin-auth.js"></script> -->
+  <script>(function(){AdminAuth.guardAdminPage();})();</script>
+</head>
+<body class="adm-body">
+  <div id="adm-app"></div>
+  <script src="/js/admin-data.js"></script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/admin-page.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    AdminPage.mountListPage({
+      activeNav: 'help',
+      title: 'Help & Support',
+      subtitle: 'Documentation and support resources',
+      contentHtml: '<div class="adm-card"><div class="adm-card-body">' +
+        '<p>Need help managing MentorBridge?</p>' +
+        '<ul style="line-height:1.8;color:#6B7280;font-size:0.85rem">' +
+        '<li><a class="adm-link" href="/pages/resource-centre.html">Resource Centre</a></li>' +
+        '<li><a class="adm-link" href="/pages/terms.html">Terms of Service</a></li>' +
+        '<li><a class="adm-link" href="/pages/privacy.html">Privacy Policy</a></li>' +
+        '<li>Contact: <a class="adm-link" href="mailto:support@mentorbridge.com">support@mentorbridge.com</a></li>' +
+        '</ul></div></div>'
+    });
+  });
+  </script>
+</body>
+</html>

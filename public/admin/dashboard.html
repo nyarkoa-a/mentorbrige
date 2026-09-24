@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentorBridge — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/css/admin-new.css?v=1" />
+<link rel="stylesheet" href="/css/unified-design.css" />
+<script src="/js/admin-auth.js"></script>
+<script>
+  (function(){ if (!AdminAuth.guardAdminPage()) return; })();
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/firebase-service.js"></script>
+<script src="/js/firebase-auth.js"></script>
+<script src="/js/admin-data.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 13L8 6L12 15L16 9L21 13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      MentorBridge
+    </div>
+
+    <div class="section-label">Admin</div>
+    <nav class="nav">
+      <a class="nav-item active" href="/admin/dashboard"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>Dashboard</a>
+      <a class="nav-item" href="/admin/mentees"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="9" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg>Mentees</a>
+      <a class="nav-item" href="/admin/mentors"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.8"/></svg>Mentors</a>
+      <a class="nav-item" href="/admin/applications"><svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.8"/></svg>Mentor Applications<span class="badge" id="navBadge">0</span></a>
+      <a class="nav-item" href="/admin/sessions"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>Sessions</a>
+      <a class="nav-item" href="/admin/payments"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/></svg>Payments</a>
+      <a class="nav-item" href="/admin/reports"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Reports</a>
+      <a class="nav-item" href="/admin/settings"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5"/></svg>Settings</a>
+    </nav>
+
+    <div class="nav-divider"></div>
+    <a class="nav-item" href="/admin/help"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Help &amp; Support</a>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar-sm" id="sidebarAvatar">AA</div>
+        <div>
+          <div class="name" id="sidebarName">Admin</div>
+          <div class="email">admin@mentorbridge.com</div>
+        </div>
+      </div>
+      <div class="logout" id="logoutBtn" onclick="window.location.href='/admin/login'">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sign Out
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <div class="page-sub" id="lastUpdated">Overview of MentorBridge platform — Last updated: Loading...</div>
+      </div>
+      <div class="top-actions">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" placeholder="Search mentees, mentors, sessions..." id="searchInput">
+        </div>
+        <div class="icon-btn" id="notifBtn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span class="dot" id="notifDot" style="display:none">0</span>
+        </div>
+        <div class="profile-chip" id="profileChip">
+          <div class="avatar" id="headerAvatar">AA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Total Mentees</div>
+        </div>
+        <div class="kpi-value" id="kpiMentees">Loading...</div>
+        <div class="kpi-trend" id="trendMentees"><span class="sub">Loading...</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Total Mentors</div>
+        </div>
+        <div class="kpi-value" id="kpiMentors">Loading...</div>
+        <div class="kpi-trend" id="trendMentors"><span class="sub">Loading...</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Active Mentorships</div>
+        </div>
+        <div class="kpi-value" id="kpiActive">Loading...</div>
+        <div class="kpi-trend"><span class="sub">No trend data</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="kpi-title">Completed Programs</div>
+        </div>
+        <div class="kpi-value" id="kpiCompleted">Loading...</div>
+        <div class="kpi-trend"><span class="sub">No trend data</span></div>
+      </div>
+
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Pending Applications</div>
+        </div>
+        <div class="kpi-value" id="kpiPending">Loading...</div>
+        <div class="kpi-trend" id="trendPending"><span class="sub">No trend data</span></div>
+      </div>
+    </div>
+
+    <!-- GROWTH / VERIFICATION / SESSIONS -->
+    <div class="grid-3">
+      <div class="card panel">
+        <div class="panel-head">
+          <h3>Platform Growth</h3>
+          <select class="select-chip" id="chartRange">
+            <option value="6">Last 6 Months</option>
+            <option value="12">Last 12 Months</option>
+          </select>
+        </div>
+        <div class="chart-legend" style="margin-bottom:10px;">
+          <span><span class="legend-dot" style="background:#1B62DE;"></span>Mentees</span>
+          <span><span class="legend-dot" style="background:#4C7BE8;opacity:0.55;"></span>Mentors</span>
+        </div>
+        <canvas id="growthChart" height="180"></canvas>
+        <div id="chartSource" style="font-size:11px;color:#6B7280;margin-top:8px;"></div>
+      </div>
+
+      <div class="card panel">
+        <div class="panel-head">
+          <h3>Pending Mentor Verification</h3>
+          <a class="view-all" href="/admin/applications">View all</a>
+        </div>
+        <div id="pendingList">
+          <div class="verify-row-loading">Loading...</div>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <div class="panel-head">
+          <h3>Upcoming Sessions</h3>
+          <a class="view-all" href="/admin/sessions">View all</a>
+        </div>
+        <div id="sessionsList">
+          <div class="session-loading">Loading...</div>
+        </div>
+
+        <div class="panel-head" style="margin-top:18px;">
+          <h3>Quick Actions</h3>
+        </div>
+        <div class="qa-grid">
+          <a class="qa-btn" href="/admin/applications">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.8"/></svg>
+            Verify Mentors
+          </a>
+          <a class="qa-btn" href="/admin/applications">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="1.8"/></svg>
+            Review Applications
+          </a>
+          <a class="qa-btn" href="/admin/reports">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            View Reports
+          </a>
+          <a class="qa-btn" href="/admin/sessions">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>
+            Manage Sessions
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENTEES / ACTIVITY -->
+    <div class="grid-2">
+      <div class="card panel">
+        <div class="panel-head">
+          <h3>Recent Mentees</h3>
+          <a class="view-all" href="/admin/mentees">View all</a>
+        </div>
+        <div id="menteesTable">
+          <div class="table-loading">Loading...</div>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <div class="panel-head">
+          <h3>Recent Activity</h3>
+          <a class="view-all" href="#">View all</a>
+        </div>
+        <div id="activityFeed">
+          <div class="activity-loading">Loading...</div>
+        </div>
+
+        <div class="panel-head" style="margin-top:16px;">
+          <h3>System Overview</h3>
+          <div class="live-dot"><span class="dot"></span>Live</div>
+        </div>
+        <div id="systemOverview">
+          <div class="sys-loading">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Initialize Firebase and load data
+document.addEventListener('DOMContentLoaded', async function () {
+  // Initialize Firebase if needed
+  if (!window.mentorBridgeAuth || !window.mentorBridgeAuth.initialized) {
+    if (window.mentorBridgeAuth) {
+      await window.mentorBridgeAuth.initialize();
+    } else if (typeof initializeFirebaseConfig === 'function') {
+      await initializeFirebaseConfig();
+    }
+  }
+
+  // Update user info
+  const session = AdminAuth.getSession();
+  if (session) {
+    const initials = AdminAuth.getInitials(session.name);
+    document.getElementById('sidebarAvatar').textContent = initials;
+    document.getElementById('sidebarName').textContent = session.name || 'Admin';
+    document.getElementById('headerAvatar').textContent = initials;
+  }
+
+  // Update timestamp
+  const now = new Date();
+  document.getElementById('lastUpdated').textContent = 
+    'Overview of MentorBridge platform — Last updated: ' + 
+    now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) + 
+    ' • ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  // Load KPI data
+  try {
+    const kpis = await AdminData.fetchKPIs();
+    
+    // Update KPI cards
+    document.getElementById('kpiMentees').textContent = kpis.mentees.total.toLocaleString();
+    document.getElementById('kpiMentors').textContent = kpis.mentors.total.toLocaleString();
+    document.getElementById('kpiActive').textContent = kpis.activeMentorships.total.toLocaleString();
+    document.getElementById('kpiCompleted').textContent = kpis.completedPrograms.total.toLocaleString();
+    document.getElementById('kpiPending').textContent = kpis.pendingApplications.total.toLocaleString();
+
+    // Update trends
+    if (kpis.mentees.trend) {
+      const trendMentees = document.getElementById('trendMentees');
+      const arrow = kpis.mentees.trend.direction === 'up' ? '↑' : kpis.mentees.trend.direction === 'down' ? '↓' : '→';
+      const colorClass = kpis.mentees.trend.direction === 'up' ? 'up' : kpis.mentees.trend.direction === 'down' ? 'down' : '';
+      trendMentees.className = 'kpi-trend ' + colorClass;
+      trendMentees.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> ${arrow} ${kpis.mentees.trend.value}% <span class="sub">vs last month</span>`;
+    }
+
+    if (kpis.mentors.trend) {
+      const trendMentors = document.getElementById('trendMentors');
+      const arrow = kpis.mentors.trend.direction === 'up' ? '↑' : kpis.mentors.trend.direction === 'down' ? '↓' : '→';
+      const colorClass = kpis.mentors.trend.direction === 'up' ? 'up' : kpis.mentors.trend.direction === 'down' ? 'down' : '';
+      trendMentors.className = 'kpi-trend ' + colorClass;
+      trendMentors.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> ${arrow} ${kpis.mentors.trend.value}% <span class="sub">vs last month</span>`;
+    }
+
+    // Update badge
+    const badge = document.getElementById('navBadge');
+    const notifDot = document.getElementById('notifDot');
+    if (kpis.pendingApplications.total > 0) {
+      badge.textContent = kpis.pendingApplications.total;
+      notifDot.textContent = kpis.pendingApplications.total;
+      notifDot.style.display = 'flex';
+    }
+
+    // Load pending mentors
+    const pendingList = document.getElementById('pendingList');
+    if (kpis.pendingMentors.length > 0) {
+      pendingList.innerHTML = kpis.pendingMentors.slice(0, 4).map(m => {
+        const initials = (m.name || m.email || 'NA').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        const colors = ['#1B62DE', '#4C7BE8', '#0D4BC2', '#1B62DE'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        return `
+          <div class="verify-row">
+            <div class="init-avatar" style="background:${color};">${initials}</div>
+            <div class="verify-info">
+              <div class="verify-name">${escapeHtml(m.name || m.email)}</div>
+              <div class="verify-meta">${escapeHtml(m.title || 'Mentor')} • ${escapeHtml(m.experience || m.yearsExperience || 'N/A')} years experience · Applied ${AdminData.formatDate(m.createdAt)}</div>
+            </div>
+            <div class="verify-actions">
+              <button class="btn-approve" onclick="approveMentor('${m.uid}')">Approve</button>
+              <a class="btn-review" href="/admin/mentor-detail?id=${encodeURIComponent(m.uid)}">Review</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      pendingList.innerHTML = '<div class="empty-state">No pending applications</div>';
+    }
+
+    // Load upcoming sessions
+    const sessionsList = document.getElementById('sessionsList');
+    const sessions = await AdminData.fetchUpcomingSessions();
+    if (sessions.length > 0) {
+      sessionsList.innerHTML = sessions.slice(0, 3).map(s => {
+        const date = s.date || s.scheduledDate;
+        const dateObj = date ? new Date(date) : new Date();
+        const month = dateObj.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
+        const day = dateObj.getDate();
+        return `
+          <div class="session-item">
+            <div class="date-chip"><div class="mon">${month}</div><div class="day">${day}</div></div>
+            <div>
+              <div class="session-title">${escapeHtml(s.title || s.topic || 'Session')}</div>
+              <div class="session-meta">${escapeHtml(s.time || 'TBD')}<br>With ${escapeHtml(s.mentorName || s.mentorId || 'Mentor')}</div>
+            </div>
+            <a class="btn-join" href="/admin/sessions">View</a>
+          </div>
+        `;
+      }).join('');
+    } else {
+      sessionsList.innerHTML = '<div class="empty-state">No upcoming sessions</div>';
+    }
+
+    // Load recent mentees
+    const menteesTable = document.getElementById('menteesTable');
+    const mentees = await AdminData.fetchRecentMentees(5);
+    if (mentees.length > 0) {
+      menteesTable.innerHTML = `
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Status</th></tr></thead>
+          <tbody>
+            ${mentees.map(m => {
+              const initials = (m.name || m.email || 'NA').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+              const colors = ['#1B62DE', '#4C7BE8', '#0D4BC2', '#1B62DE', '#4C7BE8'];
+              const color = colors[Math.floor(Math.random() * colors.length)];
+              const status = m.accountStatus === 'pending' ? 'Pending' : 'Active';
+              const statusClass = status === 'Active' ? 'status-active' : 'status-pending';
+              return `
+                <tr>
+                  <td><div class="name-cell"><div class="init-avatar" style="width:30px;height:30px;font-size:11px;background:${color};">${initials}</div>${escapeHtml(m.name || '—')}</div></td>
+                  <td>${escapeHtml(m.email || '—')}</td>
+                  <td>${AdminData.formatDate(m.createdAt)}</td>
+                  <td><span class="status-pill ${statusClass}">${status}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    } else {
+      menteesTable.innerHTML = '<div class="empty-state">No mentees registered yet</div>';
+    }
+
+    // Load activity feed
+    const activityFeed = document.getElementById('activityFeed');
+    const activities = await AdminData.fetchActivityFeed(5);
+    if (activities.length > 0) {
+      activityFeed.innerHTML = activities.map(a => `
+        <div class="activity-item">
+          <div class="act-icon">${a.icon}</div>
+          <div>
+            <div class="act-title">${escapeHtml(a.text)}</div>
+            <div class="act-time">${AdminData.formatRelative(a.time)}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      activityFeed.innerHTML = '<div class="empty-state">No recent activity</div>';
+    }
+
+    // Load system overview
+    const systemOverview = document.getElementById('systemOverview');
+    const sys = await AdminData.fetchSystemOverview();
+    systemOverview.innerHTML = `
+      <div class="sys-row"><span class="sys-stat">Server Uptime</span><span class="sys-value">${escapeHtml(String(sys.uptime))}</span></div>
+      <div class="sys-row"><span class="sys-stat">Total Sessions</span><span class="sys-value">${sys.totalSessions.toLocaleString()}</span></div>
+      <div class="sys-row"><span class="sys-stat">Active Users</span><span class="sys-value">${sys.activeUsers.toLocaleString()}</span></div>
+      <div class="sys-row"><span class="sys-stat">Storage Used</span><span class="sys-value">${escapeHtml(String(sys.storageUsed))}</span></div>
+    `;
+
+    // Load chart
+    await loadGrowthChart(6);
+
+  } catch (error) {
+    console.error('Error loading dashboard data:', error);
+  }
+});
+
+// Load growth chart
+async function loadGrowthChart(months) {
+  try {
+    const data = await AdminData.fetchGrowthData(months);
+    const ctx = document.getElementById('growthChart');
+    
+    if (ctx && window.Chart) {
+      if (window.growthChartInstance) {
+        window.growthChartInstance.destroy();
+      }
+      
+      document.getElementById('chartSource').textContent = 
+        data.source === 'firestore' ? 'Source: Firestore users collection' :
+        data.source === 'api-fallback' ? 'Source: API fallback (limited data)' : 'Source: no user records found';
+
+      window.growthChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              label: 'Mentees',
+              data: data.mentees,
+              borderColor: '#1B62DE',
+              backgroundColor: 'rgba(27,98,222,0.10)',
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointBackgroundColor: '#1B62DE'
+            },
+            {
+              label: 'Mentors',
+              data: data.mentors,
+              borderColor: '#4C7BE8',
+              backgroundColor: 'rgba(76,123,232,0.08)',
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointBackgroundColor: '#4C7BE8'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#EEF0F5' }, ticks: { color: '#6B7280', font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { color: '#6B7280', font: { size: 11 } } }
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading chart:', error);
+  }
+}
+
+// Approve mentor function
+async function approveMentor(uid) {
+  try {
+    await AdminData.approveMentor(uid);
+    // Reload the dashboard
+    location.reload();
+  } catch (error) {
+    alert('Failed to approve mentor: ' + error.message);
+  }
+}
+
+// Chart range change handler
+document.getElementById('chartRange').addEventListener('change', function() {
+  loadGrowthChart(parseInt(this.value, 10));
+});
+
+// Logout handler
+document.getElementById('logoutBtn').addEventListener('click', function() {
+  showLogoutModal();
+});
+
+function showLogoutModal() {
+  document.getElementById('logoutModal').style.display = 'flex';
+}
+
+function closeLogoutModal() {
+  document.getElementById('logoutModal').style.display = 'none';
+}
+
+function confirmLogout() {
+  // Clear session storage
+  sessionStorage.removeItem('mb_session');
+  // Logout admin
+  AdminAuth.logout();
+}
+
+// Profile chip click
+document.getElementById('profileChip').addEventListener('click', function() {
+  window.location.href = '/admin/settings';
+});
+
+// Notification bell click
+document.getElementById('notifBtn').addEventListener('click', function() {
+  window.location.href = '/admin/sessions';
+});
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('keydown', async function(e) {
+  if (e.key === 'Enter' && this.value.trim().length >= 2) {
+    const results = await AdminData.searchPlatform(this.value.trim());
+    if (results.length > 0 && results[0].href) {
+      window.location.href = results[0].href;
+    }
+  }
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,0.2);">
+    <h3 style="font-family:'Poppins',sans-serif;font-size:18px;font-weight:700;color:#2B2D42;margin:0 0 12px;">Sign Out</h3>
+    <p style="font-size:14px;color:#6B7280;margin:0 0 24px;line-height:1.5;">Are you sure you want to sign out?</p>
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <button onclick="closeLogoutModal()" style="padding:10px 24px;border:1px solid #D8DCE2;border-radius:8px;background:#fff;color:#2B2D42;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#F9FAFB';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#fff';this.style.borderColor='#D8DCE2'">No</button>
+      <button onclick="confirmLogout()" style="padding:10px 24px;border:none;border-radius:8px;background:#3A86FF;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#2563EB'" onmouseout="this.style.background='#3A86FF'">Yes</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

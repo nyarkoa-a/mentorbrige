@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Test - Simple Fix</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    input.error {
+      border-color: #c0392b !important;
+      box-shadow: 0 0 5px rgba(192, 57, 43, 0.3);
+    }
+    button {
+      background: #4A1547;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background: #5a1857;
+    }
+    .message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      display: none;
+    }
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      background: #f8f9fa;
+      cursor: pointer;
+      text-align: center;
+    }
+    .tab.active {
+      background: #4A1547;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .role-tabs {
+      display: flex;
+      margin-bottom: 15px;
+    }
+    .role-tab {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      background: #f8f9fa;
+      cursor: pointer;
+      text-align: center;
+      font-size: 14px;
+    }
+    .role-tab.active {
+      background: #7A286F;
+      color: white;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>MentorBridge Authentication Test</h1>
+  <p>This is a simplified test page to verify authentication functionality.</p>
+  
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Sign In</div>
+    <div class="tab" onclick="switchTab('register')">Create Account</div>
+  </div>
+
+  <div id="message" class="message"></div>
+
+  <!-- LOGIN TAB -->
+  <div id="login-content" class="tab-content active">
+    <h2>Sign In</h2>
+    
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="switchRole('login', 'student')">Mentee</div>
+      <div class="role-tab" onclick="switchRole('login', 'mentor')">Mentor</div>
+    </div>
+
+    <form id="loginForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </div>
+      <button type="button" id="loginButton" onclick="handleLogin()">Sign In</button>
+    </form>
+  </div>
+
+  <!-- REGISTER TAB -->
+  <div id="register-content" class="tab-content">
+    <h2>Create Account</h2>
+    
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="switchRole('register', 'student')">Mentee</div>
+      <div class="role-tab" onclick="switchRole('register', 'mentor')">Mentor</div>
+    </div>
+
+    <form id="registerForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="registerName">Full Name</label>
+        <input type="text" id="registerName" placeholder="Your full name" required>
+      </div>
+      <div class="form-group">
+        <label for="registerEmail">Email</label>
+        <input type="email" id="registerEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label for="registerPassword">Password</label>
+        <input type="password" id="registerPassword" placeholder="Min. 6 characters" required>
+      </div>
+      <div class="form-group">
+        <label for="registerConfirmPassword">Confirm Password</label>
+        <input type="password" id="registerConfirmPassword" placeholder="Repeat your password" required>
+      </div>
+      
+      <!-- Additional fields for mentors -->
+      <div id="mentorFields" style="display: none;">
+        <div class="form-group">
+          <label for="registerTitle">Professional Title</label>
+          <input type="text" id="registerTitle" placeholder="e.g., Senior Software Engineer">
+        </div>
+        <div class="form-group">
+          <label for="registerIndustry">Industry</label>
+          <input type="text" id="registerIndustry" placeholder="e.g., Technology, Finance">
+        </div>
+        <div class="form-group">
+          <label for="registerExpertise">Areas of Expertise</label>
+          <input type="text" id="registerExpertise" placeholder="e.g., Product Management, Data Science">
+        </div>
+        <div class="form-group">
+          <label for="registerExperience">Years of Experience</label>
+          <select id="registerExperience">
+            <option value="">Select range</option>
+            <option value="1-3">1-3 years</option>
+            <option value="4-7">4-7 years</option>
+            <option value="8-12">8-12 years</option>
+            <option value="13+">13+ years</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="registerBio">Bio</label>
+          <textarea id="registerBio" rows="3" placeholder="Tell mentees about your background"></textarea>
+        </div>
+      </div>
+      
+      <button type="button" id="registerButton" onclick="handleRegister()">Create Account</button>
+    </form>
+  </div>
+
+  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <h3>Firebase Status</h3>
+    <div id="firebaseStatus">Checking Firebase connection...</div>
+    <button onclick="checkFirebaseStatus()" style="width: auto; padding: 8px 16px; margin-top: 10px;">Refresh Status</button>
+  </div>
+
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-service.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+
+  <script>
+    // Global variables
+    let currentLoginRole = 'student';
+    let currentRegisterRole = 'student';
+    let firebaseReady = false;
+
+    // Initialize Firebase on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🔥 Starting Firebase initialization...');
+      
+      try {
+        // Initialize Firebase services in order
+        if (typeof initializeFirebaseConfig !== 'undefined') {
+          await initializeFirebaseConfig();
+          console.log('✅ Firebase config loaded');
+        }
+
+        if (window.firebaseService) {
+          await window.firebaseService.initialize();
+          console.log('✅ Firebase services initialized');
+        }
+
+        if (window.mentorBridgeAuth) {
+          await window.mentorBridgeAuth.initialize();
+          console.log('✅ MentorBridge Auth initialized');
+        }
+
+        firebaseReady = true;
+        updateFirebaseStatus('✅ Firebase is ready and connected');
+        console.log('🎉 All Firebase services initialized successfully');
+
+      } catch (error) {
+        console.error('❌ Firebase initialization failed:', error);
+        updateFirebaseStatus('❌ Firebase initialization failed: ' + error.message);
+        // Continue with validation-only mode
+      }
+    });
+
+    // UI Functions
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName + '-content').classList.add('active');
+      
+      clearMessage();
+    }
+
+    function switchRole(mode, role) {
+      if (mode === 'login') {
+        currentLoginRole = role;
+      } else {
+        currentRegisterRole = role;
+        // Show/hide mentor fields
+        const mentorFields = document.getElementById('mentorFields');
+        mentorFields.style.display = role === 'mentor' ? 'block' : 'none';
+      }
+      
+      // Update role tab buttons
+      const container = event.target.closest('.role-tabs');
+      container.querySelectorAll('.role-tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // Validation Functions
+    function validateEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    function validateForm(formId) {
+      const form = document.getElementById(formId);
+      const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+      let isValid = true;
+      
+      // Clear previous error styles
+      inputs.forEach(input => input.classList.remove('error'));
+      
+      inputs.forEach(input => {
+        if (!input.value.trim()) {
+          input.classList.add('error');
+          isValid = false;
+        }
+      });
+      
+      return isValid;
+    }
+
+    function showMessage(text, type = 'error') {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = `message ${type}`;
+      messageEl.style.display = 'block';
+    }
+
+    function clearMessage() {
+      const messageEl = document.getElementById('message');
+      messageEl.style.display = 'none';
+    }
+
+    function setButtonLoading(buttonId, isLoading, loadingText = 'Loading...') {
+      const button = document.getElementById(buttonId);
+      if (isLoading) {
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner"></span>${loadingText}`;
+      } else {
+        button.disabled = false;
+        // Reset to original text
+        if (buttonId === 'loginButton') {
+          button.innerHTML = 'Sign In';
+        } else if (buttonId === 'registerButton') {
+          button.innerHTML = 'Create Account';
+        }
+      }
+    }
+
+    // Authentication Functions
+    async function handleLogin() {
+      console.log('🔑 Login button clicked');
+      
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      // Clear previous errors
+      document.getElementById('loginEmail').classList.remove('error');
+      document.getElementById('loginPassword').classList.remove('error');
+      
+      // Basic validation
+      let hasError = false;
+      if (!email) {
+        document.getElementById('loginEmail').classList.add('error');
+        showMessage('Email is required');
+        hasError = true;
+      } else if (!validateEmail(email)) {
+        document.getElementById('loginEmail').classList.add('error');
+        showMessage('Please enter a valid email address');
+        hasError = true;
+      }
+      
+      if (!password) {
+        document.getElementById('loginPassword').classList.add('error');
+        showMessage('Password is required');
+        hasError = true;
+      }
+      
+      if (hasError) return;
+
+      // Show loading state
+      setButtonLoading('loginButton', true, 'Signing in...');
+      showMessage('Signing you in...', 'success');
+
+      try {
+        if (firebaseReady && window.mentorBridgeAuth) {
+          console.log('🔥 Using Firebase authentication');
+          const result = await window.mentorBridgeAuth.signInUser(email, password);
+          
+          if (result.success) {
+            showMessage('Login successful! Welcome back.', 'success');
+            console.log('✅ Login successful:', result);
+            
+            // Redirect after success
+            setTimeout(() => {
+              const dashboards = {
+                student: '/pages/student-dashboard.html',
+                mentor: '/pages/mentor-dashboard.html',
+                admin: '/pages/admin-dashboard.html'
+              };
+              window.location.href = dashboards[currentLoginRole] || dashboards.student;
+            }, 1500);
+            
+          } else {
+            showMessage(result.message || 'Login failed. Please check your credentials.');
+          }
+        } else {
+          // Demo mode - just validate inputs
+          console.log('🧪 Demo mode - Firebase not available');
+          showMessage('✅ Demo mode: Validation passed! (Firebase not connected)', 'success');
+          console.log('Demo login data:', { email, role: currentLoginRole });
+        }
+        
+      } catch (error) {
+        console.error('❌ Login error:', error);
+        showMessage('Login failed: ' + (error.message || 'Unknown error'));
+      } finally {
+        setButtonLoading('loginButton', false);
+      }
+    }
+
+    async function handleRegister() {
+      console.log('📝 Register button clicked');
+      
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+      
+      // Clear previous errors
+      document.querySelectorAll('#registerForm input').forEach(input => input.classList.remove('error'));
+      
+      // Basic validation
+      let hasError = false;
+      if (!name) {
+        document.getElementById('registerName').classList.add('error');
+        showMessage('Full name is required');
+        hasError = true;
+      }
+      
+      if (!email) {
+        document.getElementById('registerEmail').classList.add('error');
+        showMessage('Email is required');
+        hasError = true;
+      } else if (!validateEmail(email)) {
+        document.getElementById('registerEmail').classList.add('error');
+        showMessage('Please enter a valid email address');
+        hasError = true;
+      }
+      
+      if (!password) {
+        document.getElementById('registerPassword').classList.add('error');
+        showMessage('Password is required');
+        hasError = true;
+      } else if (password.length < 6) {
+        document.getElementById('registerPassword').classList.add('error');
+        showMessage('Password must be at least 6 characters');
+        hasError = true;
+      }
+      
+      if (!confirmPassword) {
+        document.getElementById('registerConfirmPassword').classList.add('error');
+        showMessage('Please confirm your password');
+        hasError = true;
+      } else if (password !== confirmPassword) {
+        document.getElementById('registerConfirmPassword').classList.add('error');
+        showMessage('Passwords do not match');
+        hasError = true;
+      }
+      
+      // Validate mentor-specific fields
+      if (currentRegisterRole === 'mentor') {
+        const requiredFields = ['registerTitle', 'registerIndustry', 'registerExpertise', 'registerExperience', 'registerBio'];
+        for (const fieldId of requiredFields) {
+          const field = document.getElementById(fieldId);
+          if (!field.value.trim()) {
+            field.classList.add('error');
+            showMessage(`${field.previousElementSibling.textContent} is required for mentors`);
+            hasError = true;
+            break;
+          }
+        }
+      }
+      
+      if (hasError) return;
+
+      // Show loading state
+      setButtonLoading('registerButton', true, 'Creating account...');
+      showMessage('Creating your account...', 'success');
+
+      try {
+        // Build profile data
+        const profileData = {
+          name: name,
+          role: currentRegisterRole
+        };
+
+        if (currentRegisterRole === 'mentor') {
+          profileData.title = document.getElementById('registerTitle').value.trim();
+          profileData.industry = document.getElementById('registerIndustry').value.trim();
+          profileData.expertise = document.getElementById('registerExpertise').value.trim().split(',').map(s => s.trim());
+          profileData.experience = document.getElementById('registerExperience').value;
+          profileData.bio = document.getElementById('registerBio').value.trim();
+        }
+
+        if (firebaseReady && window.mentorBridgeAuth) {
+          console.log('🔥 Using Firebase registration');
+          const result = await window.mentorBridgeAuth.registerUser({
+            email: email,
+            password: password,
+            profile: profileData
+          });
+          
+          if (result.success) {
+            showMessage('Account created successfully! Please check your email for verification.', 'success');
+            console.log('✅ Registration successful:', result);
+            
+            // Clear form
+            document.getElementById('registerForm').reset();
+            
+          } else {
+            showMessage(result.message || 'Registration failed. Please try again.');
+          }
+        } else {
+          // Demo mode - just validate inputs
+          console.log('🧪 Demo mode - Firebase not available');
+          showMessage('✅ Demo mode: Registration validation passed! (Firebase not connected)', 'success');
+          console.log('Demo registration data:', { email, profileData });
+        }
+        
+      } catch (error) {
+        console.error('❌ Registration error:', error);
+        showMessage('Registration failed: ' + (error.message || 'Unknown error'));
+      } finally {
+        setButtonLoading('registerButton', false);
+      }
+    }
+
+    // Firebase status functions
+    function updateFirebaseStatus(message) {
+      document.getElementById('firebaseStatus').textContent = message;
+    }
+
+    async function checkFirebaseStatus() {
+      updateFirebaseStatus('Checking Firebase status...');
+      
+      try {
+        if (window.mentorBridgeAuth && window.mentorBridgeAuth.initialized) {
+          const auth = window.mentorBridgeAuth.getCurrentUser();
+          const authStatus = auth ? `Signed in as: ${auth.email}` : 'Ready (not signed in)';
+          updateFirebaseStatus('✅ Firebase Auth: ' + authStatus);
+        } else if (window.firebaseService) {
+          const services = window.firebaseService.getServiceStates();
+          updateFirebaseStatus('🔧 Firebase Services: ' + JSON.stringify(services));
+        } else {
+          updateFirebaseStatus('❌ Firebase services not available');
+        }
+      } catch (error) {
+        updateFirebaseStatus('❌ Error checking Firebase: ' + error.message);
+      }
+    }
+
+    // Add keyboard support
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab.id === 'login-content') {
+          handleLogin();
+        } else if (activeTab.id === 'register-content') {
+          handleRegister();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In | MentorBridge</title>
+  <meta name="description" content="Sign in or create your MentorBridge account to connect with expert mentors and start your learning journey." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/unified-design.css" />
+  <style>
+    :root {
+      --navy: #0B1F3A;
+      --navy-deep: #071527;
+      --blue: #1B62DE;
+      --blue-dark: #0D4BC2;
+      --blue-light: #EAF1FF;
+      --accent-border: #4C7BE8;
+      --cream: #F8F5EF;
+      --ink: #1C2430;
+      --muted: #6B7280;
+      --line: #E4E1DA;
+      --radius: 14px;
+      --green: #16A34A;
+      --red: #DC2626;
+      --amber: #B45309;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .auth-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 1000px;
+      max-width: 100%;
+      min-height: 520px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-xl);
+    }
+    .auth-left {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .auth-left-photo {
+      position: absolute;
+      inset: 0;
+      background-image: url('../assets/auth hero.png');
+      background-size: cover;
+      background-position: center center;
+      z-index: 0;
+    }
+    .auth-left-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      padding: 20px 24px;
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .auth-logo img {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .auth-logo-name {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .auth-logo-name .mentor {
+      color: var(--ink);
+    }
+    .auth-logo-name .bridge {
+      color: var(--blue);
+    }
+    .auth-headline {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      line-height: 1.22;
+      color: #fff;
+      margin-top: auto;
+      margin-bottom: 1.5rem;
+    }
+    .auth-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .auth-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.32);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 0.77rem;
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+    .auth-badge svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .auth-right {
+      padding: 32px 36px 28px;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      overflow-y: auto;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 28px;
+      border-bottom: 1.5px solid var(--line);
+      margin-bottom: 20px;
+    }
+    .auth-tab {
+      padding-bottom: 12px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .auth-tab.active { font-weight: 700; color: var(--blue); }
+    .auth-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1.5px;
+      left: 0; right: 0;
+      height: 3px;
+      background: var(--blue);
+      border-radius: 2px 2px 0 0;
+    }
+    .auth-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 1.42rem;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .auth-section-sub {
+      font-size: 0.845rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .role-label { font-size: 0.85rem; font-weight: 600; color: var(--ink); margin-bottom: 9px; }
+    .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .role-card {
+      position: relative;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .role-card:hover { border-color: var(--blue); background: var(--blue-light); }
+    .role-card.selected { border-color: var(--blue); background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%); }
+    /* Icon wrapper box */
+    .role-card-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue-light) 0%, var(--blue-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(27,98,222,0.15);
+    }
+    .role-card:hover .role-card-icon-box {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(27,98,222,0.25);
+    }
+    .role-card.selected .role-card-icon-box {
+      background: rgba(255,255,255,0.25);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .role-card-icon-box svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--blue);
+      transition: stroke 0.18s;
+      filter: drop-shadow(0 2px 4px rgba(27,98,222,0.2));
+    }
+    .role-card.selected .role-card-icon-box svg {
+      stroke: #fff;
+      filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3));
+    }
+    .role-card-content { flex: 1; }
+    .role-card-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--ink); display: block; margin-bottom: 4px; }
+    .role-card-desc { font-size: 0.78rem; color: var(--muted); display: block; line-height: 1.4; }
+    .role-card.selected .role-card-title,
+    .role-card.selected .role-card-desc { color: #fff; }
+    .role-check {
+      display: none;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+    .role-check svg { width: 14px; height: 14px; }
+    .role-card.selected .role-check { display: flex; }
+    .form-group { margin-bottom: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row .form-group { margin-bottom: 0; }
+    .form-label { display: block; font-size: 0.81rem; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+    .form-input {
+      width: 100%;
+      height: 44px;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .form-input::placeholder { color: var(--muted); }
+    .form-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(27,98,222,0.12); }
+    .input-wrap { position: relative; }
+    .input-wrap .form-input { padding-right: 42px; }
+    .eye-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      display: flex; align-items: center; padding: 2px;
+      transition: color 0.15s;
+    }
+    .eye-toggle:hover { color: var(--blue); }
+    .eye-toggle svg { width: 18px; height: 18px; }
+    .form-helper { font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+    /* Login card styling */
+    .login-card {
+      background: linear-gradient(135deg, var(--blue-light) 0%, #fff 100%);
+      border: 1.5px solid var(--accent-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .login-card .form-label {
+      color: var(--navy);
+    }
+    .login-card .form-input {
+      border-color: var(--accent-border);
+      background: #fff;
+    }
+    .login-card .form-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(27,98,222,0.12);
+    }
+    textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.5;
+    }
+    select.form-input {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+    .role-fields-transition {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .form-error {
+      display: none;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 0.81rem;
+      color: var(--red);
+      margin-bottom: 11px;
+    }
+    .form-error.visible { display: block; }
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-bottom: 14px;
+      font-size: 0.79rem;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .terms-row input[type="checkbox"] {
+      width: 15px; height: 15px;
+      margin-top: 2px;
+      accent-color: var(--blue);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .terms-row a { color: var(--blue); font-weight: 600; text-decoration: none; }
+    .terms-row a:hover { text-decoration: underline; }
+    .btn-primary {
+      width: 100%;
+      height: 44px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.1s, box-shadow 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+    .btn-primary:hover { background: var(--blue-dark); box-shadow: 0 6px 20px rgba(27,98,222,0.32); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 13px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--line);
+    }
+    .btn-google {
+      width: 100%;
+      height: 44px;
+      border: 1.5px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+      margin-bottom: 14px;
+    }
+    .btn-google:hover { background: var(--blue-light); border-color: var(--accent-border); box-shadow: 0 2px 8px rgba(27,98,222,0.07); }
+    .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .auth-switch { text-align: center; font-size: 0.81rem; color: var(--muted); margin-bottom: 13px; }
+    .auth-switch a { color: var(--blue); font-weight: 700; text-decoration: none; }
+    .auth-switch a:hover { text-decoration: underline; }
+    .security-note {
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+    .security-note svg { width: 13px; height: 13px; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .panel { display: none; flex-direction: column; flex: 1; }
+    .panel.active { display: flex; }
+    .forgot-link {
+      font-size: 0.77rem;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
+      float: right;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      .auth-card { grid-template-columns: 1fr; width: 100%; }
+      .auth-left { min-height: 200px; }
+      .auth-right { padding: 24px 20px; }
+      .role-cards { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 0; }
+      .auth-card { border-radius: 0; min-height: 100vh; box-shadow: none; border: none; }
+      .auth-left { min-height: 160px; }
+      .auth-left-content { padding: 16px 20px; }
+      .auth-logo img { height: 32px; }
+      .auth-logo-name { font-size: 1rem; }
+      .auth-right { padding: 20px 16px; }
+      .auth-tabs { gap: 20px; margin-bottom: 16px; }
+      .auth-tab { font-size: 0.9rem; }
+      .auth-section-title { font-size: 1.3rem; }
+      .form-row { grid-template-columns: 1fr; gap: 12px; }
+      .form-row .form-group { margin-bottom: 12px; }
+      .btn-primary, .btn-google { height: 48px; font-size: 1rem; }
+      .auth-badges { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-card" id="authCard">
+
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-left-photo"></div>
+    <div class="auth-left-content">
+
+      <a href="../index.html" class="auth-logo">
+        <img src="../assets/newl.png" alt="MentorBridge" style="height:40px; width:auto;" />
+        <span class="auth-logo-name"><span class="mentor">Mentor</span><span class="bridge">Bridge</span></span>
+      </a>
+
+      <div class="auth-badges">
+        <div class="auth-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Trusted &amp; Secure
+        </div>
+        <div class="auth-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+          Expert Mentors
+        </div>
+        <div class="auth-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Track Progress
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" id="tab-signup" role="tab" aria-selected="true" onclick="switchPanel('signup')">Create Account</button>
+      <button class="auth-tab" id="tab-login" role="tab" aria-selected="false" onclick="switchPanel('login')">Login</button>
+    </div>
+
+    <!-- SIGN UP PANEL -->
+    <div class="panel active" id="panel-signup">
+      <p class="auth-section-title">Create Account</p>
+      <p class="auth-section-sub">Join MentorBridge and start your learning journey today.</p>
+
+      <p class="role-label">I am a:</p>
+      <div class="role-cards">
+        <!-- Mentor card -->
+        <div class="role-card" id="role-mentor" onclick="selectRole('mentor')" tabindex="0" role="button" aria-pressed="false">
+          <div class="role-card-icon-box">
+            <!-- Professional mentor SVG - elegant -->
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5.5 21v-2a6 6 0 0 1 6-6h1a6 6 0 0 1 6 6v2"/>
+              <path d="M16 7l3-3"/>
+              <path d="M19 7l-3-3"/>
+              <circle cx="19" cy="7" r="2"/>
+            </svg>
+          </div>
+          <div class="role-card-content">
+            <span class="role-card-title">Mentor</span>
+            <span class="role-card-desc">I want to guide others</span>
+          </div>
+          <span class="role-check">
+            <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="var(--blue)"/><path d="M4 7l2.5 2.5L10 4.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+        <!-- Mentee card (selected by default) -->
+        <div class="role-card selected" id="role-mentee" onclick="selectRole('student')" tabindex="0" role="button" aria-pressed="true">
+          <div class="role-card-icon-box">
+            <!-- Learning/growth SVG - elegant -->
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3L2 7l10 4 10-4-10-4z"/>
+              <path d="M2 17l10 4 10-4"/>
+              <path d="M2 12l10 4 10-4"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <div class="role-card-content">
+            <span class="role-card-title">Mentee</span>
+            <span class="role-card-desc">I want to learn &amp; grow</span>
+          </div>
+          <span class="role-check">
+            <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="var(--blue)"/><path d="M4 7l2.5 2.5L10 4.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="form-error" id="signup-error"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Full Name</label>
+          <input id="signup-name" class="form-input" type="text" placeholder="Enter your full name" autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Email</label>
+          <input id="signup-email" class="form-input" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-password">Password</label>
+        <div class="input-wrap">
+          <input id="signup-password" class="form-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password" />
+          <button class="eye-toggle" type="button" onclick="togglePwd('signup-password',this)" aria-label="Toggle password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mentor-specific fields -->
+      <div id="mentor-fields" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="mentor-bio">Professional Bio</label>
+          <textarea id="mentor-bio" class="form-input" style="height: 80px; padding: 12px; resize: vertical;" placeholder="Tell us about yourself, your background, and what you're passionate about mentoring..."></textarea>
+          <p class="form-helper">Share your professional journey to help mentees understand your expertise</p>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="mentor-field">Field/Industry</label>
+            <select id="mentor-field" class="form-input">
+              <option value="">Select your field</option>
+              <option value="technology">Technology & Software</option>
+              <option value="business">Business & Entrepreneurship</option>
+              <option value="healthcare">Healthcare & Medicine</option>
+              <option value="education">Education & Academia</option>
+              <option value="engineering">Engineering</option>
+              <option value="finance">Finance & Economics</option>
+              <option value="arts">Arts & Design</option>
+              <option value="law">Law & Legal</option>
+              <option value="marketing">Marketing & Communications</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="mentor-experience">Experience Level</label>
+            <select id="mentor-experience" class="form-input">
+              <option value="">Select experience level</option>
+              <option value="entry">1-3 years (Early Career)</option>
+              <option value="mid">4-7 years (Mid-Level)</option>
+              <option value="senior">8-12 years (Senior)</option>
+              <option value="executive">13+ years (Executive/Expert)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mentor-expertise">Areas of Expertise</label>
+          <input id="mentor-expertise" class="form-input" type="text" placeholder="e.g. Web Development, Data Science, Product Management" />
+          <p class="form-helper">List the specific areas you can mentor in (comma-separated)</p>
+        </div>
+      </div>
+
+      <!-- Mentee-specific fields -->
+      <div id="mentee-fields">
+        <div class="form-group">
+          <label class="form-label" for="mentee-program">Academic Program</label>
+          <input id="mentee-program" class="form-input" type="text" placeholder="e.g. Computer Science, Business Administration" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mentee-level">Level of Study</label>
+          <select id="mentee-level" class="form-input">
+            <option value="">Select your level</option>
+            <option value="100">Level 100 (Freshman)</option>
+            <option value="200">Level 200 (Sophomore)</option>
+            <option value="300">Level 300 (Junior)</option>
+            <option value="400">Level 400 (Senior)</option>
+            <option value="graduate">Graduate Studies</option>
+            <option value="alumni">Alumni</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mentee-interests">Learning Interests</label>
+          <input id="mentee-interests" class="form-input" type="text" placeholder="e.g. Career guidance, Technical skills, Industry insights" />
+          <p class="form-helper">What do you hope to learn from a mentor?</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mentee-skills">Skills to Develop</label>
+          <input id="mentee-skills" class="form-input" type="text" placeholder="e.g. Python, Public Speaking, Project Management" />
+          <p class="form-helper">Specific skills you want to improve (comma-separated)</p>
+        </div>
+      </div>
+
+      <div class="terms-row">
+        <input type="checkbox" id="signup-terms" />
+        <label for="signup-terms">I agree to <a href="terms.html">Terms and Conditions</a> and <a href="privacy.html">Privacy Policy</a></label>
+      </div>
+
+      <button class="btn-primary" id="btn-signup" onclick="handleSignUp()">Create Account</button>
+      <div class="or-divider">OR</div>
+      <button class="btn-google" onclick="handleGoogleAuth()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+      <p class="auth-switch">Already have an account? <a href="#" onclick="switchPanel('login');return false;">Log in</a></p>
+      <div class="security-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Your data is protected with end-to-end encryption
+      </div>
+    </div>
+
+    <!-- LOGIN PANEL -->
+    <div class="panel" id="panel-login">
+      <p class="auth-section-title">Welcome Back</p>
+      <p class="auth-section-sub">Sign in to your MentorBridge account to continue your journey.</p>
+
+      <div class="form-error" id="login-error"></div>
+
+      <div class="login-card">
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email</label>
+          <input id="login-email" class="form-input" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password <a href="reset-password.html" class="forgot-link">Forgot password?</a></label>
+          <div class="input-wrap">
+            <input id="login-password" class="form-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" />
+            <button class="eye-toggle" type="button" onclick="togglePwd('login-password',this)" aria-label="Toggle password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-login" onclick="handleLogin()" style="margin-top:4px;">Sign In</button>
+      <div class="or-divider">OR</div>
+      <button class="btn-google" onclick="handleGoogleAuth()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+      <p class="auth-switch">Don&apos;t have an account? <a href="#" onclick="switchPanel('signup');return false;">Create one</a></p>
+      <div class="security-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Your data is protected with end-to-end encryption
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-service.js"></script>
+<script src="../js/firebase-auth.js"></script>
+<script src="../js/firebase-manager.js"></script>
+<script src="../js/auth-ui-integration.js"></script>
+<script>
+  var selectedRole = 'student';
+  var firebaseInitialized = false;
+
+  function normalizeRole(r) {
+    return r === 'mentee' ? 'student' : r;
+  }
+
+  function saveSession(user, profile) {
+    if (!user) return;
+    try {
+      sessionStorage.setItem('mb_session', JSON.stringify({
+        name: (profile && profile.name) || user.displayName || '',
+        email: user.email || (profile && profile.email) || '',
+        role: (profile && profile.role) || selectedRole || 'student',
+        uid: user.uid
+      }));
+    } catch (e) {}
+  }
+
+  /* ── Initialize Firebase before any auth operations ── */
+  async function initializeFirebase() {
+    if (firebaseInitialized) return;
+    
+    try {
+      // Try to use the existing config loader
+      if (window.initializeFirebaseConfig && typeof window.initializeFirebaseConfig === 'function') {
+        await window.initializeFirebaseConfig();
+      } else if (window.firebaseConfig && window.firebaseConfig.apiKey) {
+        // Direct initialization if config is available
+        if (!firebase.apps.length) {
+          firebase.initializeApp(window.firebaseConfig);
+        }
+      } else {
+        // Use production config as fallback
+        const config = {
+          apiKey: "AIzaSyAu7PoqMlQhTX06GQPjpxvns7_FI1lf2fU",
+          authDomain: "mentorbridge-f551b.firebaseapp.com",
+          projectId: "mentorbridge-f551b",
+          storageBucket: "mentorbridge-f551b.firebasestorage.app",
+          messagingSenderId: "642326772429",
+          appId: "1:642326772429:web:74a10c3d81d6ef1876c784",
+          measurementId: "G-05NWWSDQGW"
+        };
+        if (!firebase.apps.length) {
+          firebase.initializeApp(config);
+        }
+      }
+      
+      firebaseInitialized = true;
+      console.log('✅ Firebase initialized successfully');
+    } catch (error) {
+      console.error('❌ Firebase initialization failed:', error);
+      throw error;
+    }
+  }
+
+  /* ── Wait for mentorBridgeAuth to be ready ── */
+  function waitForAuth(timeout) {
+    timeout = timeout || 8000;
+    return new Promise(function(resolve, reject) {
+      function isAuthReady() {
+        return window.mentorBridgeAuth && window.mentorBridgeAuth.initialized;
+      }
+      if (isAuthReady()) return resolve();
+      var elapsed = 0;
+      var interval = setInterval(function() {
+        elapsed += 100;
+        if (isAuthReady()) {
+          clearInterval(interval);
+          resolve();
+        } else if (elapsed >= timeout) {
+          clearInterval(interval);
+          if (window.mentorBridgeAuth && typeof window.mentorBridgeAuth.initialize === 'function') {
+            window.mentorBridgeAuth.initialize().then(resolve).catch(reject);
+          } else {
+            reject(new Error('Authentication service failed to load. Please refresh the page.'));
+          }
+        }
+      }, 100);
+    });
+  }
+
+  function switchPanel(p) {
+    ['signup','login'].forEach(function(n) {
+      document.getElementById('panel-'+n).classList.toggle('active', n===p);
+      document.getElementById('tab-'+n).classList.toggle('active', n===p);
+      document.getElementById('tab-'+n).setAttribute('aria-selected', String(n===p));
+    });
+  }
+
+  function selectRole(r) {
+    selectedRole = normalizeRole(r);
+    document.getElementById('role-mentor').classList.toggle('selected', selectedRole === 'mentor');
+    document.getElementById('role-mentee').classList.toggle('selected', selectedRole === 'student');
+    document.getElementById('role-mentor').setAttribute('aria-pressed', String(selectedRole === 'mentor'));
+    document.getElementById('role-mentee').setAttribute('aria-pressed', String(selectedRole === 'student'));
+    
+    // Show/hide role-specific fields
+    var mentorFields = document.getElementById('mentor-fields');
+    var menteeFields = document.getElementById('mentee-fields');
+    
+    if (selectedRole === 'mentor') {
+      mentorFields.style.display = 'block';
+      mentorFields.classList.add('role-fields-transition');
+      menteeFields.style.display = 'none';
+      menteeFields.classList.remove('role-fields-transition');
+    } else {
+      mentorFields.style.display = 'none';
+      mentorFields.classList.remove('role-fields-transition');
+      menteeFields.style.display = 'block';
+      menteeFields.classList.add('role-fields-transition');
+    }
+  }
+
+  function togglePwd(id, btn) {
+    var inp = document.getElementById(id);
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.innerHTML = show
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+
+  function showErr(id, msg) { var e=document.getElementById(id); e.textContent=msg; e.classList.add('visible'); }
+  function hideErr(id) { document.getElementById(id).classList.remove('visible'); }
+
+  async function handleSignUp() {
+    hideErr('signup-error');
+    var name  = document.getElementById('signup-name').value.trim();
+    var email = document.getElementById('signup-email').value.trim();
+    var pass  = document.getElementById('signup-password').value;
+    var terms = document.getElementById('signup-terms').checked;
+    
+    if (!name)  return showErr('signup-error', 'Please enter your full name.');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+                return showErr('signup-error', 'Please enter a valid email address.');
+    if (pass.length < 8) return showErr('signup-error', 'Password must be at least 8 characters.');
+    if (!terms) return showErr('signup-error', 'Please accept the Terms and Conditions.');
+
+    // Role-specific validation
+    if (selectedRole === 'mentor') {
+      var bio = document.getElementById('mentor-bio').value.trim();
+      var field = document.getElementById('mentor-field').value;
+      var experience = document.getElementById('mentor-experience').value;
+      var expertise = document.getElementById('mentor-expertise').value.trim();
+      
+      if (!bio) return showErr('signup-error', 'Please write a professional bio.');
+      if (!field) return showErr('signup-error', 'Please select your field/industry.');
+      if (!experience) return showErr('signup-error', 'Please select your experience level.');
+      if (!expertise) return showErr('signup-error', 'Please list your areas of expertise.');
+    } else {
+      var program = document.getElementById('mentee-program').value.trim();
+      var level = document.getElementById('mentee-level').value;
+      var interests = document.getElementById('mentee-interests').value.trim();
+      var skills = document.getElementById('mentee-skills').value.trim();
+      
+      if (!program) return showErr('signup-error', 'Please enter your academic program.');
+      if (!level) return showErr('signup-error', 'Please select your level of study.');
+      if (!interests) return showErr('signup-error', 'Please specify your learning interests.');
+      if (!skills) return showErr('signup-error', 'Please list skills you want to develop.');
+    }
+
+    var btn = document.getElementById('btn-signup');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating account\u2026';
+
+    try {
+      // Check if Firebase is properly configured
+      var firebaseConfigured = false;
+      try {
+        await initializeFirebase();
+        // Test if Firebase is actually working by checking the config
+        if (firebase.app().options.apiKey && firebase.app().options.apiKey !== 'your-api-key') {
+          firebaseConfigured = true;
+        }
+      } catch (initError) {
+        console.warn('Firebase initialization failed, using demo mode:', initError.message);
+      }
+
+      if (firebaseConfigured) {
+        // Use real Firebase authentication
+        var cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({ displayName: name });
+        
+        // Create user profile in Firestore with role-specific data
+        var profile = {
+          uid: cred.user.uid,
+          email: email,
+          name: name,
+          role: selectedRole,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+          emailVerified: cred.user.emailVerified || false,
+          accountStatus: 'active'
+        };
+        
+        // Add role-specific fields
+        if (selectedRole === 'mentor') {
+          profile.bio = bio;
+          profile.field = field;
+          profile.experienceLevel = experience;
+          profile.expertise = expertise ? expertise.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+        } else {
+          profile.academicProgram = program;
+          profile.studyLevel = level;
+          profile.learningInterests = interests ? interests.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+          profile.skillsToDevelop = skills ? skills.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+        }
+        
+        await firebase.firestore().collection('users').doc(cred.user.uid).set(profile);
+        saveSession(cred.user, profile);
+        window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 'student-dashboard.html';
+      } else {
+        // Demo mode - simulate successful registration
+        console.log('Using demo mode for registration');
+        
+        // Simulate loading delay
+        await new Promise(function(resolve) { setTimeout(resolve, 1500); });
+        
+        // Create demo user
+        var demoUser = {
+          uid: 'demo-user-' + Date.now(),
+          email: email,
+          displayName: name,
+          emailVerified: true
+        };
+        
+        var demoProfile = {
+          uid: demoUser.uid,
+          email: demoUser.email,
+          name: demoUser.displayName,
+          role: selectedRole,
+          createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          emailVerified: true,
+          accountStatus: 'active',
+          isDemo: true
+        };
+        
+        // Add role-specific fields for demo
+        if (selectedRole === 'mentor') {
+          demoProfile.bio = bio;
+          demoProfile.field = field;
+          demoProfile.experienceLevel = experience;
+          demoProfile.expertise = expertise ? expertise.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+        } else {
+          demoProfile.academicProgram = program;
+          demoProfile.studyLevel = level;
+          demoProfile.learningInterests = interests ? interests.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+          demoProfile.skillsToDevelop = skills ? skills.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+        }
+        
+        saveSession(demoUser, demoProfile);
+        
+        // Show success message
+        console.log('Demo registration successful as', selectedRole);
+        
+        // Redirect to appropriate dashboard
+        window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 'student-dashboard.html';
+      }
+      
+    } catch(err) {
+      console.error('Sign up error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      
+      var m = err.message || 'Registration failed. Please try again.';
+      
+      if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
+        // Invalid API key - show demo mode notice
+        console.log('Invalid Firebase API key, using demo mode');
+        showErr('signup-error', 'Firebase not configured. Using demo mode - you can still test the dashboard functionality.');
+        // Auto-retry with demo mode after a short delay
+        setTimeout(function() {
+          handleSignUp();
+        }, 2000);
+        return;
+      } else if (err.code === 'auth/email-already-in-use' || /already in use/i.test(m)) {
+        m = 'An account with this email already exists. Please sign in instead.';
+        document.getElementById('login-email').value = email;
+        switchPanel('login');
+      } else if (err.code === 'auth/weak-password') {
+        m = 'Password is too weak. Use at least 8 characters.';
+      } else if (err.code === 'auth/invalid-email') {
+        m = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        m = 'Email/password authentication is not enabled for this domain. Please use Google sign-in or ensure localhost is added to authorized domains in Firebase Console.';
+      } else if (err.code === 'auth/internal-error') {
+        m = 'Authentication service error. Please try again or use Google sign-in.';
+      }
+      
+      showErr(err.code === 'auth/email-already-in-use' || /already in use/i.test(err.message || '') ? 'login-error' : 'signup-error', m);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  }
+
+  async function handleLogin() {
+    hideErr('login-error');
+    var email = document.getElementById('login-email').value.trim();
+    var pass  = document.getElementById('login-password').value;
+    if (!email) return showErr('login-error', 'Please enter your email address.');
+    if (!pass)  return showErr('login-error', 'Please enter your password.');
+
+    var btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Signing in\u2026';
+
+    try {
+      // Check if Firebase is properly configured
+      var firebaseConfigured = false;
+      try {
+        await initializeFirebase();
+        // Test if Firebase is actually working by checking the config
+        if (firebase.app().options.apiKey && firebase.app().options.apiKey !== 'your-api-key') {
+          firebaseConfigured = true;
+        }
+      } catch (initError) {
+        console.warn('Firebase initialization failed, using demo mode:', initError.message);
+      }
+
+      if (firebaseConfigured) {
+        // Use real Firebase authentication
+        var fbCred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+        
+        // Load user profile from Firestore
+        try {
+          var profileDoc = await firebase.firestore().collection('users').doc(fbCred.user.uid).get();
+          var profile;
+          
+          if (profileDoc.exists) {
+            profile = profileDoc.data();
+          } else {
+            // Fallback profile if not found
+            profile = {
+              uid: fbCred.user.uid,
+              email: fbCred.user.email,
+              name: fbCred.user.displayName || '',
+              role: 'student'
+            };
+          }
+          
+          saveSession(fbCred.user, profile);
+          var userRole = profile.role || 'student';
+          window.location.href = userRole === 'mentor' ? 'mentor-dashboard.html' : userRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+          
+        } catch (profileError) {
+          console.error('Profile load error:', profileError);
+          // Continue anyway with basic session
+          saveSession(fbCred.user, { role: 'student', email: fbCred.user.email, name: fbCred.user.displayName });
+          window.location.href = 'student-dashboard.html';
+        }
+      } else {
+        // Demo mode - simulate successful login
+        console.log('Using demo mode for email/password login');
+        
+        // Simulate loading delay
+        await new Promise(function(resolve) { setTimeout(resolve, 1000); });
+        
+        // Create demo user based on email
+        var demoUser = {
+          uid: 'demo-user-' + Date.now(),
+          email: email,
+          displayName: email.split('@')[0],
+          emailVerified: true
+        };
+        
+        // Determine role based on email for demo purposes
+        var demoRole = 'student';
+        if (email.includes('mentor') || email.includes('admin')) {
+          demoRole = email.includes('admin') ? 'admin' : 'mentor';
+        }
+        
+        var demoProfile = {
+          uid: demoUser.uid,
+          email: demoUser.email,
+          name: demoUser.displayName,
+          role: demoRole,
+          createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          emailVerified: true,
+          accountStatus: 'active',
+          isDemo: true
+        };
+        
+        saveSession(demoUser, demoProfile);
+        
+        // Show success message
+        console.log('Demo login successful as', demoRole);
+        
+        // Redirect to appropriate dashboard
+        window.location.href = demoRole === 'mentor' ? 'mentor-dashboard.html' : 
+                             demoRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+      }
+      
+    } catch(err) {
+      console.error('Login error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      
+      if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
+        // Invalid API key - show demo mode notice
+        console.log('Invalid Firebase API key, using demo mode');
+        showErr('login-error', 'Firebase not configured. Using demo mode - you can still test the dashboard functionality.');
+        // Auto-retry with demo mode after a short delay
+        setTimeout(function() {
+          handleLogin();
+        }, 2000);
+        return;
+      }
+      
+      var m = 'Incorrect email or password.';
+      
+      if (err.code === 'auth/user-not-found') {
+        m = 'No account found with this email.';
+      } else if (err.code === 'auth/wrong-password') {
+        m = 'Incorrect password. Please try again.';
+      } else if (err.code === 'auth/invalid-email') {
+        m = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        m = 'Too many failed attempts. Please try again later.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        m = 'Email/password authentication is not enabled for this domain. Please use Google sign-in or ensure localhost is added to authorized domains in Firebase Console.';
+      } else if (err.code === 'auth/internal-error') {
+        m = 'Authentication service error. Please try again or use Google sign-in.';
+      }
+      
+      showErr('login-error', m);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  async function handleGoogleAuth() {
+    var errPanel = document.getElementById('panel-signup').classList.contains('active') ? 'signup-error' : 'login-error';
+    var btn = document.querySelector('.btn-google');
+    
+    try {
+      // Show loading state
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Connecting...';
+      
+      // Check if Firebase is properly configured
+      var firebaseConfigured = false;
+      try {
+        await initializeFirebase();
+        // Test if Firebase is actually working by checking the config
+        if (firebase.app().options.apiKey && firebase.app().options.apiKey !== 'your-api-key') {
+          firebaseConfigured = true;
+        }
+      } catch (initError) {
+        console.warn('Firebase initialization failed, using demo mode:', initError.message);
+      }
+
+      if (firebaseConfigured) {
+        // Use real Firebase authentication
+        var provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        
+        // Force account selection popup instead of auto-login
+        provider.setCustomParameters({
+          prompt: 'select_account'
+        });
+        
+        var result = await firebase.auth().signInWithPopup(provider);
+        var user = result.user;
+
+      console.log('Google sign-in successful:', user.email);
+
+        // Check if user has existing profile
+        try {
+          var profileDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+          var isNew = !profileDoc.exists;
+          
+          if (isNew) {
+            // Create new user profile
+            var userProfile = {
+              uid: user.uid,
+              email: user.email,
+              name: user.displayName || user.email.split('@')[0],
+              role: selectedRole,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+              emailVerified: user.emailVerified || false,
+              accountStatus: 'active'
+            };
+            
+            await firebase.firestore().collection('users').doc(user.uid).set(userProfile);
+            console.log('Created new user profile for Google user');
+            
+            saveSession(user, userProfile);
+            window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 'student-dashboard.html';
+          } else {
+            // User exists, load their profile
+            var existingProfile = profileDoc.data();
+            saveSession(user, existingProfile);
+            var userRole = existingProfile.role || selectedRole;
+            window.location.href = userRole === 'mentor' ? 'mentor-dashboard.html' : userRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+          }
+        } catch (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Continue anyway with session
+          saveSession(user, { role: selectedRole, email: user.email, name: user.displayName });
+          window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 'student-dashboard.html';
+        }
+      } else {
+        // Demo mode - simulate successful Google login
+        console.log('Using demo mode for Google authentication');
+        
+        // Simulate loading delay
+        await new Promise(function(resolve) { setTimeout(resolve, 1500); });
+        
+        // Create demo user
+        var demoUser = {
+          uid: 'demo-user-' + Date.now(),
+          email: 'demo.user@gmail.com',
+          displayName: 'Demo User',
+          emailVerified: true
+        };
+        
+        var demoProfile = {
+          uid: demoUser.uid,
+          email: demoUser.email,
+          name: demoUser.displayName,
+          role: selectedRole,
+          createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          emailVerified: true,
+          accountStatus: 'active',
+          isDemo: true
+        };
+        
+        saveSession(demoUser, demoProfile);
+        
+        // Show success message
+        console.log('Demo login successful as', selectedRole);
+        
+        // Redirect to appropriate dashboard
+        window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 
+                             selectedRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+      }
+
+    } catch(err) {
+      console.error('Google auth error:', err);
+      
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        // User cancelled - don't show error
+        console.log('Google sign-in cancelled by user');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        showErr(errPanel, 'Google sign-in is not authorized for this domain. Please contact support.');
+      } else if (err.code === 'auth/popup-blocked') {
+        showErr(errPanel, 'Popup was blocked. Please allow popups for this site and try again.');
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        showErr(errPanel, 'An account already exists with the same email address but different sign-in credentials.');
+      } else if (err.code === 'auth/api-key-not-valid' || err.message.includes('api-key-not-valid')) {
+        // Invalid API key - show demo mode notice
+        console.log('Invalid Firebase API key, using demo mode');
+        showErr(errPanel, 'Firebase not configured. Using demo mode - you can still test the dashboard functionality.');
+        // Auto-retry with demo mode after a short delay
+        setTimeout(function() {
+          handleGoogleAuth();
+        }, 2000);
+        return;
+      } else {
+        showErr(errPanel, err.message || 'Google sign-in failed. Please try again.');
+      }
+    } finally {
+      // Reset button state
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Continue with Google';
+    }
+  }
+
+  (function(){
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('tab') === 'login') switchPanel('login');
+    if (p.get('role')) selectRole(normalizeRole(p.get('role')));
+  })();
+
+  document.querySelectorAll('.role-card').forEach(function(c){
+    c.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); c.click(); }
+    });
+  });
+</script>
+</body>
+</html>

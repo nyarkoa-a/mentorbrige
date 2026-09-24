@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth UI Integration Enhancements Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6fb; }
+    .test-section { margin: 20px 0; padding: 15px; background: white; border-radius: 10px; }
+    .auth-message { 
+      min-height: 20px; 
+      margin: 10px 0; 
+      padding: 10px; 
+      border: 1px solid #ddd; 
+      border-radius: 5px;
+      display: none;
+    }
+    button { 
+      padding: 10px 15px; 
+      margin: 5px; 
+      border: none; 
+      border-radius: 5px; 
+      background: #4A1547; 
+      color: white; 
+      cursor: pointer; 
+    }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .loading-spinner { 
+      display: inline-block; 
+      width: 12px; 
+      height: 12px; 
+      border: 2px solid #fff; 
+      border-radius: 50%; 
+      border-top-color: transparent; 
+      animation: spin 1s linear infinite; 
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .auth-loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(248, 245, 239, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Auth UI Integration Service Enhancement Test</h1>
+  
+  <!-- Mock auth message element -->
+  <div id="authMessage" class="auth-message"></div>
+  
+  <!-- Mock loading overlay -->
+  <div class="auth-loading-overlay">
+    <div style="text-align: center;">
+      <div class="loading-spinner" style="margin: 0 auto 1rem;"></div>
+      <p style="color: #4A1547; font-weight: 500;">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Test Section 1: Basic Methods -->
+  <div class="test-section">
+    <h2>1. Basic Enhanced Methods Test</h2>
+    <button id="testClearMessages">Test clearPreviousMessages()</button>
+    <button id="testSetLoading">Test setLoadingState()</button>
+    <button id="testClearLoading">Test clearLoadingState()</button>
+    <button id="testNotificationQueue">Test Notification Queue</button>
+  </div>
+
+  <!-- Test Section 2: Email Verification -->
+  <div class="test-section">
+    <h2>2. Email Verification Notifications Test</h2>
+    <button id="testEmailVerification">Test showEmailVerificationMessage()</button>
+    <button id="testEmailNotVerified">Test showEmailNotVerifiedMessage()</button>
+    <button id="testErrorWithActions">Test showErrorWithActions()</button>
+  </div>
+
+  <!-- Test Section 3: Dashboard Redirection -->
+  <div class="test-section">
+    <h2>3. Dashboard Redirection Test</h2>
+    <button id="testDashboardUrl">Test getDashboardUrlForRole()</button>
+    <button id="testValidationPlacement">Test validateNotificationPlacement()</button>
+  </div>
+
+  <!-- Mock buttons for testing -->
+  <button id="btnLogin" style="display: none;">Sign In</button>
+  <button id="btnRegister" style="display: none;">Register</button>
+
+  <script>
+    // Mock Firebase/window objects for testing
+    window.firebaseManager = {
+      isReady: () => true,
+      getStatus: () => ({ initialized: true })
+    };
+    
+    window.mentorBridgeAuth = {
+      initialized: true,
+      initialize: () => Promise.resolve(),
+      onAuthStateChanged: () => {},
+      currentUser: null,
+      sendEmailVerification: () => Promise.resolve()
+    };
+
+    window.firebaseService = {
+      initialize: () => Promise.resolve()
+    };
+
+    console.log('🧪 Loading AuthUIIntegrationService for testing...');
+  </script>
+  
+  <script src="auth-ui-integration.js"></script>
+
+  <script>
+    // Test script
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🧪 Starting Auth UI Integration Enhancement Tests...');
+
+      // Wait for service to initialize
+      try {
+        await window.authUIIntegration.initialize();
+        console.log('✅ Auth UI Integration Service initialized successfully');
+      } catch (error) {
+        console.error('❌ Failed to initialize Auth UI Integration Service:', error);
+        return;
+      }
+
+      const service = window.authUIIntegration;
+
+      // Test 1: clearPreviousMessages
+      document.getElementById('testClearMessages').addEventListener('click', () => {
+        console.log('\n🧪 Testing clearPreviousMessages()...');
+        
+        // First add some content to clear
+        const authMessage = document.getElementById('authMessage');
+        authMessage.innerHTML = 'Previous message to be cleared';
+        authMessage.style.display = 'block';
+        
+        // Now test clearing
+        service.clearPreviousMessages();
+        
+        console.log('✅ clearPreviousMessages() test completed');
+        console.log('Auth message cleared:', authMessage.innerHTML === '');
+      });
+
+      // Test 2: setLoadingState
+      document.getElementById('testSetLoading').addEventListener('click', () => {
+        console.log('\n🧪 Testing setLoadingState()...');
+        
+        service.setLoadingState('testOperation', 'Testing loading state...');
+        
+        console.log('✅ setLoadingState() test completed');
+        console.log('Loading states:', service.loadingStates.size);
+      });
+
+      // Test 3: clearLoadingState
+      document.getElementById('testClearLoading').addEventListener('click', () => {
+        console.log('\n🧪 Testing clearLoadingState()...');
+        
+        service.clearLoadingState('testOperation');
+        
+        console.log('✅ clearLoadingState() test completed');
+        console.log('Loading states after clear:', service.loadingStates.size);
+      });
+
+      // Test 4: Notification Queue
+      document.getElementById('testNotificationQueue').addEventListener('click', () => {
+        console.log('\n🧪 Testing notification queue...');
+        
+        const notification = service.addNotificationToQueue({
+          type: 'test',
+          content: 'Test notification',
+          persistent: true
+        });
+        
+        console.log('✅ Notification queue test completed');
+        console.log('Notification added:', notification);
+        console.log('Queue length:', service.notificationQueue.length);
+      });
+
+      // Test 5: Email Verification Message
+      document.getElementById('testEmailVerification').addEventListener('click', () => {
+        console.log('\n🧪 Testing showEmailVerificationMessage()...');
+        
+        service.showEmailVerificationMessage('test@example.com', 'student');
+        
+        console.log('✅ showEmailVerificationMessage() test completed');
+      });
+
+      // Test 6: Email Not Verified Message
+      document.getElementById('testEmailNotVerified').addEventListener('click', () => {
+        console.log('\n🧪 Testing showEmailNotVerifiedMessage()...');
+        
+        service.showEmailNotVerifiedMessage('test@example.com', true);
+        
+        console.log('✅ showEmailNotVerifiedMessage() test completed');
+      });
+
+      // Test 7: Error with Actions
+      document.getElementById('testErrorWithActions').addEventListener('click', () => {
+        console.log('\n🧪 Testing showErrorWithActions()...');
+        
+        const actions = [
+          {
+            label: 'Retry',
+            action: () => console.log('Retry clicked'),
+            style: 'primary'
+          },
+          {
+            label: 'Cancel',
+            action: () => console.log('Cancel clicked'),
+            style: 'secondary'
+          }
+        ];
+        
+        service.showErrorWithActions('Test error message with actions', actions);
+        
+        console.log('✅ showErrorWithActions() test completed');
+      });
+
+      // Test 8: Dashboard URL
+      document.getElementById('testDashboardUrl').addEventListener('click', () => {
+        console.log('\n🧪 Testing getDashboardUrlForRole()...');
+        
+        const studentUrl = service.getDashboardUrlForRole('student');
+        const mentorUrl = service.getDashboardUrlForRole('mentor');
+        const adminUrl = service.getDashboardUrlForRole('admin');
+        const defaultUrl = service.getDashboardUrlForRole('unknown');
+        
+        console.log('Student URL:', studentUrl);
+        console.log('Mentor URL:', mentorUrl);
+        console.log('Admin URL:', adminUrl);
+        console.log('Default URL:', defaultUrl);
+        
+        console.log('✅ getDashboardUrlForRole() test completed');
+      });
+
+      // Test 9: Validation Placement
+      document.getElementById('testValidationPlacement').addEventListener('click', () => {
+        console.log('\n🧪 Testing validateNotificationPlacement()...');
+        
+        const isValid = service.validateNotificationPlacement();
+        
+        console.log('Notification placement valid:', isValid);
+        console.log('✅ validateNotificationPlacement() test completed');
+      });
+
+      console.log('\n🎉 All test buttons configured and ready!');
+      console.log('Click the buttons above to test individual methods.');
+    });
+  </script>
+</body>
+</html>

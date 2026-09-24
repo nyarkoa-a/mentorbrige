@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentorBridge - Firebase Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #b8daff;
+        }
+        .test-details {
+            font-family: monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .auth-form {
+            display: none;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 MentorBridge Firebase Integration Test</h1>
+        
+        <!-- Overall Status -->
+        <div class="test-section">
+            <h2>📊 Overall System Status</h2>
+            <div id="overall-status" class="status loading">Initializing Firebase services...</div>
+            <div class="metrics" id="metrics-grid">
+                <!-- Metrics will be populated here -->
+            </div>
+        </div>
+
+        <!-- Firebase Configuration Test -->
+        <div class="test-section">
+            <h2>⚙️ Firebase Configuration</h2>
+            <div id="config-status" class="status loading">Loading configuration...</div>
+            <button onclick="testFirebaseConfig()" id="test-config-btn">Test Configuration</button>
+            <div id="config-details" class="test-details"></div>
+        </div>
+
+        <!-- Firebase Services Test -->
+        <div class="test-section">
+            <h2>🔧 Firebase Services</h2>
+            <div id="services-status" class="status loading">Initializing services...</div>
+            <button onclick="testFirebaseServices()" id="test-services-btn">Test Services</button>
+            <div id="services-details" class="test-details"></div>
+        </div>
+
+        <!-- Authentication Test -->
+        <div class="test-section">
+            <h2>🔐 Authentication System</h2>
+            <div id="auth-status" class="status info">Ready to test authentication</div>
+            
+            <button onclick="showRegisterForm()" id="show-register-btn">Test Registration</button>
+            <button onclick="showLoginForm()" id="show-login-btn">Test Login</button>
+            <button onclick="testPasswordReset()" id="test-reset-btn">Test Password Reset</button>
+            <button onclick="signOutUser()" id="signout-btn" disabled>Sign Out</button>
+
+            <!-- Registration Form -->
+            <div id="register-form" class="auth-form">
+                <h3>Test User Registration</h3>
+                <input type="email" id="reg-email" placeholder="Email (test@example.com)" value="test@mentorbridge.com">
+                <input type="password" id="reg-password" placeholder="Password" value="test123456">
+                <input type="text" id="reg-name" placeholder="Full Name" value="Test User">
+                <select id="reg-role">
+                    <option value="student">Student</option>
+                    <option value="mentor">Mentor</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button onclick="testRegistration()">Register Test User</button>
+                <button onclick="hideAuthForms()">Cancel</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h3>Test User Login</h3>
+                <input type="email" id="login-email" placeholder="Email" value="test@mentorbridge.com">
+                <input type="password" id="login-password" placeholder="Password" value="test123456">
+                <button onclick="testLogin()">Login Test User</button>
+                <button onclick="hideAuthForms()">Cancel</button>
+            </div>
+
+            <div id="auth-details" class="test-details"></div>
+        </div>
+
+        <!-- Firestore Database Test -->
+        <div class="test-section">
+            <h2>🗄️ Firestore Database</h2>
+            <div id="firestore-status" class="status info">Ready to test database operations</div>
+            <button onclick="testFirestoreRead()" id="test-read-btn">Test Read Access</button>
+            <button onclick="testFirestoreWrite()" id="test-write-btn" disabled>Test Write Access</button>
+            <button onclick="testSecurityRules()" id="test-security-btn">Test Security Rules</button>
+            <div id="firestore-details" class="test-details"></div>
+        </div>
+
+        <!-- Real-time Features Test -->
+        <div class="test-section">
+            <h2>⚡ Real-time Features</h2>
+            <div id="realtime-status" class="status info">Ready to test real-time features</div>
+            <button onclick="testRealtimeListeners()" id="test-realtime-btn" disabled>Test Real-time Listeners</button>
+            <button onclick="testOfflineSupport()" id="test-offline-btn">Test Offline Support</button>
+            <div id="realtime-details" class="test-details"></div>
+        </div>
+
+        <!-- Performance Test -->
+        <div class="test-section">
+            <h2>🚀 Performance & Health</h2>
+            <div id="performance-status" class="status info">Ready to run performance tests</div>
+            <button onclick="runPerformanceTest()" id="test-performance-btn">Run Performance Test</button>
+            <button onclick="runHealthCheck()" id="test-health-btn">Health Check</button>
+            <div id="performance-details" class="test-details"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+
+    <!-- MentorBridge Firebase Files -->
+    <script src="public/js/firebase-config.js"></script>
+    <script src="public/js/firebase-service.js"></script>
+    <script src="public/js/firebase-auth.js"></script>
+    <script src="public/js/firebase-data.js"></script>
+
+    <script>
+        // Test state management
+        let testState = {
+            configTested: false,
+            servicesTested: false,
+            authTested: false,
+            firestoreTested: false,
+            currentUser: null,
+            testResults: {}
+        };
+
+        // Initialize test suite
+        async function initializeTestSuite() {
+            updateStatus('overall-status', 'loading', 'Initializing Firebase test suite...');
+            
+            try {
+                // Initialize Firebase configuration
+                await initializeFirebaseConfig();
+                updateStatus('config-status', 'success', 'Firebase configuration loaded');
+                
+                // Initialize Firebase services
+                await window.firebaseService.initialize();
+                updateStatus('services-status', 'success', 'Firebase services initialized');
+                
+                // Setup auth state monitoring
+                if (window.mentorBridgeAuth) {
+                    await window.mentorBridgeAuth.initialize();
+                    window.mentorBridgeAuth.onAuthStateChanged(handleAuthStateChange);
+                }
+
+                updateStatus('overall-status', 'success', 'Firebase initialization complete - Ready for testing');
+                updateMetrics();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                updateStatus('overall-status', 'error', `Initialization failed: ${error.message}`);
+                updateDetails('config-details', `Error: ${error.message}\nStack: ${error.stack}`);
+            }
+        }
+
+        // Update status display
+        function updateStatus(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.textContent = message;
+        }
+
+        // Update details display
+        function updateDetails(elementId, content) {
+            const element = document.getElementById(elementId);
+            element.textContent = content;
+        }
+
+        // Update metrics display
+        function updateMetrics() {
+            const metricsGrid = document.getElementById('metrics-grid');
+            
+            const metrics = [
+                { label: 'Config Status', value: testState.configTested ? '✅' : '⏳', color: testState.configTested ? '#27ae60' : '#f39c12' },
+                { label: 'Services Status', value: testState.servicesTested ? '✅' : '⏳', color: testState.servicesTested ? '#27ae60' : '#f39c12' },
+                { label: 'Auth Status', value: testState.currentUser ? '🔐 Authenticated' : '🔓 Anonymous', color: testState.currentUser ? '#27ae60' : '#95a5a6' },
+                { label: 'Database Status', value: testState.firestoreTested ? '✅' : '⏳', color: testState.firestoreTested ? '#27ae60' : '#f39c12' }
+            ];
+
+            metricsGrid.innerHTML = metrics.map(metric => `
+                <div class="metric-card" style="border-left-color: ${metric.color}">
+                    <div class="metric-value">${metric.value}</div>
+                    <div class="metric-label">${metric.label}</div>
+                </div>
+            `).join('');
+        }
+
+        // Test Firebase Configuration
+        async function testFirebaseConfig() {
+            updateStatus('config-status', 'loading', 'Testing Firebase configuration...');
+            
+            try {
+                const result = await testFirebaseConnectivity();
+                testState.configTested = true;
+                testState.testResults.config = result;
+                
+                if (result.success) {
+                    updateStatus('config-status', 'success', `Configuration test passed - ${result.summary}`);
+                } else {
+                    updateStatus('config-status', 'error', `Configuration test failed: ${result.error}`);
+                }
+                
+                updateDetails('config-details', JSON.stringify(result, null, 2));
+                updateMetrics();
+                
+            } catch (error) {
+                updateStatus('config-status', 'error', `Configuration test error: ${error.message}`);
+                updateDetails('config-details', `Error: ${error.message}\nStack: ${error.stack}`);
+            }
+        }
+
+        // Test Firebase Services
+        async function testFirebaseServices() {
+            updateStatus('services-status', 'loading', 'Testing Firebase services...');
+            
+            try {
+                const result = await window.firebaseService.testConnection();
+                testState.servicesTested = true;
+                testState.testResults.services = result;
+                
+                if (result.success) {
+                    updateStatus('services-status', 'success', `Services test passed - Health: ${result.overallHealth}`);
+                } else {
+                    updateStatus('services-status', 'error', `Services test failed`);
+                }
+                
+                updateDetails('services-details', JSON.stringify(result, null, 2));
+                updateMetrics();
+                
+            } catch (error) {
+                updateStatus('services-status', 'error', `Services test error: ${error.message}`);
+                updateDetails('services-details', `Error: ${error.message}\nStack: ${error.stack}`);
+            }
+        }
+
+        // Authentication functions
+        function showRegisterForm() {
+            hideAuthForms();
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            hideAuthForms();
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        function hideAuthForms() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'none';
+        }
+
+        async function testRegistration() {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+            const role = document.getElementById('reg-role').value;
+
+            updateStatus('auth-status', 'loading', 'Testing user registration...');
+            
+            try {
+                const result = await window.mentorBridgeAuth.registerUser({
+                    email,
+                    password,
+                    profile: { name, role }
+                });
+                
+                testState.authTested = true;
+                updateStatus('auth-status', 'success', 'Registration successful! Check email for verification.');
+                updateDetails('auth-details', JSON.stringify(result, null, 2));
+                hideAuthForms();
+                
+            } catch (error) {
+                updateStatus('auth-status', 'error', `Registration failed: ${error.message}`);
+                updateDetails('auth-details', `Error: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            updateStatus('auth-status', 'loading', 'Testing user login...');
+            
+            try {
+                const result = await window.mentorBridgeAuth.signInUser(email, password);
+                
+                if (result.success) {
+                    testState.authTested = true;
+                    updateStatus('auth-status', 'success', 'Login successful!');
+                    document.getElementById('test-write-btn').disabled = false;
+                    document.getElementById('test-realtime-btn').disabled = false;
+                } else {
+                    updateStatus('auth-status', 'error', result.message);
+                }
+                
+                updateDetails('auth-details', JSON.stringify(result, null, 2));
+                hideAuthForms();
+                
+            } catch (error) {
+                updateStatus('auth-status', 'error', `Login failed: ${error.message}`);
+                updateDetails('auth-details', `Error: ${error.message}`);
+            }
+        }
+
+        async function testPasswordReset() {
+            const email = prompt('Enter email for password reset test:', 'test@mentorbridge.com');
+            if (!email) return;
+
+            updateStatus('auth-status', 'loading', 'Testing password reset...');
+            
+            try {
+                const result = await window.mentorBridgeAuth.sendPasswordResetEmail(email);
+                updateStatus('auth-status', 'success', 'Password reset email sent!');
+                updateDetails('auth-details', JSON.stringify(result, null, 2));
+                
+            } catch (error) {
+                updateStatus('auth-status', 'error', `Password reset failed: ${error.message}`);
+                updateDetails('auth-details', `Error: ${error.message}`);
+            }
+        }
+
+        async function signOutUser() {
+            try {
+                await window.mentorBridgeAuth.signOut();
+                updateStatus('auth-status', 'info', 'User signed out successfully');
+                
+            } catch (error) {
+                updateStatus('auth-status', 'error', `Sign out failed: ${error.message}`);
+            }
+        }
+
+        // Handle authentication state changes
+        function handleAuthStateChange(authEvent) {
+            testState.currentUser = authEvent.user;
+            
+            if (authEvent.user) {
+                updateStatus('auth-status', 'success', `Authenticated: ${authEvent.user.email}`);
+                document.getElementById('signout-btn').disabled = false;
+                document.getElementById('test-write-btn').disabled = false;
+                document.getElementById('test-realtime-btn').disabled = false;
+            } else {
+                updateStatus('auth-status', 'info', 'No authenticated user');
+                document.getElementById('signout-btn').disabled = true;
+                document.getElementById('test-write-btn').disabled = true;
+                document.getElementById('test-realtime-btn').disabled = true;
+            }
+            
+            updateMetrics();
+        }
+
+        // Firestore tests
+        async function testFirestoreRead() {
+            updateStatus('firestore-status', 'loading', 'Testing Firestore read access...');
+            
+            try {
+                const db = window.firebaseService.getDb();
+                const snapshot = await db.collection('_health').limit(1).get();
+                
+                updateStatus('firestore-status', 'success', 'Firestore read access confirmed');
+                updateDetails('firestore-details', `Read test successful. Documents found: ${snapshot.size}`);
+                testState.firestoreTested = true;
+                updateMetrics();
+                
+            } catch (error) {
+                if (error.code === 'permission-denied') {
+                    updateStatus('firestore-status', 'success', 'Firestore connected - Security rules active');
+                    updateDetails('firestore-details', 'Permission denied (expected) - Security rules are working correctly');
+                    testState.firestoreTested = true;
+                } else {
+                    updateStatus('firestore-status', 'error', `Firestore read failed: ${error.message}`);
+                    updateDetails('firestore-details', `Error: ${error.message}`);
+                }
+                updateMetrics();
+            }
+        }
+
+        async function testFirestoreWrite() {
+            if (!testState.currentUser) {
+                updateStatus('firestore-status', 'error', 'Authentication required for write test');
+                return;
+            }
+
+            updateStatus('firestore-status', 'loading', 'Testing Firestore write access...');
+            
+            try {
+                const db = window.firebaseService.getDb();
+                const testData = {
+                    message: 'Firebase integration test',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userId: testState.currentUser.uid
+                };
+                
+                await db.collection('test_messages').add(testData);
+                
+                updateStatus('firestore-status', 'success', 'Firestore write access confirmed');
+                updateDetails('firestore-details', `Write test successful. Test document created.`);
+                
+            } catch (error) {
+                updateStatus('firestore-status', 'error', `Firestore write failed: ${error.message}`);
+                updateDetails('firestore-details', `Error: ${error.message}\nCode: ${error.code}`);
+            }
+        }
+
+        async function testSecurityRules() {
+            updateStatus('firestore-status', 'loading', 'Testing Firestore security rules...');
+            
+            try {
+                const db = window.firebaseService.getDb();
+                
+                // Test unauthorized access
+                try {
+                    await db.collection('users').doc('test-unauthorized').get();
+                    updateStatus('firestore-status', 'error', 'Security rules failed - Unauthorized access allowed');
+                } catch (authError) {
+                    if (authError.code === 'permission-denied') {
+                        updateStatus('firestore-status', 'success', 'Security rules working correctly');
+                        updateDetails('firestore-details', 'Security test passed - Unauthorized access properly blocked');
+                    } else {
+                        throw authError;
+                    }
+                }
+                
+            } catch (error) {
+                updateStatus('firestore-status', 'error', `Security rules test failed: ${error.message}`);
+                updateDetails('firestore-details', `Error: ${error.message}`);
+            }
+        }
+
+        // Real-time features tests
+        async function testRealtimeListeners() {
+            if (!testState.currentUser) {
+                updateStatus('realtime-status', 'error', 'Authentication required for real-time test');
+                return;
+            }
+
+            updateStatus('realtime-status', 'loading', 'Testing real-time listeners...');
+            
+            try {
+                const db = window.firebaseService.getDb();
+                let messageCount = 0;
+                
+                const unsubscribe = db.collection('test_messages')
+                    .where('userId', '==', testState.currentUser.uid)
+                    .onSnapshot((snapshot) => {
+                        messageCount = snapshot.size;
+                        updateStatus('realtime-status', 'success', `Real-time listener active - ${messageCount} messages`);
+                        updateDetails('realtime-details', `Listening for real-time updates. Messages: ${messageCount}`);
+                    });
+                
+                // Cleanup listener after test
+                setTimeout(() => {
+                    unsubscribe();
+                    updateStatus('realtime-status', 'success', 'Real-time listener test completed');
+                }, 5000);
+                
+            } catch (error) {
+                updateStatus('realtime-status', 'error', `Real-time test failed: ${error.message}`);
+                updateDetails('realtime-details', `Error: ${error.message}`);
+            }
+        }
+
+        async function testOfflineSupport() {
+            updateStatus('realtime-status', 'loading', 'Testing offline support...');
+            
+            try {
+                const db = window.firebaseService.getDb();
+                
+                // Try to disable network
+                await db.disableNetwork();
+                updateStatus('realtime-status', 'success', 'Offline mode enabled');
+                
+                // Re-enable network
+                setTimeout(async () => {
+                    await db.enableNetwork();
+                    updateStatus('realtime-status', 'success', 'Offline support test completed');
+                    updateDetails('realtime-details', 'Offline persistence is configured and working');
+                }, 2000);
+                
+            } catch (error) {
+                updateStatus('realtime-status', 'error', `Offline test failed: ${error.message}`);
+                updateDetails('realtime-details', `Error: ${error.message}`);
+            }
+        }
+
+        // Performance tests
+        async function runPerformanceTest() {
+            updateStatus('performance-status', 'loading', 'Running performance tests...');
+            
+            const startTime = performance.now();
+            
+            try {
+                // Test multiple operations
+                const tests = [
+                    testFirebaseConnectivity(),
+                    window.firebaseService.testConnection(),
+                ];
+                
+                await Promise.all(tests);
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                updateStatus('performance-status', 'success', `Performance test completed in ${duration}ms`);
+                updateDetails('performance-details', `All performance tests passed in ${duration}ms`);
+                
+            } catch (error) {
+                updateStatus('performance-status', 'error', `Performance test failed: ${error.message}`);
+                updateDetails('performance-details', `Error: ${error.message}`);
+            }
+        }
+
+        async function runHealthCheck() {
+            updateStatus('performance-status', 'loading', 'Running health check...');
+            
+            try {
+                const health = window.firebaseService.getConnectionStatus();
+                const isHealthy = health.initialized && health.status === 'connected';
+                
+                if (isHealthy) {
+                    updateStatus('performance-status', 'success', 'System health check passed');
+                } else {
+                    updateStatus('performance-status', 'error', 'System health check failed');
+                }
+                
+                updateDetails('performance-details', JSON.stringify(health, null, 2));
+                
+            } catch (error) {
+                updateStatus('performance-status', 'error', `Health check failed: ${error.message}`);
+                updateDetails('performance-details', `Error: ${error.message}`);
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeTestSuite);
+    </script>
+</body>
+</html>

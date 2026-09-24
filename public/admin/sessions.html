@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sessions | MentorBridge Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
+  <!-- <script src="/js/admin-auth.js"></script> -->
+  <script>(function(){AdminAuth.guardAdminPage();})();</script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/firebase-service.js"></script>
+  <script src="/js/firebase-auth.js"></script>
+</head>
+<body class="adm-body">
+  <div id="adm-app"></div>
+  <script src="/js/admin-data.js"></script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/admin-page.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    AdminPage.mountListPage({
+      activeNav: 'sessions',
+      title: 'Sessions',
+      subtitle: 'All mentorship sessions on the platform',
+      contentHtml: '<div class="adm-card"><div class="adm-card-body adm-table-wrap" id="admPageBody"><p class="adm-kpi-loading">Loading…</p></div></div>',
+      load: async function (el) {
+        var sessions = await AdminData.fetchSessions();
+        if (!sessions.length) {
+          el.innerHTML = '<div class="adm-empty">No sessions found.<small>Sessions created by mentors and mentees will appear here.</small></div>';
+          return;
+        }
+        el.innerHTML = '<table class="adm-table"><thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Mentor</th><th>Status</th></tr></thead><tbody>' +
+          sessions.map(function (s) {
+            return '<tr><td>' + AdminPage.esc(s.title || s.topic || 'Session') + '</td><td>' +
+              AdminPage.esc(s.date || s.scheduledDate || '—') + '</td><td>' + AdminPage.esc(s.time || '—') + '</td><td>' +
+              AdminPage.esc(s.mentorName || s.mentorId || '—') + '</td><td><span class="adm-badge adm-badge-active">' +
+              AdminPage.esc(s.status || 'scheduled') + '</span></td></tr>';
+          }).join('') + '</tbody></table>';
+      }
+    });
+  });
+  </script>
+</body>
+</html>

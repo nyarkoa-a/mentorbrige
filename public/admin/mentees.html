@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentees | MentorBridge Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
+  <!-- <script src="/js/admin-auth.js"></script> -->
+  <script>(function(){AdminAuth.guardAdminPage();})();</script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/firebase-service.js"></script>
+  <script src="/js/firebase-auth.js"></script>
+</head>
+<body class="adm-body">
+  <div id="adm-app"></div>
+  <script src="/js/admin-data.js"></script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/admin-page.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    AdminPage.mountListPage({
+      activeNav: 'mentees',
+      title: 'Mentees',
+      subtitle: 'All registered mentees on the platform',
+      contentHtml: '<div class="adm-card"><div class="adm-card-body adm-table-wrap" id="admPageBody"><p class="adm-kpi-loading">Loading…</p></div></div>',
+      load: async function (el) {
+        var all = await AdminData.fetchAllUsers();
+        var mentees = all.users.filter(function (u) { return u.role === 'student'; });
+        el.innerHTML = AdminPage.usersTable(mentees, [
+          { label: 'Name', render: function (u) { return AdminPage.esc(u.name || '—'); } },
+          { label: 'Email', key: 'email' },
+          { label: 'Joined', render: function (u) { return AdminData.formatDate(u.createdAt); } },
+          { label: 'Status', render: function (u) {
+            var s = u.accountStatus === 'pending' ? 'Pending' : 'Active';
+            return '<span class="adm-badge ' + (s === 'Active' ? 'adm-badge-active' : 'adm-badge-pending') + '">' + s + '</span>';
+          }}
+        ]);
+        if (all.source !== 'firestore') {
+          el.innerHTML += '<p style="font-size:0.72rem;color:#6B7280;margin-top:0.75rem">Showing data from ' + all.source + '.</p>';
+        }
+      }
+    });
+  });
+  </script>
+</body>
+</html>

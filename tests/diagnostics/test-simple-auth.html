@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Auth Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, button { width: 100%; padding: 10px; font-size: 16px; }
+    input { border: 1px solid #ddd; border-radius: 4px; }
+    button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .error { color: red; margin-top: 5px; }
+    .success { color: green; margin-top: 5px; }
+    .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .message.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    .message.success { background: #d4edda; border: 1px solid #c3e6cb; }
+    .debug { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>🔧 Simple Authentication Test</h1>
+  <p>This is a basic test to see if the authentication buttons work at all.</p>
+
+  <div id="messages"></div>
+
+  <div class="form-group">
+    <label for="testEmail">Email:</label>
+    <input type="email" id="testEmail" placeholder="test@example.com">
+    <div class="error" id="emailError"></div>
+  </div>
+
+  <div class="form-group">
+    <label for="testPassword">Password:</label>
+    <input type="password" id="testPassword" placeholder="password123">
+    <div class="error" id="passwordError"></div>
+  </div>
+
+  <div class="form-group">
+    <button id="testLoginBtn">🔑 Test Login Button</button>
+  </div>
+
+  <div class="form-group">
+    <button id="basicTestBtn">📝 Basic Click Test</button>
+  </div>
+
+  <div class="debug" id="debug">
+    <strong>Debug Info:</strong><br>
+    <div id="debugContent">Page loaded...</div>
+  </div>
+
+  <script>
+    // Debug function
+    function debug(message) {
+      const debugContent = document.getElementById('debugContent');
+      const timestamp = new Date().toLocaleTimeString();
+      debugContent.innerHTML += `<br>[${timestamp}] ${message}`;
+      console.log(`[AUTH-DEBUG] ${message}`);
+    }
+
+    // Message function
+    function showMessage(text, type = 'info') {
+      const messagesDiv = document.getElementById('messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      messageDiv.textContent = text;
+      messagesDiv.appendChild(messageDiv);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        messageDiv.remove();
+      }, 5000);
+    }
+
+    // Clear errors
+    function clearErrors() {
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+    }
+
+    // Validation
+    function validateForm() {
+      clearErrors();
+      const email = document.getElementById('testEmail').value.trim();
+      const password = document.getElementById('testPassword').value;
+      let isValid = true;
+
+      if (!email) {
+        document.getElementById('emailError').textContent = 'Email is required';
+        document.getElementById('testEmail').style.borderColor = 'red';
+        isValid = false;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email';
+        document.getElementById('testEmail').style.borderColor = 'red';
+        isValid = false;
+      } else {
+        document.getElementById('testEmail').style.borderColor = '#ddd';
+      }
+
+      if (!password) {
+        document.getElementById('passwordError').textContent = 'Password is required';
+        document.getElementById('testPassword').style.borderColor = 'red';
+        isValid = false;
+      } else if (password.length < 6) {
+        document.getElementById('passwordError').textContent = 'Password must be at least 6 characters';
+        document.getElementById('testPassword').style.borderColor = 'red';
+        isValid = false;
+      } else {
+        document.getElementById('testPassword').style.borderColor = '#ddd';
+      }
+
+      return { isValid, email, password };
+    }
+
+    // Wait for DOM to load
+    document.addEventListener('DOMContentLoaded', function() {
+      debug('DOM Content Loaded');
+
+      // Basic test button
+      const basicTestBtn = document.getElementById('basicTestBtn');
+      if (basicTestBtn) {
+        basicTestBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          debug('Basic button clicked - JavaScript is working!');
+          showMessage('✅ Basic button click works! JavaScript is functioning.', 'success');
+        });
+        debug('Basic test button event listener added');
+      }
+
+      // Test login button
+      const testLoginBtn = document.getElementById('testLoginBtn');
+      if (testLoginBtn) {
+        testLoginBtn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          debug('Login button clicked');
+
+          const validation = validateForm();
+          
+          if (!validation.isValid) {
+            debug('Validation failed');
+            showMessage('❌ Please fix the validation errors above', 'error');
+            return;
+          }
+
+          debug(`Validation passed - Email: ${validation.email}, Password: ${validation.password.length} chars`);
+          showMessage('✅ Form validation passed!', 'success');
+
+          // Test button loading state
+          testLoginBtn.disabled = true;
+          testLoginBtn.textContent = '⏳ Testing...';
+
+          try {
+            // Simulate processing
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            debug('Simulated authentication completed');
+            showMessage('🎉 Test authentication successful!', 'success');
+            
+          } catch (error) {
+            debug(`Error: ${error.message}`);
+            showMessage(`❌ Error: ${error.message}`, 'error');
+          } finally {
+            testLoginBtn.disabled = false;
+            testLoginBtn.textContent = '🔑 Test Login Button';
+          }
+        });
+        debug('Login button event listener added');
+      }
+
+      // Check for Firebase services
+      setTimeout(() => {
+        debug(`Checking Firebase services...`);
+        debug(`- window.firebase: ${typeof window.firebase !== 'undefined' ? 'Available' : 'Not found'}`);
+        debug(`- window.mentorBridgeAuth: ${typeof window.mentorBridgeAuth !== 'undefined' ? 'Available' : 'Not found'}`);
+        debug(`- window.authUIIntegration: ${typeof window.authUIIntegration !== 'undefined' ? 'Available' : 'Not found'}`);
+        debug(`- window.authOperations: ${typeof window.authOperations !== 'undefined' ? 'Available' : 'Not found'}`);
+      }, 1000);
+
+      debug('All event listeners set up');
+    });
+
+    // Global error handler
+    window.addEventListener('error', function(e) {
+      debug(`JavaScript Error: ${e.message} at ${e.filename}:${e.lineno}`);
+      showMessage(`JavaScript Error: ${e.message}`, 'error');
+    });
+
+    debug('Script loaded');
+  </script>
+</body>
+</html>

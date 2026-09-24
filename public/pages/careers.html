@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Careers | MentorBridge</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+</head>
+<body data-page="careers">
+  <header class="site-header">
+    <div class="container navbar">
+      <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a>
+      <div class="nav-actions">
+        <a class="btn btn-outline" href="login.html">Log in</a>
+        <a class="btn btn-secondary" href="register.html">Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding:3rem 0 5rem;">
+    <div class="container" style="max-width:800px;">
+      <div class="section-intro">
+        <span class="section-label">Careers at MentorBridge</span>
+        <h1>Help us build the future of mentorship</h1>
+        <p>MentorBridge is on a mission to make professional mentorship accessible to everyone — regardless of background, location, or career stage. We're a small, focused team that moves fast, cares deeply about users, and believes the right mentor at the right time changes lives.</p>
+      </div>
+
+      <div style="margin:3rem 0;">
+        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&q=80&fit=crop" alt="Team collaborating" loading="lazy" style="width:100%;border-radius:var(--radius-xl);height:320px;object-fit:cover;" />
+      </div>
+
+      <section style="margin-bottom:3rem;">
+        <h2>Why join us</h2>
+        <ul class="why-list" style="margin-top:1.25rem;">
+          <li><span class="why-check">✓</span><div><strong>Mission-driven work</strong><p>Every feature you build directly improves someone's career trajectory. The impact is real and measurable.</p></div></li>
+          <li><span class="why-check">✓</span><div><strong>Small team, big ownership</strong><p>You'll have genuine ownership over what you build — no bureaucracy, no endless approval chains.</p></div></li>
+          <li><span class="why-check">✓</span><div><strong>Remote-friendly</strong><p>We're headquartered in Accra, Ghana, but open to talent across Africa and beyond.</p></div></li>
+          <li><span class="why-check">✓</span><div><strong>Learning culture</strong><p>Every team member has a personal learning budget and access to MentorBridge mentors themselves.</p></div></li>
+        </ul>
+      </section>
+
+      <section style="margin-bottom:3rem;">
+        <h2>Open roles</h2>
+        <div class="job-list" style="margin-top:1.5rem;">
+          <div class="job-card">
+            <div class="job-card-meta">
+              <h3>Full-Stack Engineer</h3>
+              <span class="badge badge-secondary">Engineering</span>
+              <span class="badge badge-primary">Remote · Ghana</span>
+            </div>
+            <p>We're looking for a full-stack engineer comfortable with Node.js/Express on the backend and vanilla JS or a modern framework on the frontend. You'll work on core platform features — matching, dashboards, and resource tooling.</p>
+            <a class="btn btn-outline" href="mailto:careers@mentorbridge.com?subject=Application: Full-Stack Engineer">Apply →</a>
+          </div>
+          <div class="job-card">
+            <div class="job-card-meta">
+              <h3>Product Designer</h3>
+              <span class="badge badge-secondary">Design</span>
+              <span class="badge badge-primary">Remote · Africa</span>
+            </div>
+            <p>We need a product designer who cares deeply about clarity and accessibility. You'll own the user experience end-to-end — from research and wireframes to final UI. Figma proficiency required.</p>
+            <a class="btn btn-outline" href="mailto:careers@mentorbridge.com?subject=Application: Product Designer">Apply →</a>
+          </div>
+          <div class="job-card">
+            <div class="job-card-meta">
+              <h3>Community &amp; Partnerships Lead</h3>
+              <span class="badge badge-secondary">Growth</span>
+              <span class="badge badge-primary">Accra, Ghana</span>
+            </div>
+            <p>Build and nurture the MentorBridge community — recruit mentors, partner with universities and companies, and help us grow to the next 10,000 users. Strong communication and relationship skills essential.</p>
+            <a class="btn btn-outline" href="mailto:careers@mentorbridge.com?subject=Application: Community Lead">Apply →</a>
+          </div>
+        </div>
+        <p style="margin-top:2rem;color:var(--color-text-muted);">Don't see a role that fits? Send us an open application at <a href="mailto:careers@mentorbridge.com">careers@mentorbridge.com</a> — we're always interested in exceptional people.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a>
+        <p>Mentorship for everyone.</p>
+      </div>
+      <div class="footer-col"><h3>Company</h3><a href="blog.html">Blog</a><a href="careers.html">Careers</a></div>
+      <div class="footer-col"><h3>Legal</h3><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+    </div>
+    <div class="container footer-bottom"><p>© 2026 MentorBridge. Mentorship for everyone.</p></div>
+  </footer>
+
+  <script src="../js/theme.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/chat.js"></script>
+</body>
+</html>

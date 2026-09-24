@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find a Mentor | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/unified-design.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    /* ── Page layout ── */
+    .dir-page { background: var(--color-background); min-height: 100vh; }
+
+    /* ── Page hero ── */
+    .dir-hero {
+      background: var(--color-primary);
+      padding: 3rem 0 2.5rem;
+      color: #fff;
+    }
+    .dir-hero h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; color: #fff; margin: 0 0 0.5rem;
+      letter-spacing: -0.025em;
+    }
+    .dir-hero p { color: rgba(255,255,255,0.75); font-size: 1rem; margin: 0 0 1.75rem; max-width: 540px; }
+    .dir-search-bar {
+      display: flex; align-items: center; gap: 0;
+      background: #fff; border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg); max-width: 620px;
+      overflow: hidden;
+    }
+    .dir-search-bar .search-icon { padding: 0 1rem; color: var(--color-text-muted); font-size: 1rem; flex-shrink: 0; }
+    .dir-search-bar input {
+      flex: 1; border: none; outline: none; padding: 0.9rem 0.5rem 0.9rem 0;
+      font-size: 0.9rem; font-family: inherit; color: var(--color-text);
+      background: transparent;
+    }
+    .dir-search-bar input::placeholder { color: var(--color-text-light); }
+    .dir-search-bar button { flex-shrink: 0; padding: 0.9rem 1.5rem; background: var(--color-secondary); color: var(--color-primary); border: none; font-weight: 700; font-size: 0.875rem; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+    .dir-search-bar button:hover { background: var(--color-secondary-dark); }
+    .dir-hero-stats { display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .dir-hero-stat { font-size: 0.82rem; color: rgba(255,255,255,0.65); }
+    .dir-hero-stat strong { color: #fff; display: block; font-size: 1.1rem; font-weight: 700; }
+
+    /* ── Main body ── */
+    .dir-body { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; padding: 2rem 0 4rem; align-items: start; }
+
+    /* ── Filter sidebar ── */
+    .dir-filters {
+      background: var(--color-card); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-xl); padding: 1.5rem;
+      position: sticky; top: calc(80px + 1rem);
+      box-shadow: var(--shadow-sm);
+    }
+    .dir-filter-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .dir-filter-header h3 { font-size: 0.9rem; font-weight: 700; color: var(--color-primary); margin: 0; font-family: 'Poppins', sans-serif; }
+    .dir-filter-clear { font-size: 0.75rem; color: var(--color-secondary-dark); font-weight: 600; background: none; border: none; cursor: pointer; padding: 0; }
+    .dir-filter-clear:hover { color: var(--color-primary); }
+    .dir-filter-group { margin-bottom: 1.25rem; }
+    .dir-filter-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+    .dir-filter-group select, .dir-filter-group input { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-background); color: var(--color-text); font-size: 0.82rem; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .dir-filter-group select:focus, .dir-filter-group input:focus { border-color: var(--color-primary); }
+
+    /* ── Mentor panel ── */
+    .dir-panel {}
+    .dir-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .dir-result-count { font-size: 0.85rem; color: var(--color-text-muted); }
+    .dir-result-count strong { color: var(--color-primary); }
+    .dir-sort { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .dir-sort label { color: var(--color-text-muted); font-weight: 500; }
+    .dir-sort select { padding: 0.45rem 0.85rem; border: 1.5px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-card); color: var(--color-text); font-size: 0.82rem; font-family: inherit; outline: none; }
+
+    /* ── Mentor card ── */
+    .dir-mentor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+    .dir-mentor-card {
+      background: var(--color-card); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-xl); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+      display: flex; flex-direction: column;
+    }
+    .dir-mentor-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: rgba(43, 45, 66,0.2); }
+    .dir-mentor-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--color-secondary), var(--color-secondary-light)); transform: scaleX(0); transform-origin: left; transition: transform 0.2s; }
+    .dir-mentor-card:hover::before { transform: scaleX(1); }
+    .dir-card-img { width: 100%; height: 180px; overflow: hidden; position: relative; flex-shrink: 0; }
+    .dir-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .dir-mentor-card:hover .dir-card-img img { transform: scale(1.05); }
+    .dir-card-availability {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.65rem;
+      border-radius: var(--radius-full); backdrop-filter: blur(6px);
+    }
+    .avail-available { background: rgba(35,138,83,0.9); color: #fff; }
+    .avail-limited { background: rgba(215,140,21,0.9); color: #fff; }
+    .dir-card-body { padding: 1.1rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+    .dir-card-top { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .dir-card-avatar { width: 48px; height: 48px; border-radius: 14px; object-fit: cover; flex-shrink: 0; box-shadow: 0 3px 10px rgba(26,0,26,0.12); }
+    .dir-card-meta h3 { font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin: 0 0 0.15rem; }
+    .dir-card-meta p { font-size: 0.75rem; color: var(--color-text-muted); margin: 0; }
+    .dir-card-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
+    .dir-card-bio { font-size: 0.78rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 0.85rem; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .dir-card-skills { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 1rem; }
+    .dir-skill-tag { background: rgba(26,0,26,0.06); color: var(--color-primary); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); font-size: 0.68rem; font-weight: 500; }
+    .dir-card-footer { display: flex; gap: 0.5rem; padding-top: 0.85rem; border-top: 1px solid var(--color-border-light); }
+    .dir-card-footer .btn { flex: 1; }
+    .dir-conn-state { font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: var(--radius-full); text-align: center; }
+    .conn-pending { background: rgba(215,140,21,0.1); color: #b07d10; }
+    .conn-connected { background: rgba(35,138,83,0.1); color: #238a53; }
+    .conn-declined { background: rgba(192,57,43,0.1); color: #c0392b; }
+    .dir-match-badge { position: absolute; top: 0.75rem; left: 0.75rem; background: rgba(26,0,26,0.85); color: var(--color-secondary); font-size: 0.68rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: var(--radius-full); backdrop-filter: blur(6px); }
+
+    /* ── Section headings ── */
+    .dir-section-title { font-family: 'Poppins', sans-serif; font-size: 1rem; font-weight: 700; color: var(--color-primary); margin: 0 0 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .dir-section-title span { font-size: 0.75rem; font-weight: 500; color: var(--color-text-muted); }
+
+    /* ── Empty / Error / Loading ── */
+    .dir-state { text-align: center; padding: 3rem 1rem; }
+    .dir-state-icon { font-size: 3rem; opacity: 0.4; margin-bottom: 1rem; }
+    .dir-state h3 { font-size: 1.05rem; font-weight: 700; color: var(--color-primary); margin: 0 0 0.4rem; }
+    .dir-state p { font-size: 0.875rem; color: var(--color-text-muted); margin: 0 0 1.25rem; }
+    .dir-skeleton { background: linear-gradient(90deg, var(--color-border-light) 25%, var(--color-border) 50%, var(--color-border-light) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-md); }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .dir-skeleton-card { height: 320px; border-radius: var(--radius-xl); }
+
+    /* ── Mobile filter toggle ── */
+    .dir-filter-toggle { display: none; width: 100%; margin-bottom: 1rem; }
+
+    /* ── Mobile ── */
+    @media (max-width: 1000px) {
+      .dir-body { grid-template-columns: 1fr; }
+      .dir-filters { position: static; }
+    }
+    @media (max-width: 700px) {
+      .dir-filter-toggle { display: flex; }
+      .dir-filters { display: none; }
+      .dir-filters.open { display: block; }
+      .dir-search-bar { max-width: 100%; }
+      .dir-hero { padding: 2rem 0 1.75rem; }
+      .dir-mentor-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="mentor-directory" class="dir-page">
+
+<!-- NAVBAR -->
+<header class="site-header" id="navbar">
+  <div class="container navbar">
+    <a class="brand" href="../index.html">
+      <img src="../assets/logo-new.jpg" alt="MentorBridge logo" />
+      <span>mentor<span class="brand-accent">bridge</span></span>
+    </a>
+    <button id="menuToggle" class="menu-toggle btn btn-ghost" type="button" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <nav id="navLinks" class="nav-links" aria-label="Main navigation">
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#how-it-works">How it works</a>
+      <a href="../index.html#opportunities-preview">Opportunities</a>
+      <a href="../index.html#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a class="btn btn-outline" href="auth.html">Log in</a>
+      <a class="btn btn-secondary" href="auth.html?mode=register">Get started</a>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE HERO -->
+<section class="dir-hero">
+  <div class="container">
+    <h1>Find Your Mentor</h1>
+    <p>Discover mentors who match your interests, goals, and career direction.</p>
+    <div class="dir-search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="search" id="dirSearch" placeholder="Search by name, expertise, industry…" aria-label="Search mentors" />
+      <button type="button" id="dirSearchBtn">Search</button>
+    </div>
+    <div class="dir-hero-stats">
+      <div class="dir-hero-stat"><strong id="heroMentorCount">156</strong>Verified mentors</div>
+      <div class="dir-hero-stat"><strong>15+</strong>Industries</div>
+      <div class="dir-hero-stat"><strong>Free</strong>For mentees</div>
+    </div>
+  </div>
+</section>
+
+<main class="container dir-body">
+
+  <!-- FILTER SIDEBAR -->
+  <button class="btn btn-outline dir-filter-toggle" id="filterToggleBtn" type="button">⚙️ Filters</button>
+
+  <aside class="dir-filters" id="dirFilters" aria-label="Filter mentors">
+    <div class="dir-filter-header">
+      <h3>Filters</h3>
+      <button class="dir-filter-clear" id="clearFiltersBtn" type="button">Clear all</button>
+    </div>
+
+    <div class="dir-filter-group">
+      <label for="filterIndustry">Industry</label>
+      <select id="filterIndustry">
+        <option value="">All industries</option>
+        <option value="Technology">Technology</option>
+        <option value="Finance">Finance</option>
+        <option value="Banking">Banking</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Education">Education</option>
+        <option value="Legal">Legal</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Telecommunications">Telecommunications</option>
+        <option value="Development">Development &amp; Policy</option>
+        <option value="Manufacturing">Manufacturing</option>
+      </select>
+    </div>
+
+    <div class="dir-filter-group">
+      <label for="filterCareerField">Career field</label>
+      <select id="filterCareerField">
+        <option value="">All career fields</option>
+        <option value="Software Engineering">Software Engineering</option>
+        <option value="Banking &amp; Finance">Banking &amp; Finance</option>
+        <option value="Medicine">Medicine</option>
+        <option value="Law">Law</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Economics">Economics</option>
+        <option value="Operations">Operations</option>
+        <option value="Engineering">Engineering</option>
+      </select>
+    </div>
+
+    <div class="dir-filter-group">
+      <label for="filterExperience">Experience</label>
+      <select id="filterExperience">
+        <option value="">Any experience</option>
+        <option value="3">1 – 3 years</option>
+        <option value="5">4 – 7 years</option>
+        <option value="8">8+ years</option>
+      </select>
+    </div>
+
+    <div class="dir-filter-group">
+      <label for="filterAvailability">Availability</label>
+      <select id="filterAvailability">
+        <option value="">Any availability</option>
+        <option value="weekday">Weekdays</option>
+        <option value="weekend">Weekends</option>
+        <option value="evening">Evenings</option>
+      </select>
+    </div>
+
+    <div class="dir-filter-group">
+      <label for="filterSkill">Expertise / Skill</label>
+      <select id="filterSkill">
+        <option value="">All skills</option>
+        <option value="Programming">Programming</option>
+        <option value="Data Analysis">Data Analysis</option>
+        <option value="Leadership">Leadership</option>
+        <option value="Financial Analysis">Financial Analysis</option>
+        <option value="Design">Design</option>
+        <option value="Research">Research</option>
+        <option value="Project Management">Project Management</option>
+        <option value="Public Speaking">Public Speaking</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- MENTOR PANEL -->
+  <div class="dir-panel">
+
+    <!-- Toolbar -->
+    <div class="dir-toolbar">
+      <p class="dir-result-count" id="resultCount">Loading mentors…</p>
+      <div class="dir-sort">
+        <label for="sortBy">Sort:</label>
+        <select id="sortBy">
+          <option value="recommended">Recommended</option>
+          <option value="experience">Most experience</option>
+          <option value="rating">Highest rated</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Mentor grid -->
+    <div id="mentorGrid" class="dir-mentor-grid" aria-live="polite" aria-label="Mentor results">
+      <!-- Skeleton loading state -->
+      <div class="dir-skeleton dir-skeleton-card"></div>
+      <div class="dir-skeleton dir-skeleton-card"></div>
+      <div class="dir-skeleton dir-skeleton-card"></div>
+      <div class="dir-skeleton dir-skeleton-card"></div>
+      <div class="dir-skeleton dir-skeleton-card"></div>
+      <div class="dir-skeleton dir-skeleton-card"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- CONNECT MODAL -->
+<div id="connectModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="connectModalTitle">
+  <div class="modal-card">
+    <button class="modal-close btn btn-ghost" id="connectModalClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Connect with Mentor</span>
+    <h2 id="connectModalTitle" style="margin:.3rem 0 .5rem;font-size:1.3rem;">Connect with Sarah Johnson?</h2>
+    <p id="connectModalDesc" style="color:var(--color-text-muted);font-size:.875rem;margin-bottom:1.5rem;line-height:1.7;"></p>
+    <div class="form-group">
+      <label class="form-label" for="connectMessage">Your message <span style="color:var(--color-text-muted);font-weight:400;">(optional)</span></label>
+      <textarea class="form-textarea" id="connectMessage" rows="3" placeholder="Introduce yourself and explain what you're hoping to gain from this mentorship…"></textarea>
+    </div>
+    <div id="connectFeedback" style="font-size:.875rem;min-height:1.2rem;padding:.25rem 0;" aria-live="polite"></div>
+    <div style="display:flex;gap:.75rem;margin-top:.25rem;">
+      <button class="btn btn-primary" style="flex:1;" id="sendConnectBtn" type="button">Send Connection Request</button>
+      <button class="btn btn-outline" style="flex:1;" id="cancelConnectBtn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="successModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="text-align:center;max-width:420px;">
+    <span style="font-size:3rem;display:block;margin-bottom:1rem;">🎉</span>
+    <h2 style="margin-bottom:.5rem;font-size:1.3rem;" id="successModalTitle">Connection Request Sent!</h2>
+    <p id="successModalDesc" style="color:var(--color-text-muted);font-size:.875rem;margin-bottom:1.75rem;line-height:1.7;"></p>
+    <div style="display:flex;flex-direction:column;gap:.75rem;">
+      <a href="student-dashboard.html" class="btn btn-primary">View My Dashboard</a>
+      <button class="btn btn-outline" id="successModalClose" type="button">Browse more mentors</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a class="brand" href="../index.html">
+        <img src="../assets/logo-new.jpg" alt="MentorBridge" />
+        <span>mentor<span class="brand-accent">bridge</span></span>
+      </a>
+      <p>Connect. Learn. Grow.</p>
+    </div>
+    <div class="footer-col">
+      <h3>Platform</h3>
+      <a href="mentor-directory.html">Find a mentor</a>
+      <a href="auth.html?mode=register&role=mentor">Become a mentor</a>
+      <a href="resource-centre.html">Resources</a>
+    </div>
+    <div class="footer-col">
+      <h3>Company</h3>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#faq">FAQ</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h3>Legal</h3>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="terms.html">Terms of service</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© 2026 MentorBridge. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-auth.js"></script>
+<script src="../js/theme.js"></script>
+<script src="../js/matching.js"></script>
+<script>
+/* ── Inline mentor data (mirrors backend mockData.js) ── */
+var MENTORS = [
+  { id:'m1', name:'Dr. Kwame Asante', photo:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop', company:'Google Ghana', position:'Senior Software Engineer', biography:'Computer Science graduate from University of Ghana with 12 years in tech. Passionate about helping students navigate careers in software engineering and product development across Africa.', yearsExperience:12, skills:['JavaScript','Python','System Design','Leadership','Cloud Architecture'], industries:['Technology','Software Development'], availability:'Weekends, Tuesday evenings', rating:4.9, careerField:'Software Engineering' },
+  { id:'m2', name:'Abena Darko', photo:'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop', company:'Ecobank Ghana', position:'VP, Corporate Banking', biography:'Finance professional with expertise in corporate banking and investment. Dedicated to mentoring business students aspiring to careers in banking and finance.', yearsExperience:15, skills:['Financial Analysis','Corporate Banking','Investment','Networking','Leadership'], industries:['Banking','Finance'], availability:'Wednesday afternoons, Saturday mornings', rating:4.8, careerField:'Banking & Finance' },
+  { id:'m3', name:'Prof. Efua Mensah', photo:'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop', company:'UG Medical School', position:'Associate Professor of Medicine', biography:'Practicing physician and educator guiding pre-med and medical students through academic challenges, residency applications, and clinical career paths.', yearsExperience:18, skills:['Clinical Medicine','Research','Academic Writing','Patient Care','Mentorship'], industries:['Healthcare','Education'], availability:'Friday afternoons', rating:4.9, careerField:'Medicine' },
+  { id:'m4', name:'Samuel Tetteh', photo:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop', company:'MTN Ghana', position:'Head of Digital Marketing', biography:'Marketing strategist with experience building digital campaigns across West Africa. Helps students break into marketing, communications, and brand management.', yearsExperience:13, skills:['Digital Marketing','Brand Strategy','Social Media','Analytics','Content Creation'], industries:['Telecommunications','Marketing'], availability:'Monday evenings, Thursday evenings', rating:4.7, careerField:'Marketing' },
+  { id:'m5', name:'Grace Akoto', photo:'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=400&fit=crop', company:'Andela Ghana', position:'Engineering Manager', biography:'Full-stack engineer turned engineering leader. Focuses on helping CS and IT students develop technical skills and prepare for remote work opportunities.', yearsExperience:10, skills:['React','Node.js','Team Leadership','Agile','Technical Interviews'], industries:['Technology','Remote Work'], availability:'Tuesday and Thursday evenings', rating:4.8, careerField:'Software Engineering' },
+  { id:'m6', name:'Nana Ama Serwaa', photo:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop', company:'Ghana Legal Associates', position:'Senior Partner', biography:'Corporate lawyer specializing in commercial law and intellectual property. Mentors law students on career paths in private practice and corporate legal departments.', yearsExperience:16, skills:['Corporate Law','Legal Research','Negotiation','Contract Drafting','Career Guidance'], industries:['Legal','Corporate'], availability:'Saturday afternoons', rating:4.9, careerField:'Law' },
+  { id:'m7', name:'Michael Adom', photo:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop', company:'Voltic Ghana', position:'Supply Chain Director', biography:'Operations and supply chain expert with experience in FMCG across West Africa. Guides engineering and business students interested in operations management.', yearsExperience:14, skills:['Supply Chain','Operations','Project Management','Lean Six Sigma','Leadership'], industries:['Manufacturing','FMCG'], availability:'Wednesday evenings', rating:4.6, careerField:'Operations' },
+  { id:'m8', name:'Dr. Akosua Frimpong', photo:'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop', company:'World Bank Ghana Office', position:'Economist', biography:'Development economist working on education and youth employment projects. Mentors economics and development studies students on research and policy careers.', yearsExperience:11, skills:['Econometrics','Policy Analysis','Research Methods','Data Analysis','Academic Writing'], industries:['Development','Public Policy'], availability:'Friday mornings, Sunday afternoons', rating:4.8, careerField:'Economics' }
+];
+
+var connections = {}; // mentorId -> 'pending' | 'connected' | 'declined'
+var pendingConnectId = null;
+
+function getAvailabilityLabel(avail) {
+  if (!avail) return '';
+  var a = avail.toLowerCase();
+  if (a.includes('weekend') || a.includes('saturday') || a.includes('sunday')) return 'Weekends';
+  if (a.includes('evening') || a.includes('tuesday') || a.includes('thursday') || a.includes('monday')) return 'Evenings';
+  if (a.includes('morning') || a.includes('afternoon')) return 'Daytime';
+  return 'Available';
+}
+
+function matchesFilters(m, filters) {
+  var q = filters.search.toLowerCase();
+  if (q) {
+    var hay = (m.name + ' ' + m.position + ' ' + m.company + ' ' + (m.skills||[]).join(' ') + ' ' + (m.industries||[]).join(' ')).toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  if (filters.industry && !(m.industries||[]).some(function(i){ return i.toLowerCase().includes(filters.industry.toLowerCase()); })) return false;
+  if (filters.careerField && m.careerField && !m.careerField.toLowerCase().includes(filters.careerField.toLowerCase().replace('&amp;','&'))) return false;
+  if (filters.experience) {
+    var minExp = parseInt(filters.experience, 10);
+    if (m.yearsExperience < minExp) return false;
+  }
+  if (filters.skill) {
+    var sk = filters.skill.toLowerCase();
+    if (!(m.skills||[]).some(function(s){ return s.toLowerCase().includes(sk); })) return false;
+  }
+  if (filters.availability) {
+    var fa = filters.availability;
+    var ma = (m.availability||'').toLowerCase();
+    if (fa === 'weekday' && !ma.match(/mon|tue|wed|thu|fri/)) return false;
+    if (fa === 'weekend' && !ma.match(/sat|sun|weekend/)) return false;
+    if (fa === 'evening' && !ma.includes('evening')) return false;
+  }
+  return true;
+}
+
+function getMatchScore(m, session) {
+  if (!session || !session.role) return null;
+  if (typeof MentorMatching === 'undefined') return null;
+  var student = { programme: m.careerField, careerField: session.careerField || m.careerField, skills: session.skills || [], interests: session.interests || (m.industries||[]), careerGoals: session.careerGoals || [] };
+  var score = MentorMatching.calculateScore(student, m);
+  return score > 50 ? score : null;
+}
+
+function renderCard(m, session, showScore) {
+  var conn = connections[m.id] || null;
+  var topSkills = (m.skills||[]).slice(0,3);
+  var availLabel = getAvailabilityLabel(m.availability);
+  var availClass = availLabel === 'Available' ? 'avail-available' : 'avail-limited';
+  var score = showScore ? getMatchScore(m, session) : null;
+
+  var actionHtml = '';
+  if (conn === 'pending') {
+    actionHtml = '<span class="dir-conn-state conn-pending" style="display:flex;align-items:center;justify-content:center;padding:.55rem 0;">⏳ Request Pending</span>';
+  } else if (conn === 'connected') {
+    actionHtml = '<span class="dir-conn-state conn-connected" style="display:flex;align-items:center;justify-content:center;padding:.55rem 0;">✓ Connected</span>';
+  } else if (conn === 'declined') {
+    actionHtml = '<span class="dir-conn-state conn-declined" style="display:flex;align-items:center;justify-content:center;padding:.55rem 0;">✗ Declined</span>';
+  } else {
+    actionHtml = '<button class="btn btn-secondary btn-sm connect-btn" style="flex:1;" data-mentor-id="'+m.id+'" data-mentor-name="'+m.name+'" data-mentor-expertise="'+topSkills.join(', ')+'">Connect</button>';
+  }
+
+  return '<article class="dir-mentor-card">'
+    + '<div class="dir-card-img">'
+    + '<img src="'+m.photo+'" alt="'+m.name+'" loading="lazy" />'
+    + (score ? '<span class="dir-match-badge">'+score+'% match</span>' : '')
+    + '<span class="dir-card-availability '+availClass+'">'+availLabel+'</span>'
+    + '</div>'
+    + '<div class="dir-card-body">'
+    + '<div class="dir-card-top">'
+    + '<img class="dir-card-avatar" src="'+m.photo+'" alt="'+m.name+'" loading="lazy" />'
+    + '<div class="dir-card-meta">'
+    + '<h3>'+m.name+'</h3>'
+    + '<p>'+m.position+' · '+m.company+'</p>'
+    + '</div></div>'
+    + '<div class="dir-card-badges">'
+    + '<span class="badge badge-secondary" style="font-size:.65rem;">'+m.careerField+'</span>'
+    + '<span class="badge badge-primary" style="font-size:.65rem;">'+m.yearsExperience+'+ yrs</span>'
+    + (m.rating >= 4.8 ? '<span class="badge badge-accent" style="font-size:.65rem;">⭐ '+m.rating+'</span>' : '')
+    + '</div>'
+    + '<p class="dir-card-bio">'+m.biography+'</p>'
+    + '<div class="dir-card-skills">'+topSkills.map(function(s){ return '<span class="dir-skill-tag">'+s+'</span>'; }).join('')+'</div>'
+    + '<div class="dir-card-footer">'
+    + '<a href="mentor-profile.html?id='+m.id+'" class="btn btn-outline btn-sm" style="flex:1;">View Profile</a>'
+    + actionHtml
+    + '</div>'
+    + '</div></article>';
+}
+
+function renderGrid(mentors, session) {
+  var grid = document.getElementById('mentorGrid');
+  var count = document.getElementById('resultCount');
+  if (!grid) return;
+  if (!mentors.length) {
+    grid.innerHTML = '<div class="dir-state" style="grid-column:1/-1;">'
+      + '<div class="dir-state-icon">🔍</div>'
+      + '<h3>No mentors found</h3>'
+      + '<p>Try changing your search or filters to discover more mentors.</p>'
+      + '<button class="btn btn-outline" id="clearFromEmpty" type="button">Clear filters</button>'
+      + '</div>';
+    var ce = document.getElementById('clearFromEmpty');
+    if (ce) ce.addEventListener('click', clearFilters);
+    if (count) count.innerHTML = '<strong>0</strong> mentors found';
+    return;
+  }
+  var hasSession = session && session.role;
+  grid.innerHTML = mentors.map(function(m){ return renderCard(m, session, hasSession); }).join('');
+  if (count) count.innerHTML = '<strong>'+mentors.length+'</strong> mentor'+(mentors.length!==1?'s':'')+' found';
+
+  // Bind connect buttons
+  grid.querySelectorAll('.connect-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.dataset.mentorId;
+      var name = btn.dataset.mentorName;
+      var exp = btn.dataset.mentorExpertise;
+      pendingConnectId = id;
+      var modal = document.getElementById('connectModal');
+      var title = document.getElementById('connectModalTitle');
+      var desc = document.getElementById('connectModalDesc');
+      if (title) title.textContent = 'Connect with '+name+'?';
+      if (desc) desc.textContent = name+' specialises in '+exp+'. Send a connection request and they will get back to you.';
+      document.getElementById('connectMessage').value = '';
+      document.getElementById('connectFeedback').textContent = '';
+      if (modal) modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+}
+
+function getFilters() {
+  return {
+    search: document.getElementById('dirSearch') ? document.getElementById('dirSearch').value.trim() : '',
+    industry: document.getElementById('filterIndustry') ? document.getElementById('filterIndustry').value : '',
+    careerField: document.getElementById('filterCareerField') ? document.getElementById('filterCareerField').value : '',
+    experience: document.getElementById('filterExperience') ? document.getElementById('filterExperience').value : '',
+    availability: document.getElementById('filterAvailability') ? document.getElementById('filterAvailability').value : '',
+    skill: document.getElementById('filterSkill') ? document.getElementById('filterSkill').value : ''
+  };
+}
+
+function getSortFn(sort) {
+  if (sort === 'experience') return function(a,b){ return b.yearsExperience - a.yearsExperience; };
+  if (sort === 'rating') return function(a,b){ return b.rating - a.rating; };
+  return function(a,b){ return b.rating - a.rating; }; // recommended = highest rated
+}
+
+function getUpdatedMentors() {
+  var mentors = MENTORS.map(function(m){ return Object.assign({}, m); });
+  try {
+    var storedProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
+    mentors = mentors.map(function(m){
+      if (storedProfiles[m.id]) {
+        return Object.assign({}, m, storedProfiles[m.id]);
+      }
+      return m;
+    });
+  } catch(e){}
+  return mentors;
+}
+
+function applyAndRender() {
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
+  var filters = getFilters();
+  var sort = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'recommended';
+  var allList = getUpdatedMentors();
+  var filtered = allList.filter(function(m){ return matchesFilters(m, filters); });
+  filtered.sort(getSortFn(sort));
+  // Try API first, fall back to local data
+  var qs = [];
+  if (filters.search) qs.push('search='+encodeURIComponent(filters.search));
+  if (filters.industry) qs.push('industry='+encodeURIComponent(filters.industry));
+  if (filters.careerField) qs.push('careerField='+encodeURIComponent(filters.careerField));
+  if (filters.experience) qs.push('minExperience='+encodeURIComponent(filters.experience));
+  if (filters.skill) qs.push('skill='+encodeURIComponent(filters.skill));
+  fetch('/api/mentors'+(qs.length?'?'+qs.join('&'):''))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.mentors && data.mentors.length) { filtered = data.mentors; }
+      renderGrid(filtered, session);
+    })
+    .catch(function(){ renderGrid(filtered, session); });
+}
+
+function clearFilters() {
+  ['dirSearch','filterIndustry','filterCareerField','filterExperience','filterAvailability','filterSkill'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  applyAndRender();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Inject user menu if logged in
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
+  if (session.role) {
+    var navActions = document.getElementById('navActions');
+    if (navActions) {
+      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+      navActions.innerHTML = '<a class="btn btn-outline" href="'+dashUrl+'">Dashboard</a>';
+    }
+  }
+
+  // Mobile menu
+  var menuToggle = document.getElementById('menuToggle');
+  var navLinks = document.getElementById('navLinks');
+  if (menuToggle && navLinks) {
+    menuToggle.addEventListener('click', function(){
+      navLinks.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', navLinks.classList.contains('open'));
+    });
+  }
+
+  // Mobile filter toggle
+  var filterToggleBtn = document.getElementById('filterToggleBtn');
+  var filtersEl = document.getElementById('dirFilters');
+  if (filterToggleBtn && filtersEl) {
+    filterToggleBtn.addEventListener('click', function(){ filtersEl.classList.toggle('open'); });
+  }
+
+  // Clear filters
+  var clearBtn = document.getElementById('clearFiltersBtn');
+  if (clearBtn) clearBtn.addEventListener('click', clearFilters);
+
+  // Search
+  var searchInput = document.getElementById('dirSearch');
+  var searchBtn = document.getElementById('dirSearchBtn');
+  var debounce;
+  if (searchInput) {
+    searchInput.addEventListener('input', function(){ clearTimeout(debounce); debounce = setTimeout(applyAndRender, 280); });
+    searchInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') applyAndRender(); });
+  }
+  if (searchBtn) searchBtn.addEventListener('click', applyAndRender);
+
+  // Filter/sort changes
+  ['filterIndustry','filterCareerField','filterExperience','filterAvailability','filterSkill','sortBy'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyAndRender);
+  });
+
+  // URL param: ?industry=Technology
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('industry')) {
+    var ind = document.getElementById('filterIndustry');
+    if (ind) ind.value = urlParams.get('industry');
+  }
+  if (urlParams.get('search')) {
+    var si = document.getElementById('dirSearch');
+    if (si) si.value = urlParams.get('search');
+  }
+
+  // Initial render
+  applyAndRender();
+
+  // Connect modal
+  var connectModal = document.getElementById('connectModal');
+  var successModal = document.getElementById('successModal');
+  var sendConnectBtn = document.getElementById('sendConnectBtn');
+  var cancelConnectBtn = document.getElementById('cancelConnectBtn');
+  var connectModalClose = document.getElementById('connectModalClose');
+  var successModalClose = document.getElementById('successModalClose');
+
+  function closeConnectModal() { connectModal.classList.add('hidden'); document.body.style.overflow = ''; }
+  function closeSuccessModal() { successModal.classList.add('hidden'); document.body.style.overflow = ''; }
+
+  if (cancelConnectBtn) cancelConnectBtn.addEventListener('click', closeConnectModal);
+  if (connectModalClose) connectModalClose.addEventListener('click', closeConnectModal);
+  if (successModalClose) successModalClose.addEventListener('click', closeSuccessModal);
+
+  [connectModal, successModal].forEach(function(m){
+    if (m) m.addEventListener('click', function(e){ if (e.target === m) { m.classList.add('hidden'); document.body.style.overflow = ''; } });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+      closeConnectModal(); closeSuccessModal();
+    }
+  });
+
+  if (sendConnectBtn) {
+    sendConnectBtn.addEventListener('click', function(){
+      if (!pendingConnectId) return;
+      var fb = document.getElementById('connectFeedback');
+      sendConnectBtn.textContent = 'Sending…'; sendConnectBtn.disabled = true;
+      // Store connection state
+      connections[pendingConnectId] = 'pending';
+      setTimeout(function(){
+        closeConnectModal();
+        sendConnectBtn.textContent = 'Send Connection Request'; sendConnectBtn.disabled = false;
+        var mentor = MENTORS.find(function(m){ return m.id === pendingConnectId; });
+        var title = document.getElementById('successModalTitle');
+        var desc = document.getElementById('successModalDesc');
+        if (title) title.textContent = 'Connection Request Sent!';
+        if (desc) desc.textContent = 'Your request has been sent to '+(mentor?mentor.name:'your mentor')+'. You\'ll be notified once they respond. Check your dashboard for updates.';
+        successModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        // Re-render cards to show pending state
+        applyAndRender();
+      }, 900);
+    });
+  }
+});
+</script>
+</body>
+</html>

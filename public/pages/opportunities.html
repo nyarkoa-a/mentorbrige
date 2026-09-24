@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opportunities | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6fb; font-family: 'Inter', sans-serif; }
+    .db-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .db-sidebar { width: 260px; flex-shrink: 0; background: #1E202F; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform 0.3s ease; }
+    .db-sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-decoration: none; }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
+    .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
+    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #fff; }
+    .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .db-sidebar-overlay.open { display: block; }
+
+    .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .db-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0 2rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .db-header-left { display: flex; align-items: center; gap: 1rem; }
+    .db-menu-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #1E202F; padding: 0.3rem; }
+    .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
+    .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .db-icon-btn { position: relative; background: #f4f6fb; border: 1px solid #e8eaf0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.15s; text-decoration: none; color: inherit; }
+    .db-icon-btn:hover { background: #e8eaf0; }
+    .db-notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+
+    /* ── Page content ── */
+    .db-content { padding: 2rem; flex: 1; }
+
+    /* ── Page hero ── */
+    .opp-hero { background: var(--color-primary,#1E202F); border-radius: 16px; padding: 1.75rem 2rem; margin-bottom: 1.75rem; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+    .opp-hero h2 { font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0 0 0.3rem; }
+    .opp-hero p { font-size: 0.82rem; color: rgba(255,255,255,0.72); margin: 0; }
+    .opp-hero-search { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.55rem 0.85rem; min-width: 280px; }
+    .opp-hero-search input { border: none; background: transparent; outline: none; font-size: 0.82rem; font-family: inherit; color: #fff; width: 100%; }
+    .opp-hero-search input::placeholder { color: rgba(255,255,255,0.5); }
+    .opp-hero-search span { color: rgba(255,255,255,0.6); flex-shrink: 0; }
+
+    /* ── Body layout ── */
+    .opp-body { display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; align-items: start; }
+
+    /* ── Filter sidebar ── */
+    .opp-filters { background: #fff; border: 1px solid #e8eaf0; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 6px rgba(26,0,26,0.04); position: sticky; top: calc(68px + 1rem); }
+    .opp-filter-title { font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 700; color: #1E202F; margin: 0 0 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .opp-filter-group { margin-bottom: 1.25rem; }
+    .opp-filter-group:last-child { margin-bottom: 0; }
+    .opp-filter-group label { display: block; font-size: 0.72rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+    .opp-filter-group select { width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #e8eaf0; border-radius: 9px; background: #f8f9fc; font-size: 0.8rem; font-family: inherit; color: #1E202F; outline: none; }
+    .opp-filter-group select:focus { border-color: #2B2D42; }
+    .filter-toggle-btn { display: none; width: 100%; margin-bottom: 1rem; }
+
+    /* ── Tabs ── */
+    .opp-tabs { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .opp-tab { padding: 0.4rem 1rem; border: 1.5px solid #e8eaf0; border-radius: 20px; background: #f8f9fc; font-size: 0.78rem; font-weight: 600; color: #6b7280; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .opp-tab:hover { border-color: #2B2D42; color: #1E202F; }
+    .opp-tab.active { background: rgba(43, 45, 66,0.12); border-color: #2B2D42; color: #1E202F; }
+
+    /* ── Toolbar ── */
+    .opp-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .opp-count { font-size: 0.82rem; color: #6b7280; }
+    .opp-sort { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #6b7280; }
+    .opp-sort select { padding: 0.4rem 0.75rem; border: 1.5px solid #e8eaf0; border-radius: 9px; background: #fff; font-size: 0.78rem; font-family: inherit; color: #1E202F; outline: none; }
+
+    /* ── Opportunity card ── */
+    .opp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1.1rem; }
+    .opp-card { background: #fff; border: 1px solid #e8eaf0; border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; box-shadow: 0 2px 6px rgba(26,0,26,0.04); transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s; position: relative; overflow: hidden; }
+    .opp-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#2B2D42,#EDF2F4); transform:scaleX(0); transform-origin:left; transition:transform 0.2s; }
+    .opp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(26,0,26,0.09); border-color: rgba(43, 45, 66,0.2); }
+    .opp-card:hover::before { transform: scaleX(1); }
+    .opp-card.expired { opacity: 0.7; }
+    .opp-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .opp-cat-badge { font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 20px; flex-shrink: 0; }
+    .cat-internship { background: rgba(74,144,226,0.1); color: #3a7bd5; }
+    .cat-job { background: rgba(26,0,26,0.08); color: #1E202F; }
+    .cat-scholarship { background: rgba(43, 45, 66,0.12); color: #1E202F; }
+    .cat-certification { background: rgba(35,138,83,0.1); color: #238a53; }
+    .cat-competition { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .cat-workshop { background: rgba(156,39,176,0.1); color: #7b1fa2; }
+    .cat-event { background: rgba(255,152,0,0.1); color: #e65100; }
+    .opp-save-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0.1rem 0.2rem; color: #9ca3af; transition: color 0.15s; flex-shrink: 0; }
+    .opp-save-btn.saved { color: #2B2D42; }
+    .opp-save-btn:hover { color: #2B2D42; }
+    .opp-card h3 { font-family: 'Poppins', sans-serif; font-size: 0.9rem; font-weight: 700; color: #1E202F; margin: 0 0 0.2rem; line-height: 1.3; }
+    .opp-org { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem; font-weight: 500; }
+    .opp-desc { font-size: 0.78rem; color: #444455; line-height: 1.6; flex: 1; margin-bottom: 0.85rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .opp-card-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+    .opp-meta-pill { font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 20px; background: #f4f6fb; color: #6b7280; }
+    .opp-deadline { font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; }
+    .deadline-soon { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .deadline-ok { background: rgba(35,138,83,0.1); color: #238a53; }
+    .deadline-expired { background: rgba(107,114,128,0.1); color: #6b7280; }
+    .opp-card-footer { display: flex; gap: 0.5rem; }
+    .opp-card-footer .btn { flex: 1; font-size: 0.78rem; }
+
+    /* ── Empty / loading ── */
+    .opp-empty { text-align: center; padding: 3rem 1rem; background: #fff; border-radius: 14px; border: 1px solid #e8eaf0; grid-column: 1/-1; }
+    .opp-empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.85rem; }
+    .opp-empty h3 { font-size: 1rem; font-weight: 700; color: #1E202F; margin: 0 0 0.35rem; }
+    .opp-empty p { font-size: 0.82rem; color: #6b7280; margin: 0 0 1.25rem; }
+    .opp-skel { height: 220px; border-radius: 14px; background: linear-gradient(90deg,#f0f2f7 25%,#e8eaf0 50%,#f0f2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+
+    /* ── Detail modal ── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(7,15,30,0.65); backdrop-filter: blur(4px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
+    .modal-card { background: #fff; border-radius: 24px; padding: 2rem 2.25rem; max-width: 600px; width: 100%; position: relative; box-shadow: 0 24px 70px rgba(26,0,26,0.16); max-height: 90vh; overflow-y: auto; animation: scaleIn 0.2s ease; }
+    @keyframes scaleIn { from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)} }
+    .modal-close { position: absolute; top: 0.85rem; right: 0.85rem; font-size: 1rem; color: #6b7280; padding: 0.3rem 0.5rem; border-radius: 6px; background: none; border: none; cursor: pointer; }
+    .modal-close:hover { color: #c0392b; background: rgba(192,57,43,0.08); }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid #f0f2f7; font-size: 0.875rem; gap: 1rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row .dl { color: #6b7280; flex-shrink: 0; }
+    .detail-row .dv { color: #1E202F; font-weight: 600; text-align: right; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1000px) { .opp-body { grid-template-columns: 1fr; } .opp-filters { position: static; } }
+    @media (max-width: 900px) { .db-sidebar{transform:translateX(-100%);} .db-sidebar.open{transform:translateX(0);} .db-main{margin-left:0;} .db-menu-btn{display:flex;} .filter-toggle-btn{display:flex;} .opp-filters{display:none;} .opp-filters.open{display:block;} }
+    @media (max-width: 640px) { .db-content{padding:1rem;} .opp-hero{padding:1.25rem;} .opp-hero-search{min-width:unset;width:100%;} .opp-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body data-page="opportunities">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay"></div>
+<div class="db-shell">
+
+  <aside class="db-sidebar" id="dbSidebar">
+    <a class="db-sidebar-brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge" /><span>mentor<span class="brand-accent">bridge</span></span></a>
+    <nav class="db-nav" id="sidebarNav"></nav>
+    <div class="db-sidebar-footer">
+      <div class="db-user-row">
+        <div class="db-user-avatar-initials" id="sidebarInitials">AB</div>
+        <div class="db-user-info"><strong id="sidebarName">Loading…</strong><span id="sidebarRole">Mentee</span></div>
+      </div>
+      <button class="db-logout-btn" id="logoutBtn" type="button"><span>🚪</span> Log out</button>
+    </div>
+  </aside>
+
+  <div class="db-main">
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="menuBtn" type="button">☰</button>
+        <div class="db-welcome"><h1>Opportunities</h1><p>Discover internships, scholarships, certifications, and more.</p></div>
+      </div>
+      <div class="db-header-right">
+        <a href="notifications.html" class="db-icon-btn">🔔<span class="db-notif-dot"></span></a>
+        <div class="db-header-avatar" id="headerAvatar">AB</div>
+      </div>
+    </header>
+
+    <main class="db-content">
+
+      <!-- Hero search -->
+      <div class="opp-hero">
+        <div>
+          <h2>Explore Opportunities</h2>
+          <p>Discover opportunities that can help you grow your skills and career.</p>
+        </div>
+        <div class="opp-hero-search">
+          <span>🔍</span>
+          <input type="search" id="oppSearch" placeholder="Search opportunities…" aria-label="Search opportunities" />
+        </div>
+      </div>
+
+      <!-- Tabs: All / Saved -->
+      <div class="opp-tabs" id="oppTabs">
+        <button class="opp-tab active" data-tab="all" type="button">All Opportunities</button>
+        <button class="opp-tab" data-tab="saved" type="button">Saved <span id="savedCount" style="font-size:.65rem;background:rgba(43, 45, 66,.15);color:#1E202F;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;">0</span></button>
+      </div>
+
+      <!-- Mobile filter toggle -->
+      <button class="btn btn-outline btn-sm filter-toggle-btn" id="filterToggleBtn" type="button">⚙️ Filters</button>
+
+      <div class="opp-body">
+
+        <!-- Filters -->
+        <aside class="opp-filters" id="oppFilters">
+          <p class="opp-filter-title">Filters</p>
+          <div class="opp-filter-group">
+            <label for="filterCat">Category</label>
+            <select id="filterCat">
+              <option value="">All categories</option>
+              <option value="Internship">Internship</option>
+              <option value="Job">Job</option>
+              <option value="Scholarship">Scholarship</option>
+              <option value="Certification">Certification</option>
+              <option value="Competition">Competition</option>
+              <option value="Workshop">Workshop</option>
+              <option value="Event">Event</option>
+            </select>
+          </div>
+          <div class="opp-filter-group">
+            <label for="filterLoc">Location</label>
+            <select id="filterLoc">
+              <option value="">All locations</option>
+              <option value="Remote">Remote</option>
+              <option value="On-site">On-site</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+          <div class="opp-filter-group">
+            <label for="filterDeadline">Deadline</label>
+            <select id="filterDeadline">
+              <option value="">Any deadline</option>
+              <option value="soon">Closing soon (7 days)</option>
+              <option value="month">This month</option>
+              <option value="later">Later</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="clearFiltersBtn" style="width:100%;margin-top:.5rem;" type="button">Clear filters</button>
+        </aside>
+
+        <!-- Main panel -->
+        <div>
+          <div class="opp-toolbar">
+            <p class="opp-count" id="oppCount">Loading…</p>
+            <div class="opp-sort">
+              <span>Sort:</span>
+              <select id="oppSort">
+                <option value="recommended">Recommended</option>
+                <option value="newest">Newest</option>
+                <option value="deadline">Deadline</option>
+              </select>
+            </div>
+          </div>
+          <div class="opp-grid" id="oppGrid">
+            <div class="opp-skel"></div><div class="opp-skel"></div><div class="opp-skel"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- OPPORTUNITY DETAIL MODAL -->
+<div id="oppDetailModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="max-width:600px;">
+    <button class="modal-close" id="oppDetailClose" type="button">✕</button>
+    <div id="oppDetailBody"></div>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script>
+var OPPORTUNITIES = [
+  { id:'o1', title:'Software Engineering Internship', org:'Nova Tech Solutions', category:'Internship', location:'Remote', description:'Join Nova Tech\'s engineering team for a 12-week paid internship. Work on real product features alongside senior engineers. Open to Level 300 and above.', requirements:'Level 300+, some programming experience (Python, JavaScript or similar), available June–August.', deadline:'2026-08-30', posted:'2026-07-01', externalUrl:'#', featured:true, tags:['Technology','Software'] },
+  { id:'o2', title:'Alta Future Leaders Scholarship', org:'Alta Financial Group', category:'Scholarship', location:'On-site', description:'Full scholarship for outstanding final-year students in Business, Finance or Economics. Covers tuition and includes a paid internship at Alta.', requirements:'Final-year student, minimum GPA 3.5/4.0, essay submission required.', deadline:'2026-09-15', posted:'2026-07-05', externalUrl:'#', featured:true, tags:['Finance','Business'] },
+  { id:'o3', title:'Google Career Certificates', org:'Google via Coursera', category:'Certification', location:'Remote', description:'Free professional certificates in Data Analytics, UX Design, IT Support, and Project Management. Self-paced and recognised by employers.', requirements:'No prior experience needed. Available to anyone with internet access.', deadline:null, posted:'2026-06-01', externalUrl:'https://grow.google/certificates/', featured:false, tags:['Technology','Career'] },
+  { id:'o4', title:'Career Readiness Workshop', org:'MentorBridge & Meridian Partners', category:'Workshop', location:'On-site', description:'Full-day workshop covering CV writing, interview preparation, and professional networking. Limited seats available.', requirements:'Open to all mentees. Register by September 10.', deadline:'2026-10-10', posted:'2026-08-01', externalUrl:'#', featured:false, tags:['Career','Professional Development'] },
+  { id:'o5', title:'National Coding Challenge 2026', org:'Ghana Tech Council', category:'Competition', location:'Remote', description:'48-hour hackathon open to all university students. Cash prizes and fast-track interview opportunities for winners.', requirements:'Must be enrolled at an accredited university. Teams of 1–4.', deadline:'2026-09-05', posted:'2026-07-20', externalUrl:'#', featured:false, tags:['Technology','Competition'] },
+  { id:'o6', title:'Women in Tech Scholarship', org:'Tech Foundation West Africa', category:'Scholarship', location:'On-site', description:'Full scholarship covering tuition and a living stipend for female students in STEM fields at accredited West African universities.', requirements:'Female student enrolled in a STEM programme, minimum Level 200.', deadline:'2026-09-20', posted:'2026-07-15', externalUrl:'#', featured:false, tags:['Technology','Scholarship','STEM'] },
+  { id:'o7', title:'Finance & Investment Analyst (Graduate)', org:'Ecobank Ghana', category:'Job', location:'On-site', description:'Entry-level analyst position for recent graduates in Finance, Economics or Business. Rotational programme across four departments.', requirements:'Degree in Finance, Economics or related field. Graduated 2024–2026.', deadline:'2026-08-20', posted:'2026-07-25', externalUrl:'#', featured:false, tags:['Finance','Job','Banking'] },
+  { id:'o8', title:'DevFest Accra 2026', org:'Google Developer Groups', category:'Event', location:'On-site', description:'Annual developer festival with talks, workshops, and networking. Speakers from Google and leading African tech companies.', requirements:'Open to all. Free registration required.', deadline:'2026-10-25', posted:'2026-08-10', externalUrl:'#', featured:false, tags:['Technology','Networking'] },
+  { id:'o9', title:'Andela Learning Community', org:'Andela', category:'Certification', location:'Remote', description:'Free 6-week cohort-based learning programme for software engineers. Covers modern web development and career readiness.', requirements:'Some coding experience required. Apply with a brief motivation statement.', deadline:'2026-08-01', posted:'2026-06-15', externalUrl:'#', featured:false, tags:['Technology','Software','Learning'] }
+];
+
+var saved = {};
+var activeTab = 'all';
+var searchQ = '', filterCat = '', filterLoc = '', filterDeadline = '';
+var sortBy = 'recommended';
+
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function catClass(c){ return 'cat-'+c.toLowerCase().replace(/\s+/g,'-'); }
+
+function deadlineStatus(dl){
+  if(!dl) return null;
+  var now = new Date(), d = new Date(dl), diff = d-now, days = Math.ceil(diff/(1000*86400));
+  if(days<0) return {label:'Expired', cls:'deadline-expired', expired:true};
+  if(days<=7) return {label:'Closing in '+days+' day'+(days!==1?'s':''), cls:'deadline-soon', expired:false};
+  return {label:'Deadline: '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), cls:'deadline-ok', expired:false};
+}
+
+function filterOpps(){
+  var list = OPPORTUNITIES.filter(function(o){
+    if(searchQ){
+      var q=searchQ.toLowerCase();
+      if(!(o.title.toLowerCase().includes(q)||o.org.toLowerCase().includes(q)||o.category.toLowerCase().includes(q)||(o.tags||[]).join(' ').toLowerCase().includes(q))) return false;
+    }
+    if(filterCat && o.category!==filterCat) return false;
+    if(filterLoc && o.location!==filterLoc) return false;
+    if(filterDeadline){
+      var now=new Date(), d=o.deadline?new Date(o.deadline):null;
+      if(filterDeadline==='soon' && (!d||d-now>7*86400000)) return false;
+      if(filterDeadline==='month'){var e=new Date(now.getFullYear(),now.getMonth()+1,0); if(!d||d>e) return false;}
+      if(filterDeadline==='later' && (!d||d-now<=30*86400000)) return false;
+    }
+    return true;
+  });
+  if(sortBy==='newest') list.sort(function(a,b){return new Date(b.posted)-new Date(a.posted);});
+  else if(sortBy==='deadline') list.sort(function(a,b){ if(!a.deadline) return 1; if(!b.deadline) return -1; return new Date(a.deadline)-new Date(b.deadline); });
+  return list;
+}
+
+function renderCard(o){
+  var dl = deadlineStatus(o.deadline);
+  var isSaved = saved[o.id];
+  var dlHtml = dl ? '<span class="opp-deadline '+dl.cls+'">'+esc(dl.label)+'</span>' : '';
+  var saveBtn = '<button class="opp-save-btn'+(isSaved?' saved':'')+'" data-opp-id="'+o.id+'" title="'+(isSaved?'Unsave':'Save')+'" type="button">'+(isSaved?'🔖':'🏷️')+'</button>';
+  var actionBtn = dl && dl.expired
+    ? '<span style="font-size:.75rem;color:#9ca3af;padding:.55rem 0;display:block;">Expired</span>'
+    : '<a href="'+(o.externalUrl&&o.externalUrl!=='#'?esc(o.externalUrl):'#')+'" class="btn btn-secondary btn-sm" target="_blank" rel="noopener"'+(!o.externalUrl||o.externalUrl==='#'?' onclick="return false;"':'')+'>Apply →</a>';
+  return '<div class="opp-card'+(dl&&dl.expired?' expired':'')+'">'
+    +'<div class="opp-card-top"><span class="opp-cat-badge '+catClass(o.category)+'">'+esc(o.category)+'</span>'+saveBtn+'</div>'
+    +'<h3>'+esc(o.title)+'</h3>'
+    +'<p class="opp-org">'+esc(o.org)+'</p>'
+    +'<p class="opp-desc">'+esc(o.description)+'</p>'
+    +'<div class="opp-card-meta">'
+    +'<span class="opp-meta-pill">📍 '+esc(o.location)+'</span>'
+    +(dlHtml)
+    +'</div>'
+    +'<div class="opp-card-footer">'
+    +'<button class="btn btn-outline btn-sm view-detail-btn" data-opp-id="'+o.id+'" type="button">View Details</button>'
+    +actionBtn
+    +'</div></div>';
+}
+
+function renderGrid(){
+  var grid=$('oppGrid'), count=$('oppCount');
+  var list = activeTab==='saved' ? OPPORTUNITIES.filter(function(o){return saved[o.id];}) : filterOpps();
+  $('savedCount').textContent = Object.keys(saved).length;
+  if(!list.length){
+    var msg = activeTab==='saved' ? '<h3>No saved opportunities yet.</h3><p>Save opportunities you want to come back to later.</p><button class="btn btn-secondary" onclick="switchTab(\'all\')" type="button">Explore Opportunities</button>'
+      : '<h3>No results found.</h3><p>Try a different search or adjust your filters.</p><button class="btn btn-outline" id="clearFromEmpty" type="button">Clear filters</button>';
+    grid.innerHTML='<div class="opp-empty"><div class="opp-empty-icon">💼</div>'+msg+'</div>';
+    var ce=$('clearFromEmpty'); if(ce) ce.addEventListener('click',clearFilters);
+    count.textContent='0 results';
+    return;
+  }
+  grid.innerHTML = list.map(renderCard).join('');
+  count.innerHTML = '<strong>'+list.length+'</strong> opportunit'+(list.length!==1?'ies':'y');
+  bindCardBtns();
+}
+
+function bindCardBtns(){
+  document.querySelectorAll('.view-detail-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){ openDetail(btn.dataset.oppId); });
+  });
+  document.querySelectorAll('.opp-save-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var id=btn.dataset.oppId;
+      saved[id] = !saved[id];
+      renderGrid();
+    });
+  });
+}
+
+function openDetail(id){
+  var o=OPPORTUNITIES.find(function(x){return x.id===id;}); if(!o) return;
+  var dl=deadlineStatus(o.deadline);
+  $('oppDetailBody').innerHTML =
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem;">'
+    +'<div><span class="opp-cat-badge '+catClass(o.category)+'" style="font-size:.72rem;">'+esc(o.category)+'</span></div>'
+    +(dl?'<span class="opp-deadline '+dl.cls+'">'+esc(dl.label)+'</span>':'')
+    +'</div>'
+    +'<h2 style="font-family:Poppins,sans-serif;font-size:1.2rem;margin:0 0 .25rem;color:#1E202F;">'+esc(o.title)+'</h2>'
+    +'<p style="font-size:.875rem;color:#6b7280;margin:0 0 1.25rem;">'+esc(o.org)+'</p>'
+    +'<p style="font-size:.875rem;color:#444455;line-height:1.75;margin-bottom:1.25rem;">'+esc(o.description)+'</p>'
+    +(o.requirements?'<div style="background:#f8f9fc;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;"><p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:0 0 .4rem;">Requirements</p><p style="font-size:.82rem;color:#444455;margin:0;line-height:1.65;">'+esc(o.requirements)+'</p></div>':'')
+    +'<div class="detail-row"><span class="dl">Location</span><span class="dv">'+esc(o.location)+'</span></div>'
+    +(o.deadline?'<div class="detail-row"><span class="dl">Deadline</span><span class="dv">'+new Date(o.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</span></div>':'')
+    +'<div class="detail-row"><span class="dl">Posted</span><span class="dv">'+new Date(o.posted).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</span></div>'
+    +'<div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;">'
+    +(dl&&dl.expired
+      ? '<p style="font-size:.82rem;color:#6b7280;margin:0;">This opportunity is no longer available.</p>'
+      : '<a href="'+(o.externalUrl&&o.externalUrl!=='#'?esc(o.externalUrl):'#')+'" class="btn btn-secondary" target="_blank" rel="noopener"'+(!o.externalUrl||o.externalUrl==='#'?' onclick="return false;"':'')+'>Apply on External Website →</a>')
+    +'<button class="btn btn-outline opp-save-btn'+(saved[o.id]?' saved':'')+'" data-opp-id="'+o.id+'" type="button">'+(saved[o.id]?'🔖 Saved':'🏷️ Save')+'</button>'
+    +'</div>';
+  $('oppDetailBody').querySelectorAll('.opp-save-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){ saved[btn.dataset.oppId]=!saved[btn.dataset.oppId]; renderGrid(); openDetail(id); });
+  });
+  $('oppDetailModal').classList.remove('hidden'); document.body.style.overflow='hidden';
+}
+
+function clearFilters(){
+  $('filterCat').value=''; $('filterLoc').value=''; $('filterDeadline').value='';
+  $('oppSearch').value=''; $('oppSort').value='recommended';
+  filterCat=filterLoc=filterDeadline=searchQ=''; sortBy='recommended';
+  renderGrid();
+}
+
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.opp-tab').forEach(function(b){b.classList.toggle('active',b.dataset.tab===tab);});
+  renderGrid();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var session={};
+  try{session=JSON.parse(sessionStorage.getItem('mb_session')||'{}');}catch(e){}
+  var role=session.role||'student', name=session.name||(role==='mentor'?'Grace Akoto':'Amina Boateng');
+  if(!session.role){window.location.replace('auth.html');return;}
+  var inits=name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  $('sidebarInitials').textContent=inits; $('sidebarName').textContent=name; $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee'; $('headerAvatar').textContent=inits;
+
+  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var links=[
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
+    {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities',active:true},
+    {href:'messages.html',icon:'💬',label:'Messages'},{href:'resource-centre.html',icon:'📚',label:'Resources'},
+    {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  $('sidebarNav').innerHTML=links.map(function(l){return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';}).join('');
+
+  var menuBtn=$('menuBtn'),sidebar=$('dbSidebar'),overlay=$('sidebarOverlay');
+  if(menuBtn) menuBtn.addEventListener('click',function(){sidebar.classList.toggle('open');overlay.classList.toggle('open');});
+  if(overlay) overlay.addEventListener('click',function(){sidebar.classList.remove('open');overlay.classList.remove('open');});
+  (function(){
+    var lBtn = document.getElementById('logoutBtn');
+    var lModal = document.getElementById('logoutConfirmModal');
+    var lConfirm = document.getElementById('logoutConfirmBtn');
+    var lCancel = document.getElementById('logoutCancelBtn');
+    if(lBtn && lModal){
+      lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+      if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+      if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+      lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+    }
+  })();
+
+  // Search
+  var deb; $('oppSearch').addEventListener('input',function(){ clearTimeout(deb); searchQ=$('oppSearch').value.trim(); deb=setTimeout(renderGrid,250); });
+  $('filterCat').addEventListener('change',function(){filterCat=$('filterCat').value;renderGrid();});
+  $('filterLoc').addEventListener('change',function(){filterLoc=$('filterLoc').value;renderGrid();});
+  $('filterDeadline').addEventListener('change',function(){filterDeadline=$('filterDeadline').value;renderGrid();});
+  $('oppSort').addEventListener('change',function(){sortBy=$('oppSort').value;renderGrid();});
+  $('clearFiltersBtn').addEventListener('click',clearFilters);
+  if($('filterToggleBtn')) $('filterToggleBtn').addEventListener('click',function(){$('oppFilters').classList.toggle('open');});
+
+  // Tabs
+  document.querySelectorAll('.opp-tab').forEach(function(btn){btn.addEventListener('click',function(){switchTab(btn.dataset.tab);});});
+
+  // Modal close
+  $('oppDetailClose').addEventListener('click',function(){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';});
+  $('oppDetailModal').addEventListener('click',function(e){if(e.target===$('oppDetailModal')){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';}});
+
+  // Load
+  setTimeout(renderGrid,400);
+
+  // URL param
+  var urlParams=new URLSearchParams(window.location.search);
+  if(urlParams.get('saved')==='1') setTimeout(function(){switchTab('saved');},450);
+});
+</script>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

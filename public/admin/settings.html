@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings | MentorBridge Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
+  <!-- <script src="/js/admin-auth.js"></script> -->
+  <script>(function(){AdminAuth.guardAdminPage();})();</script>
+</head>
+<body class="adm-body">
+  <div id="adm-app"></div>
+  <script src="/js/admin-data.js"></script>
+  <script src="/js/admin-layout.js"></script>
+  <script src="/js/admin-page.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var s = AdminAuth.getSession() || {};
+    AdminPage.mountListPage({
+      activeNav: 'settings',
+      title: 'Settings',
+      subtitle: 'Admin account and platform preferences',
+      contentHtml: '<div class="adm-card"><div class="adm-card-body">' +
+        '<p><strong>Name:</strong> ' + AdminPage.esc(s.name || 'Admin') + '</p>' +
+        '<p><strong>Email:</strong> ' + AdminPage.esc(s.email || '—') + '</p>' +
+        '<p><strong>Role:</strong> Administrator</p>' +
+        '<p style="margin-top:1.25rem"><a class="adm-btn adm-btn-outline" href="/pages/settings.html">Open full settings page</a></p>' +
+        '</div></div>'
+    });
+  });
+  </script>
+</body>
+</html>

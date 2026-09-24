@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog | MentorBridge</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .blog-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:2rem; }
+    .blog-card { background:var(--color-card); border:1px solid var(--color-border-light); border-radius:var(--radius-xl); overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; transition:transform .22s,box-shadow .22s; }
+    .blog-card:hover { transform:translateY(-5px); box-shadow:var(--shadow-lg); }
+    .blog-card-img { height:210px; overflow:hidden; }
+    .blog-card-img img { width:100%; height:100%; object-fit:cover; transition:transform .5s; }
+    .blog-card:hover .blog-card-img img { transform:scale(1.05); }
+    .blog-card-body { padding:1.5rem; display:flex; flex-direction:column; flex:1; }
+    .blog-meta { display:flex; align-items:center; gap:.6rem; margin-bottom:.85rem; flex-wrap:wrap; }
+    .blog-category { background:rgba(212,175,55,.15); color:#a38224; font-size:.72rem; font-weight:700; padding:.25rem .65rem; border-radius:20px; text-transform:uppercase; letter-spacing:.07em; }
+    .blog-date { font-size:.78rem; color:var(--color-text-muted); }
+    .blog-card-body h2 { font-size:1.15rem; color:var(--color-primary); margin-bottom:.65rem; line-height:1.35; }
+    .blog-excerpt { font-size:.875rem; color:var(--color-text-muted); line-height:1.7; margin-bottom:1rem; flex:1; }
+    .blog-author { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+    .blog-author-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .blog-author-name { font-size:.8rem; font-weight:600; color:var(--color-primary); }
+    .blog-read-more { background:none; border:2px solid var(--color-primary); color:var(--color-primary); border-radius:8px; padding:.5rem 1.1rem; font-size:.85rem; font-weight:600; cursor:pointer; font-family:inherit; transition:background .18s,color .18s; align-self:flex-start; }
+    .blog-read-more:hover { background:var(--color-primary); color:#fff; }
+    /* Modal */
+    .blog-modal-backdrop { position:fixed; inset:0; background:rgba(7,15,30,.65); backdrop-filter:blur(4px); z-index:3000; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+    .blog-modal-box { background:var(--color-card); border-radius:20px; max-width:680px; width:100%; max-height:88vh; overflow-y:auto; padding:2.25rem; position:relative; animation:fadeInUp .2s ease; }
+    .blog-modal-close { position:absolute; top:1rem; right:1rem; background:rgba(11,31,58,.07); border:none; border-radius:8px; width:34px; height:34px; font-size:1rem; cursor:pointer; color:var(--color-text-muted); display:flex; align-items:center; justify-content:center; }
+    .blog-modal-close:hover { background:rgba(192,57,43,.1); color:var(--color-error); }
+    .blog-modal-box h2 { font-size:1.5rem; color:var(--color-primary); margin-bottom:1rem; line-height:1.3; }
+    .blog-modal-box .blog-meta { margin-bottom:1.25rem; }
+    .blog-modal-body p { font-size:.9rem; color:var(--color-text-muted); line-height:1.8; margin-bottom:1.1rem; }
+    .blog-modal-body h3 { font-size:1rem; color:var(--color-primary); margin:1.4rem 0 .5rem; }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);} }
+    @media(max-width:720px){ .blog-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body data-page="blog">
+
+  <header class="site-header">
+    <div class="container navbar">
+      <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a>
+      <nav class="nav-links">
+        <a href="../index.html">Home</a>
+        <a href="mentor-directory.html">Mentors</a>
+        <a href="resource-centre.html">Resources</a>
+        <a href="blog.html" aria-current="page">Blog</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-outline" href="auth.html">Log in</a>
+        <a class="btn btn-secondary" href="auth.html?mode=register">Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding:3.5rem 0 5rem;">
+    <div class="container">
+      <div class="section-intro text-center" style="margin-bottom:3rem;">
+        <span class="section-label">MentorBridge Blog</span>
+        <h1>Insights on mentorship, careers &amp; growth</h1>
+        <p>Real stories and practical advice from the MentorBridge community.</p>
+      </div>
+
+      <div class="blog-grid" id="blogGrid">
+
+        <!-- Post 1 -->
+        <article class="blog-card">
+          <div class="blog-card-img">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&q=80&fit=crop" alt="Mentorship session" loading="lazy" />
+          </div>
+          <div class="blog-card-body">
+            <div class="blog-meta">
+              <span class="blog-category">Mentorship Tips</span>
+              <span class="blog-date">18 July 2026</span>
+            </div>
+            <h2>How to Make the Most of Your First Mentorship Session</h2>
+            <p class="blog-excerpt">Your first session with a mentor can feel daunting — but it doesn't have to. Coming prepared with two specific questions and a clear goal transforms a casual conversation into a career-defining moment. Here's exactly what to do before, during, and after that first meeting.</p>
+            <div class="blog-author">
+              <img class="blog-author-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=64&h=64&fit=crop&crop=face" alt="Abena Darko" />
+              <span class="blog-author-name">Abena Darko · MentorBridge Team</span>
+            </div>
+            <button class="blog-read-more" data-post="post1">Read More →</button>
+          </div>
+        </article>
+
+        <!-- Post 2 -->
+        <article class="blog-card">
+          <div class="blog-card-img">
+            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=700&q=80&fit=crop" alt="UG Alumni panel" loading="lazy" />
+          </div>
+          <div class="blog-card-body">
+            <div class="blog-meta">
+              <span class="blog-category">Career Advice</span>
+              <span class="blog-date">5 July 2026</span>
+            </div>
+            <h2>5 Career Lessons UG Alumni Wish They Knew Earlier</h2>
+            <p class="blog-excerpt">We spoke to five University of Ghana graduates now working at Google, Ecobank, and the World Bank. Their answers had a striking theme: the things that mattered most were rarely taught in the classroom. These are the five lessons they wish someone had told them in Level 100.</p>
+            <div class="blog-author">
+              <img class="blog-author-avatar" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=64&h=64&fit=crop&crop=face" alt="Dr. Kwame Asante" />
+              <span class="blog-author-name">Dr. Kwame Asante · Guest Contributor</span>
+            </div>
+            <button class="blog-read-more" data-post="post2">Read More →</button>
+          </div>
+        </article>
+
+        <!-- Post 3 -->
+        <article class="blog-card">
+          <div class="blog-card-img">
+            <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=700&q=80&fit=crop" alt="Student at laptop" loading="lazy" />
+          </div>
+          <div class="blog-card-body">
+            <div class="blog-meta">
+              <span class="blog-category">Student Story</span>
+              <span class="blog-date">22 June 2026</span>
+            </div>
+            <h2>From Campus to Corporate: A Student's Journey</h2>
+            <p class="blog-excerpt">Kofi arrived at university with a vague plan and a strong work ethic. Three years later, he had an internship offer at MTN Ghana, a published research paper, and a mentor who changed how he saw his own potential. This is his story — and what made the difference.</p>
+            <div class="blog-author">
+              <img class="blog-author-avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop&crop=face" alt="Kofi Mensah" />
+              <span class="blog-author-name">Kofi Mensah · BSc Business Administration</span>
+            </div>
+            <button class="blog-read-more" data-post="post3">Read More →</button>
+          </div>
+        </article>
+
+        <!-- Post 4 -->
+        <article class="blog-card">
+          <div class="blog-card-img">
+            <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=700&q=80&fit=crop" alt="Professional mentoring session" loading="lazy" />
+          </div>
+          <div class="blog-card-body">
+            <div class="blog-meta">
+              <span class="blog-category">Opinion</span>
+              <span class="blog-date">10 June 2026</span>
+            </div>
+            <h2>Why Mentorship Matters More Than Ever for Ghanaian Graduates</h2>
+            <p class="blog-excerpt">Ghana's graduate job market has never been more competitive. Degrees are necessary but no longer sufficient — the gap between a graduate who thrives and one who struggles is increasingly determined by access to the right professional network and guidance. Mentorship is how you close that gap.</p>
+            <div class="blog-author">
+              <img class="blog-author-avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=64&h=64&fit=crop&crop=face" alt="Prof. Efua Mensah" />
+              <span class="blog-author-name">Prof. Efua Mensah · MentorBridge Advisory Board</span>
+            </div>
+            <button class="blog-read-more" data-post="post4">Read More →</button>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Post Modals ── -->
+
+  <!-- Post 1 Modal -->
+  <div id="modal-post1" class="blog-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="p1title">
+    <div class="blog-modal-box">
+      <button class="blog-modal-close" type="button" aria-label="Close">✕</button>
+      <div class="blog-meta">
+        <span class="blog-category">Mentorship Tips</span>
+        <span class="blog-date">18 July 2026 · Abena Darko</span>
+      </div>
+      <h2 id="p1title">How to Make the Most of Your First Mentorship Session</h2>
+      <div class="blog-modal-body">
+        <p>The most common mistake mentees make is treating a first session like a casual chat. A mentor's time is valuable, and arriving without preparation signals that yours isn't. Before the session, write down two specific questions — not broad ones like "how do I get a job?" but focused ones like "I'm deciding between two internship offers in tech and banking. What framework would you use to choose?" Specific questions produce specific, useful answers.</p>
+        <p>During the session, listen more than you speak. Your mentor is sharing hard-won experience — the instinct to fill silences or showcase your own knowledge works against you here. Take brief notes, nod, and ask follow-up questions that show you're processing what's being said. At the end of every session, agree on one concrete action you will take before you meet again. Accountability is what separates a productive mentorship from a pleasant conversation.</p>
+        <p>After the session, send a short thank-you message within 24 hours. Reference something specific from the conversation — it shows you were paying attention and makes the relationship feel genuine rather than transactional. Then do the thing you said you would do. Nothing builds trust with a mentor faster than following through. Nothing erodes it faster than not.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Post 2 Modal -->
+  <div id="modal-post2" class="blog-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="p2title">
+    <div class="blog-modal-box">
+      <button class="blog-modal-close" type="button" aria-label="Close">✕</button>
+      <div class="blog-meta">
+        <span class="blog-category">Career Advice</span>
+        <span class="blog-date">5 July 2026 · Dr. Kwame Asante</span>
+      </div>
+      <h2 id="p2title">5 Career Lessons UG Alumni Wish They Knew Earlier</h2>
+      <div class="blog-modal-body">
+        <h3>1. Your network is built before you need it</h3>
+        <p>Every alumni we spoke to said the same thing: the opportunities that changed their careers came through people they had already built relationships with — not cold applications. Start connecting with professionals in your field from Level 100, not Level 400 when you're desperate for a job. LinkedIn messages, career fairs, MentorBridge sessions — every connection you make now compounds over time.</p>
+        <h3>2. Internships matter more than grades past a threshold</h3>
+        <p>A 3.8 GPA with no work experience will lose to a 3.2 GPA with two meaningful internships almost every time. Employers want evidence that you can operate in the real world — and coursework, however excellent, doesn't provide that evidence. Get into work environments early, even through volunteering or part-time roles.</p>
+        <h3>3. Soft skills are the actual differentiator</h3>
+        <p>Technical skills get you the interview. Communication, adaptability, and emotional intelligence get you the job — and the promotion. Deliberately practice public speaking, writing, and working through conflict with peers. These are learnable skills, not personality traits, and investing in them early pays compound returns throughout your entire career.</p>
+        <h3>4. Ask for what you want — no one will offer it unprompted</h3>
+        <p>Multiple alumni told us they spent years waiting to be noticed, recognised, or promoted — and nothing happened until they asked directly. Whether it's a salary negotiation, a stretch assignment, or a reference letter, the person who asks professionally and confidently almost always gets a better outcome than the person who waits.</p>
+        <h3>5. Take care of your mental health as seriously as your career</h3>
+        <p>Burnout is real, it's common, and it sets careers back by years. The alumni who thrived were the ones who built sustainable habits early — regular rest, exercise, and strong personal relationships outside work. A mentor who only pushes you harder without asking about your wellbeing is not a great mentor.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Post 3 Modal -->
+  <div id="modal-post3" class="blog-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="p3title">
+    <div class="blog-modal-box">
+      <button class="blog-modal-close" type="button" aria-label="Close">✕</button>
+      <div class="blog-meta">
+        <span class="blog-category">Student Story</span>
+        <span class="blog-date">22 June 2026 · Kofi Mensah</span>
+      </div>
+      <h2 id="p3title">From Campus to Corporate: A Student's Journey</h2>
+      <div class="blog-modal-body">
+        <p>I started Level 100 at the University of Ghana Business School with one goal: graduate with a good grade. That was it. I had no plan beyond that, no particular industry in mind, and no professional connections outside my family. By Level 200 I had completed one internship, published a co-authored research note, and had my first real mentor — none of which I would have done without MentorBridge.</p>
+        <p>My mentor, Abena Darko, was a Vice President at Ecobank. In our first session I came with a list of questions about investment banking. She answered two of them and then asked me something I wasn't expecting: "What problem do you actually want to spend your career solving?" I didn't have an answer. But that question changed how I thought about everything. By our third session I had narrowed my focus to corporate finance for SMEs in West Africa — a specific enough direction to actually start building toward. My applications stopped being generic and started landing interviews.</p>
+        <p>The internship at MTN Ghana came through a connection Abena made — a single introduction over LinkedIn. I want to be honest about that, because people rarely are: talent matters, but access matters just as much. MentorBridge gave me access I wouldn't otherwise have had. If you're a student reading this and you haven't requested a mentor yet, do it today. Not next semester. Today.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Post 4 Modal -->
+  <div id="modal-post4" class="blog-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="p4title">
+    <div class="blog-modal-box">
+      <button class="blog-modal-close" type="button" aria-label="Close">✕</button>
+      <div class="blog-meta">
+        <span class="blog-category">Opinion</span>
+        <span class="blog-date">10 June 2026 · Prof. Efua Mensah</span>
+      </div>
+      <h2 id="p4title">Why Mentorship Matters More Than Ever for Ghanaian Graduates</h2>
+      <div class="blog-modal-body">
+        <p>Ghana produces tens of thousands of graduates every year. The University of Ghana alone graduates over 15,000 students annually across all levels. The job market, by contrast, cannot absorb all of them at the level they aspire to. This is not a failure of the education system — it is the reality of a developing economy growing faster than its formal employment base. What determines who thrives and who stagnates in this environment is increasingly not their degree, but their professional network, their self-awareness, and their ability to navigate ambiguity with guidance.</p>
+        <p>Mentorship addresses all three. A mentor gives you access to a network that would otherwise take years to build. A good mentor holds up a mirror and helps you see yourself more clearly — your strengths, your blind spots, and the gap between where you are and where you want to be. And crucially, a mentor who has already navigated the terrain you're entering can help you avoid the most costly mistakes. The ROI on a single conversation with the right person at the right time is incalculable.</p>
+        <p>What concerns me as an educator is that access to mentorship in Ghana has historically been distributed along the same lines as everything else: those with professional family connections benefit most, those without suffer most. MentorBridge is, in my view, an important partial correction to this inequality. It cannot solve everything. But it can ensure that a Level 200 student from Tamale has the same access to a Google engineer in Accra as a student whose father plays golf with that engineer. That matters. That is worth building.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a>
+        <p>Mentorship for everyone.</p>
+      </div>
+      <div class="footer-col"><h3>Platform</h3><a href="mentor-directory.html">Find a mentor</a><a href="auth.html?mode=register">Register</a><a href="resource-centre.html">Resources</a></div>
+      <div class="footer-col"><h3>Company</h3><a href="blog.html">Blog</a><a href="careers.html">Careers</a></div>
+      <div class="footer-col"><h3>Legal</h3><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+    </div>
+    <div class="container footer-bottom"><p>© 2026 MentorBridge. Mentorship for everyone.</p></div>
+  </footer>
+
+  <script src="../js/theme.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+      // Open modals
+      document.querySelectorAll('.blog-read-more').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var modal = document.getElementById('modal-' + btn.dataset.post);
+          if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        });
+      });
+
+      // Close via ✕ button
+      document.querySelectorAll('.blog-modal-close').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var modal = btn.closest('.blog-modal-backdrop');
+          if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+        });
+      });
+
+      // Close via backdrop click
+      document.querySelectorAll('.blog-modal-backdrop').forEach(function (backdrop) {
+        backdrop.addEventListener('click', function (e) {
+          if (e.target === backdrop) { backdrop.style.display = 'none'; document.body.style.overflow = ''; }
+        });
+      });
+
+      // Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.blog-modal-backdrop').forEach(function (m) {
+            m.style.display = 'none';
+          });
+          document.body.style.overflow = '';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

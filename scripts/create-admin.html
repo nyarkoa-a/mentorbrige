@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Admin Account - MentorBridge</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4A1547;
+            text-align: center;
+        }
+        .credentials {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .btn {
+            background: #4A1547;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #3a0f38;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Create Admin Account</h1>
+        
+        <div class="credentials">
+            <h3>Admin Credentials to Create:</h3>
+            <p><strong>Email:</strong> admin@mentorbridge.com</p>
+            <p><strong>Password:</strong> 1234admin</p>
+            <p><strong>Admin Key:</strong> mb-admin-2026</p>
+        </div>
+
+        <button id="createBtn" class="btn" onclick="createAdmin()">Create Admin Account</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <!-- Load Firebase and MentorBridge scripts -->
+    <script src="public/js/firebase-script-loader.js"></script>
+    <script>
+        let firebaseLoaded = false;
+
+        // Load Firebase and MentorBridge services
+        async function loadServices() {
+            try {
+                // Load Firebase scripts dynamically
+                if (window.firebaseScriptLoader) {
+                    await window.firebaseScriptLoader.loadFirebaseScripts();
+                    console.log('✅ Firebase scripts loaded');
+                } else {
+                    throw new Error('Firebase script loader not available');
+                }
+
+                // Initialize MentorBridge services
+                if (window.FirebaseInitializationManager) {
+                    const manager = new FirebaseInitializationManager();
+                    await manager.initialize();
+                    console.log('✅ MentorBridge services initialized');
+                    firebaseLoaded = true;
+                } else {
+                    throw new Error('Firebase manager not available');
+                }
+
+            } catch (error) {
+                console.error('❌ Failed to load services:', error);
+                showResult('Failed to load Firebase services: ' + error.message, 'error');
+            }
+        }
+
+        async function createAdmin() {
+            const btn = document.getElementById('createBtn');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = 'Creating Account...';
+            result.innerHTML = '<div class="loading">🔄 Creating admin account...</div>';
+
+            try {
+                // Load services if not already loaded
+                if (!firebaseLoaded) {
+                    await loadServices();
+                }
+
+                // Check if MentorBridge Auth is available
+                if (!window.mentorBridgeAuth) {
+                    throw new Error('MentorBridge Auth service not available');
+                }
+
+                console.log('📝 Registering admin user...');
+                
+                // Create admin account
+                const registrationData = {
+                    email: 'admin@mentorbridge.com',
+                    password: '1234admin',
+                    profile: {
+                        name: 'MentorBridge Admin',
+                        role: 'admin',
+                        createdAt: new Date().toISOString(),
+                        isAdmin: true,
+                        adminAccessKey: 'mb-admin-2026'
+                    }
+                };
+
+                const authResult = await window.mentorBridgeAuth.registerUser(registrationData);
+                
+                showResult(`
+                    ✅ <strong>Admin account created successfully!</strong><br>
+                    📧 Email: admin@mentorbridge.com<br>
+                    🔑 Password: 1234admin<br>
+                    🗝️ Admin Key: mb-admin-2026<br>
+                    👤 User ID: ${authResult.user.uid}<br><br>
+                    You can now sign in at <a href="public/pages/admin-login.html">admin-login.html</a>
+                `, 'success');
+
+            } catch (error) {
+                console.error('❌ Failed to create admin account:', error);
+                
+                if (error.message.includes('email-already-in-use')) {
+                    showResult(`
+                        ℹ️ <strong>Admin account already exists!</strong><br>
+                        📧 Email: admin@mentorbridge.com<br>
+                        🔑 Password: 1234admin<br>
+                        🗝️ Admin Key: mb-admin-2026<br><br>
+                        You can sign in at <a href="public/pages/admin-login.html">admin-login.html</a>
+                    `, 'success');
+                } else {
+                    showResult('❌ Failed to create admin account: ' + error.message, 'error');
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Admin Account';
+            }
+        }
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        // Load services on page load
+        window.addEventListener('load', () => {
+            console.log('🚀 Admin Account Creator loaded');
+            loadServices();
+        });
+    </script>
+</body>
+</html>

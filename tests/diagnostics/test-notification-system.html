@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notification System</title>
+  <link rel="stylesheet" href="./public/css/variables.css">
+  <link rel="stylesheet" href="./public/css/base.css">
+  <link rel="stylesheet" href="./public/css/components.css">
+  <style>
+    body {
+      padding: 2rem;
+      background: #F8F5EF;
+    }
+    .test-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .test-button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      background: #4A1547;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .test-button:hover {
+      background: #63205A;
+    }
+    #authMessage {
+      min-height: 1.5rem;
+      margin: 1rem 0;
+    }
+    #authNotificationsContainer {
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Notification System Test</h1>
+    <p>Test the email verification notification rendering and event handling.</p>
+    
+    <div class="test-controls">
+      <button class="test-button" onclick="testEmailVerificationNotification()">
+        Test Email Verification Success
+      </button>
+      <button class="test-button" onclick="testEmailVerificationWarning()">
+        Test Email Verification Warning
+      </button>
+      <button class="test-button" onclick="testRedirectNotification()">
+        Test Redirect Loading
+      </button>
+      <button class="test-button" onclick="clearAllNotifications()">
+        Clear All Notifications
+      </button>
+    </div>
+    
+    <div id="authMessage" class="auth-message" aria-live="polite"></div>
+    <div id="authNotificationsContainer" class="auth-notifications-container" aria-live="polite"></div>
+  </div>
+
+  <script>
+    // Mock window.mentorBridgeAuth for testing
+    window.mentorBridgeAuth = {
+      currentUser: { email: 'test@example.com' },
+      async sendEmailVerification() {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return { success: true };
+      }
+    };
+
+    // Load the auth UI integration service
+    fetch('./public/js/auth-ui-integration.js')
+      .then(response => response.text())
+      .then(code => {
+        eval(code);
+        
+        // Initialize the service
+        window.authUIIntegration.cacheUIElements();
+        console.log('✅ Auth UI Integration loaded for testing');
+      })
+      .catch(error => {
+        console.error('❌ Failed to load auth UI integration:', error);
+      });
+
+    function testEmailVerificationNotification() {
+      if (window.authUIIntegration) {
+        window.authUIIntegration.showEmailVerificationMessage('test@example.com', 'student');
+      } else {
+        alert('Auth UI Integration not loaded yet');
+      }
+    }
+
+    function testEmailVerificationWarning() {
+      if (window.authUIIntegration) {
+        window.authUIIntegration.showEmailNotVerifiedMessage('test@example.com', true);
+      } else {
+        alert('Auth UI Integration not loaded yet');
+      }
+    }
+
+    function testRedirectNotification() {
+      if (window.authUIIntegration) {
+        window.authUIIntegration.showRedirectLoadingNotification('student');
+      } else {
+        alert('Auth UI Integration not loaded yet');
+      }
+    }
+
+    function clearAllNotifications() {
+      if (window.authUIIntegration) {
+        window.authUIIntegration.clearAllMessages();
+      } else {
+        alert('Auth UI Integration not loaded yet');
+      }
+    }
+  </script>
+</body>
+</html>

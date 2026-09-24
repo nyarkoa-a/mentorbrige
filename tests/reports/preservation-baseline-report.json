@@ -1,0 +1,34 @@
+{
+  "testTimestamp": "2026-08-28T20:34:58.779Z",
+  "preservationScore": "5/5",
+  "preservationDetails": {
+    "firebaseInitOnPages": true,
+    "authenticationFlows": true,
+    "servicesConsistency": true,
+    "sessionPersistence": true,
+    "noRegressions": true
+  },
+  "preservationLogs": [
+    "index Firebase init: ✅",
+    "index Auth flow: ✅",
+    "index Services: ✅",
+    "index Sessions: ✅",
+    "index No regressions: ✅",
+    "student-dashboard Firebase init: ✅",
+    "student-dashboard Auth flow: ✅",
+    "student-dashboard Services: ✅",
+    "student-dashboard Sessions: ✅",
+    "student-dashboard No regressions: ✅",
+    "settings Firebase init: ✅",
+    "settings Auth flow: ✅",
+    "settings Services: ✅",
+    "settings Sessions: ✅",
+    "settings No regressions: ✅"
+  ],
+  "pagesValidated": [
+    "index",
+    "student-dashboard",
+    "settings"
+  ],
+  "status": "BASELINE_ESTABLISHED"
+}

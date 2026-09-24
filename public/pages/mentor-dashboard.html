@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentorBridge — Mentor Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase Configuration -->
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-service.js"></script>
+<script src="../js/firebase-auth.js"></script>
+
+<style>
+  :root{
+    --navy:#0B1F3A;
+    --navy-deep:#071527;
+    --blue:#1B62DE;
+    --blue-dark:#0D4BC2;
+    --blue-light:#EAF1FF;
+    --accent-border:#4C7BE8;
+    --cream:#F8F5EF;
+    --ink:#1C2430;
+    --muted:#6B7280;
+    --line:#E4E1DA;
+    --radius:16px;
+    --green:#16A34A;
+    --red:#DC2626;
+    --amber:#B45309;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:#F5F6FA;
+    color:var(--ink);
+  }
+  .app{ display:grid; grid-template-columns:260px 1fr; min-height:100vh; }
+
+  /* ---------------- SIDEBAR ---------------- */
+  .sidebar{
+    background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color:#fff;
+    padding:24px 20px;
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex; align-items:center; gap:12px;
+    font-family:'Poppins',sans-serif; font-weight:700; font-size:20px;
+    padding:0 0 32px;
+  }
+  .brand-icon{
+    width:40px; height:40px; border-radius:12px;
+    background:var(--blue);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-icon img{
+    width:100%; height:100%; object-fit:contain; border-radius:12px;
+  }
+  .section-label{
+    font-size:11px; letter-spacing:1.2px; color:#8CA0C7;
+    font-weight:600; padding:0 0 12px; text-transform:uppercase;
+  }
+  .nav{ display:flex; flex-direction:column; gap:4px; }
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px; border-radius:12px;
+    color:#C6D0E4; font-size:14px; font-weight:500;
+    text-decoration:none; cursor:pointer;
+    position:relative;
+    transition:all 0.2s ease;
+  }
+  .nav-item svg{ width:18px; height:18px; flex-shrink:0; }
+  .nav-item:hover{ background:rgba(255,255,255,0.08); color:#fff; }
+  .nav-item.active{
+    background:var(--blue);
+    color:#fff;
+    font-weight:600;
+  }
+  .nav-item .badge{
+    margin-left:auto;
+    background:#DC2626;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    border-radius:999px;
+    padding:2px 8px;
+  }
+  .nav-divider{ height:1px; background:rgba(255,255,255,0.1); margin:20px 0; }
+  .sidebar-footer{ margin-top:auto; }
+  .user-chip{
+    display:flex; align-items:center; gap:12px;
+    padding:16px; border-radius:12px;
+    background:rgba(255,255,255,0.05);
+  }
+  .avatar-sm{
+    width:40px; height:40px; border-radius:12px;
+    background:var(--blue);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .user-chip .name{ font-size:14px; font-weight:600; color:#fff; }
+  .user-chip .email{ font-size:12px; color:#8CA0C7; }
+  .logout{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px; margin-top:12px; border-radius:12px;
+    color:#F3A6A6; font-size:14px; font-weight:600; cursor:pointer;
+    transition:background 0.2s ease;
+  }
+  .logout:hover{ background:rgba(220,38,38,0.15); }
+  .logout svg{ width:18px; height:18px; }
+
+  /* Logout Confirmation Modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000;
+    display:none; align-items:center; justify-content:center;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal-box{
+    background:#fff; border-radius:16px; padding:32px; max-width:420px; width:90%;
+    box-shadow:0 20px 40px rgba(0,0,0,0.2); text-align:center;
+  }
+  .modal-icon{
+    width:56px; height:56px; border-radius:50%; background:rgba(220,38,38,0.1);
+    color:#DC2626; display:flex; align-items:center; justify-content:center;
+    margin:0 auto 20px;
+  }
+  .modal-icon svg{ width:28px; height:28px; }
+  .modal-title{ font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; color:var(--navy); margin:0 0 12px; }
+  .modal-text{ font-size:15px; color:var(--muted); margin:0 0 24px; line-height:1.6; }
+  .modal-actions{ display:flex; gap:16px; justify-content:center; }
+  .modal-btn{
+    padding:14px 28px; border-radius:12px; font-size:15px; font-weight:600;
+    cursor:pointer; border:none; font-family:'Inter',sans-serif;
+  }
+  .modal-btn-cancel{ background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .modal-btn-cancel:hover{ background:var(--blue-light); }
+  .modal-btn-confirm{ background:#DC2626; color:#fff; }
+  .modal-btn-confirm:hover{ background:#B91C1C; }
+
+  /* ---------------- MAIN ---------------- */
+  .main{ padding:32px 40px 40px; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:24px; margin-bottom:32px; flex-wrap:wrap;
+  }
+  .page-title{ font-family:'Poppins',sans-serif; font-size:32px; font-weight:700; margin:0; color:var(--navy); }
+  .page-sub{ font-size:15px; color:var(--muted); margin-top:6px; }
+  .top-actions{ display:flex; align-items:center; gap:20px; }
+  .search{
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:12px 16px; min-width:320px;
+  }
+  .search svg{ width:18px; height:18px; color:var(--muted); }
+  .search input{ border:none; outline:none; font-size:14px; width:100%; font-family:'Inter',sans-serif; }
+  .icon-btn{
+    position:relative; width:44px; height:44px; border-radius:12px;
+    background:#fff; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .icon-btn svg{ width:20px; height:20px; color:var(--ink); }
+  .icon-btn .dot{
+    position:absolute; top:-4px; right:-4px;
+    background:var(--red); color:#fff; font-size:11px; font-weight:700;
+    border-radius:999px; padding:2px 6px;
+  }
+  .avatar{
+    width:40px; height:40px; border-radius:12px;
+    background:var(--blue); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 2px 8px rgba(11,31,58,0.04);
+  }
+
+  /* KPI cards - Professional spacing */
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-bottom:32px;
+  }
+  .kpi{ 
+    padding:28px; 
+    background:#fff; 
+    border:1px solid var(--line); 
+    border-radius:16px;
+    box-shadow:0 2px 12px rgba(11,31,58,0.06);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .kpi:hover{ 
+    transform:translateY(-4px); 
+    box-shadow:0 8px 24px rgba(11,31,58,0.1);
+  }
+  .kpi-top{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .kpi-icon{
+    width:48px; height:48px; border-radius:14px;
+    background:var(--blue-light); color:var(--blue-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .kpi-icon svg{ width:24px; height:24px; }
+  .kpi-title{ font-size:14px; font-weight:600; color:var(--ink); letter-spacing:0.3px; }
+  .kpi-value{ font-family:'Poppins',sans-serif; font-size:36px; font-weight:700; color:var(--navy); margin-bottom:10px; line-height:1; }
+  .kpi-trend{ font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .kpi-trend.up{ color:var(--green); }
+  .kpi-trend.down{ color:var(--red); }
+  .kpi-trend span.sub{ color:var(--muted); font-weight:500; }
+  
+  /* Loading skeleton */
+  .kpi.loading{ opacity:0.6; pointer-events:none; }
+  .kpi.loading .kpi-value{ 
+    background:linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size:200% 100%;
+    animation:shimmer 1.5s infinite;
+    color:transparent;
+  }
+  @keyframes shimmer{ 
+    0%{ background-position:200% 0; } 
+    100%{ background-position:-200% 0; } 
+  }
+
+  /* Content grid */
+  .grid-3{ display:grid; grid-template-columns:2fr 1.2fr 1fr; gap:24px; align-items:start; margin-bottom:32px; }
+  .panel{ 
+    padding:28px; 
+    background:#fff; 
+    border:1px solid var(--line); 
+    border-radius:16px;
+    box-shadow:0 2px 12px rgba(11,31,58,0.06);
+  }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .panel-head h3{ font-family:'Poppins',sans-serif; font-size:20px; font-weight:700; margin:0; color:var(--navy); letter-spacing:-0.3px; }
+  .view-all{ font-size:14px; font-weight:600; color:var(--blue); text-decoration:none; cursor:pointer; transition:color 0.2s ease; }
+  .view-all:hover{ color:var(--blue-dark); }
+  
+  /* Tab navigation */
+  .tab-nav{ display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line); padding-bottom:0; }
+  .tab-btn{
+    padding:12px 20px; border:none; background:none; font-size:14px; font-weight:600;
+    color:var(--muted); cursor:pointer; border-radius:10px; transition:all 0.2s ease;
+    font-family:'Inter',sans-serif; position:relative;
+  }
+  .tab-btn:hover{ color:var(--ink); background:var(--blue-light); }
+  .tab-btn.active{ color:var(--blue); background:var(--blue-light); }
+  .tab-btn.active::after{
+    content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px;
+    background:var(--blue); border-radius:2px;
+  }
+  .tab-content{ display:none; }
+  .tab-content.active{ display:block; animation:fadeIn 0.3s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* Table */
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  thead th{
+    text-align:left; font-size:12px; color:var(--muted); text-transform:uppercase;
+    letter-spacing:0.6px; font-weight:600; padding-bottom:16px; border-bottom:2px solid var(--line);
+  }
+  tbody td{ padding:18px 0; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:var(--blue-light); }
+  .name-cell{ display:flex; align-items:center; gap:16px; }
+  .init-avatar{
+    width:48px; height:48px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:700; color:#fff; flex-shrink:0;
+    background:var(--blue);
+  }
+  .name-info{ flex:1; }
+  .name-primary{ font-size:15px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+  .name-secondary{ font-size:13px; color:var(--muted); }
+  .stage-cell{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; color:var(--blue-dark); }
+  .stage-cell svg{ width:18px; height:18px; }
+  .stage-sub{ font-size:13px; color:var(--muted); font-weight:500; margin-left:28px; }
+  .status-pill{ font-size:12px; font-weight:700; padding:8px 16px; border-radius:999px; }
+  .status-active{ background:#E8F8EF; color:var(--green); }
+  .status-pending{ background:#FEF3E2; color:var(--amber); }
+  .status-inactive{ background:#F3F4F6; color:var(--muted); }
+  
+  /* Empty states */
+  .empty-state{ text-align:center; padding:64px 32px; color:var(--muted); }
+  .empty-state-icon{ font-size:56px; margin-bottom:20px; opacity:0.5; }
+  .empty-state-title{ font-size:18px; font-weight:600; color:var(--ink); margin-bottom:10px; }
+  .empty-state-text{ font-size:15px; margin-bottom:28px; line-height:1.6; }
+  .btn-action{ background:var(--blue); color:#fff; border:none; border-radius:12px; padding:14px 28px; font-size:15px; font-weight:600; cursor:pointer; transition:background 0.2s ease; }
+  .btn-action:hover{ background:var(--blue-dark); }
+
+  /* Activity items */
+  .activity-item{ display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--line); }
+  .activity-item:last-child{ border-bottom:none; }
+  .act-icon{
+    width:40px; height:40px; border-radius:12px; background:var(--blue-light); color:var(--blue-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .act-icon svg{ width:20px; height:20px; }
+  .act-title{ font-size:14px; font-weight:600; color:var(--ink); }
+  .act-sub{ font-size:13px; color:var(--muted); margin-top:4px; }
+  .act-time{ font-size:12px; color:#9CA3AF; margin-top:6px; }
+
+  @media (max-width:1200px){
+    .grid-3{ grid-template-columns:1fr 1fr; }
+    .grid-3 > :last-child{ grid-column:span 2; }
+    .kpi-row{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:960px){
+    .app{ grid-template-columns:1fr; }
+    .sidebar{ display:none; }
+    .kpi-row{ grid-template-columns:1fr; }
+    .grid-3{ grid-template-columns:1fr; }
+    .grid-3 > :last-child{ grid-column:span 1; }
+    .main{ padding:24px; }
+    table{ display:block; overflow-x:auto; white-space:nowrap; }
+  }
+  @media (max-width:600px){
+    body{ font-size:14px; }
+    .page-header{ padding:16px; flex-direction:column; align-items:flex-start; gap:12px; }
+    .page-header h1{ font-size:20px; }
+    .page-sub{ font-size:13px; }
+    .card{ padding:16px; }
+    .kpi-value{ font-size:24px; }
+    .kpi-label{ font-size:12px; }
+    .section-header{ font-size:16px; margin-bottom:12px; }
+    .btn-primary{ width:100%; }
+    .mentee-card{ flex-direction:column; }
+    .mentee-avatar{ width:48px; height:48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <img src="../assets/newl.png" alt="MentorBridge" style="width:40px; height:40px;" />
+      </div>
+      MentorBridge
+    </div>
+
+    <div class="section-label">Mentor</div>
+    <nav class="nav" id="sidebarNav">
+      <a class="nav-item active" data-tab="dashboard" href="#dashboard">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>Dashboard
+      </a>
+      <a class="nav-item" data-tab="mentees" href="#mentees">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="9" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg>My Mentees
+      </a>
+      <a class="nav-item" data-tab="sessions" href="#sessions">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>Sessions
+      </a>
+      <a class="nav-item" data-tab="profile" href="#profile">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg>My Profile
+      </a>
+      <a class="nav-item" data-tab="resources" href="#resources">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg>Resources
+      </a>
+      <a class="nav-item" data-tab="messages" href="#messages">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8"/></svg>Messages<span class="badge" id="messageBadge">0</span>
+      </a>
+      <a class="nav-item" data-tab="reports" href="#reports">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Reports
+      </a>
+      <a class="nav-item" data-tab="settings" href="#settings">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5"/></svg>Settings
+      </a>
+    </nav>
+
+    <div class="nav-divider"></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Help &amp; Support</a>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar-sm" id="sidebarAvatar">SM</div>
+        <div>
+          <div class="name" id="sidebarName">Loading...</div>
+          <div class="email" id="sidebarEmail">...</div>
+        </div>
+      </div>
+      <div class="logout" id="logoutBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Log out
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <div class="page-sub" id="pageSub">Welcome back! Here's an overview of your mentorship activities.</div>
+      </div>
+      <div class="top-actions">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" placeholder="Search mentees, sessions, or resources...">
+        </div>
+        <div class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span class="dot" id="notificationDot">0</span>
+        </div>
+        <div class="avatar" id="headerAvatar">SM</div>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="card kpi loading">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="9" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Total Mentees</div>
+        </div>
+        <div class="kpi-value">--</div>
+        <div class="kpi-trend">Loading...</div>
+      </div>
+
+      <div class="card kpi loading">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Upcoming Sessions</div>
+        </div>
+        <div class="kpi-value">--</div>
+        <div class="kpi-trend">Loading...</div>
+      </div>
+
+      <div class="card kpi loading">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M22 19.5c0-3-2.2-5.5-5-6" stroke="currentColor" stroke-width="1.8"/></svg></div>
+          <div class="kpi-title">Active Mentorships</div>
+        </div>
+        <div class="kpi-value">--</div>
+        <div class="kpi-trend">Loading...</div>
+      </div>
+
+      <div class="card kpi loading">
+        <div class="kpi-top">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="kpi-title">Completed Programs</div>
+        </div>
+        <div class="kpi-value">--</div>
+        <div class="kpi-trend">Loading...</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="grid-3">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>My Mentees</h3>
+          <a class="view-all" href="#mentees">View All</a>
+        </div>
+        <div id="menteesContent">
+          <div class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <div class="empty-state-title">No mentees yet</div>
+            <div class="empty-state-text">When students join your mentorship program, they'll appear here.</div>
+            <button class="btn-action">Share Your Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Upcoming Sessions</h3>
+          <a class="view-all" href="#sessions">View All</a>
+        </div>
+        <div id="sessionsContent">
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <div class="empty-state-title">No upcoming sessions</div>
+            <div class="empty-state-text">Your scheduled mentorship sessions will appear here.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Recent Activity</h3>
+        </div>
+        <div id="activityContent">
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-title">No recent activity</div>
+            <div class="empty-state-text">Your recent mentorship activities will appear here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </main>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h3 class="modal-title">Sign Out?</h3>
+    <p class="modal-text">Are you sure you want to sign out? You'll need to log in again to access your dashboard.</p>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="cancelLogout">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" id="confirmLogout">Yes, Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Firebase and Dashboard Logic
+  let currentUser = null;
+  let userData = null;
+  let db = null;
+
+  // Initialize Firebase and load data
+  async function initializeDashboard() {
+    try {
+      console.log('🔥 Initializing Firebase for mentor dashboard...');
+      
+      // Check if Firebase is available
+      if (typeof firebase === 'undefined') {
+        throw new Error('Firebase SDK not loaded');
+      }
+
+      // Initialize Firebase
+      await initializeFirebaseConfig();
+      db = getFirestore();
+      
+      console.log('✅ Firebase initialized for mentor dashboard');
+      
+      // Load user data
+      await loadUserData();
+      await loadDashboardData();
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize mentor dashboard:', error);
+      // Use demo data if Firebase fails
+      loadDemoData();
+    }
+  }
+
+  // Load user data from session
+  async function loadUserData() {
+    try {
+      const session = JSON.parse(sessionStorage.getItem('mb_session') || '{}');
+      if (!session.userId) {
+        window.location.href = './auth.html';
+        return;
+      }
+
+      currentUser = session;
+      userData = session.profile || {};
+      
+      // Update UI with user data
+      updateUserInfo();
+      
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      window.location.href = './auth.html';
+    }
+  }
+
+  // Update user info in UI
+  function updateUserInfo() {
+    const name = userData.name || currentUser.displayName || 'Mentor';
+    const email = userData.email || currentUser.email || 'mentor@mentorbridge.com';
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+    document.getElementById('sidebarName').textContent = name;
+    document.getElementById('sidebarEmail').textContent = email;
+    document.getElementById('sidebarAvatar').textContent = initials;
+    document.getElementById('headerAvatar').textContent = initials;
+    document.getElementById('pageTitle').textContent = `Welcome back, ${name.split(' ')[0]}!`;
+    document.getElementById('pageSub').textContent = `Here's an overview of your mentorship activities.`;
+  }
+
+  // Load dashboard data from Firebase
+  async function loadDashboardData() {
+    try {
+      // Load KPI data
+      await loadKPIData();
+      
+      // Load mentees
+      await loadMentees();
+      
+      // Load sessions
+      await loadSessions();
+      
+      // Load activity
+      await loadActivity();
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      loadDemoData();
+    }
+  }
+
+  // Load KPI data
+  async function loadKPIData() {
+    try {
+      // Try to get stats from Firestore
+      const statsDoc = await db.collection('mentorStats').doc(currentUser.userId).get();
+      
+      if (statsDoc.exists) {
+        const stats = statsDoc.data();
+        updateKPIs(stats);
+      } else {
+        // Calculate from actual data
+        await calculateRealKPIs();
+      }
+    } catch (error) {
+      console.warn('Could not load KPI data, calculating from collections:', error);
+      await calculateRealKPIs();
+    }
+  }
+
+  // Calculate real KPIs from Firestore
+  async function calculateRealKPIs() {
+    try {
+      // Count mentees assigned to this mentor
+      const menteesSnapshot = await db.collection('users')
+        .where('mentorId', '==', currentUser.userId)
+        .where('role', '==', 'mentee')
+        .get();
+      const totalMentees = menteesSnapshot.size;
+
+      // Count upcoming sessions
+      const now = new Date();
+      const sessionsSnapshot = await db.collection('sessions')
+        .where('mentorId', '==', currentUser.userId)
+        .where('scheduledTime', '>=', now)
+        .where('status', '==', 'scheduled')
+        .get();
+      const upcomingSessions = sessionsSnapshot.size;
+
+      // Count active mentorships
+      const activeMentorships = await db.collection('users')
+        .where('mentorId', '==', currentUser.userId)
+        .where('role', '==', 'mentee')
+        .where('status', '==', 'active')
+        .get();
+      const activeMentorshipsCount = activeMentorships.size;
+
+      // Count completed programs
+      const completedSnapshot = await db.collection('users')
+        .where('mentorId', '==', currentUser.userId)
+        .where('role', '==', 'mentee')
+        .where('programStatus', '==', 'completed')
+        .get();
+      const completedPrograms = completedSnapshot.size;
+
+      const stats = {
+        totalMentees,
+        upcomingSessions,
+        activeMentorships: activeMentorshipsCount,
+        completedPrograms
+      };
+
+      updateKPIs(stats);
+      
+    } catch (error) {
+      console.error('Error calculating KPIs:', error);
+      updateKPIs({ totalMentees: 0, upcomingSessions: 0, activeMentorships: 0, completedPrograms: 0 });
+    }
+  }
+
+  // Update KPI cards
+  function updateKPIs(stats) {
+    const kpiCards = document.querySelectorAll('.kpi');
+    
+    const kpiData = [
+      { title: 'Total Mentees', value: stats.totalMentees || 0, trend: '+20%', trendUp: true },
+      { title: 'Upcoming Sessions', value: stats.upcomingSessions || 0, trend: '+50%', trendUp: true },
+      { title: 'Active Mentorships', value: stats.activeMentorships || 0, trend: '+33%', trendUp: true },
+      { title: 'Completed Programs', value: stats.completedPrograms || 0, trend: '+67%', trendUp: true }
+    ];
+
+    kpiCards.forEach((card, index) => {
+      if (kpiData[index]) {
+        const data = kpiData[index];
+        card.classList.remove('loading');
+        card.querySelector('.kpi-value').textContent = data.value;
+        card.querySelector('.kpi-trend').innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="${data.trendUp ? 'up' : 'down'}">
+            <path d="${data.trendUp ? 'M7 17L17 7M17 7H9M17 7v8' : 'M17 7L7 17M7 17h8M7 17V9'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          ${data.trend} <span class="sub">vs last month</span>
+        `;
+        card.querySelector('.kpi-trend').className = `kpi-trend ${data.trendUp ? 'up' : 'down'}`;
+      }
+    });
+  }
+
+  // Load mentees
+  async function loadMentees() {
+    try {
+      const menteesSnapshot = await db.collection('users')
+        .where('mentorId', '==', currentUser.userId)
+        .where('role', '==', 'mentee')
+        .limit(5)
+        .get();
+
+      const mentees = menteesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      renderMentees(mentees);
+      
+    } catch (error) {
+      console.error('Error loading mentees:', error);
+      renderMentees([]);
+    }
+  }
+
+  // Render mentees table
+  function renderMentees(mentees) {
+    const container = document.getElementById('menteesContent');
+    
+    if (mentees.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">👥</div>
+          <div class="empty-state-title">No mentees yet</div>
+          <div class="empty-state-text">When students join your mentorship program, they'll appear here.</div>
+          <button class="btn-action">Share Your Profile</button>
+        </div>
+      `;
+      return;
+    }
+
+    let tableHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Mentee</th>
+            <th>Program Stage</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    mentees.forEach(mentee => {
+      const initials = (mentee.name || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      const stage = mentee.programStage || 'Not Started';
+      const status = mentee.status || 'pending';
+      
+      tableHTML += `
+        <tr>
+          <td>
+            <div class="name-cell">
+              <div class="init-avatar">${initials}</div>
+              <div class="name-info">
+                <div class="name-primary">${mentee.name || 'Unknown'}</div>
+                <div class="name-secondary">${mentee.email || 'No email'}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="stage-cell">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+              ${stage}
+            </div>
+          </td>
+          <td>
+            <span class="status-pill status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+          </td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `
+        </tbody>
+      </table>
+    `;
+
+    container.innerHTML = tableHTML;
+  }
+
+  // Load sessions
+  async function loadSessions() {
+    try {
+      const now = new Date();
+      const sessionsSnapshot = await db.collection('sessions')
+        .where('mentorId', '==', currentUser.userId)
+        .where('scheduledTime', '>=', now)
+        .where('status', '==', 'scheduled')
+        .orderBy('scheduledTime', 'asc')
+        .limit(3)
+        .get();
+
+      const sessions = sessionsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      renderSessions(sessions);
+      
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      renderSessions([]);
+    }
+  }
+
+  // Render sessions
+  function renderSessions(sessions) {
+    const container = document.getElementById('sessionsContent');
+    
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📅</div>
+          <div class="empty-state-title">No upcoming sessions</div>
+          <div class="empty-state-text">Your scheduled mentorship sessions will appear here.</div>
+        </div>
+      `;
+      return;
+    }
+
+    let sessionsHTML = '';
+    sessions.forEach(session => {
+      const date = session.scheduledTime ? new Date(session.scheduledTime.seconds * 1000) : new Date();
+      const menteeName = session.menteeName || 'Mentee';
+      
+      sessionsHTML += `
+        <div class="activity-item">
+          <div class="act-icon">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>
+          </div>
+          <div class="name-info">
+            <div class="act-title">Session with ${menteeName}</div>
+            <div class="act-sub">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+            <div class="act-time">${session.topic || 'General mentorship'}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = sessionsHTML;
+  }
+
+  // Load activity
+  async function loadActivity() {
+    try {
+      const activitySnapshot = await db.collection('activity')
+        .where('userId', '==', currentUser.userId)
+        .orderBy('timestamp', 'desc')
+        .limit(5)
+        .get();
+
+      const activities = activitySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      renderActivity(activities);
+      
+    } catch (error) {
+      console.error('Error loading activity:', error);
+      renderActivity([]);
+    }
+  }
+
+  // Render activity
+  function renderActivity(activities) {
+    const container = document.getElementById('activityContent');
+    
+    if (activities.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-title">No recent activity</div>
+          <div class="empty-state-text">Your recent mentorship activities will appear here.</div>
+        </div>
+      `;
+      return;
+    }
+
+    let activityHTML = '';
+    activities.forEach(activity => {
+      const date = activity.timestamp ? new Date(activity.timestamp.seconds * 1000) : new Date();
+      
+      activityHTML += `
+        <div class="activity-item">
+          <div class="act-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="name-info">
+            <div class="act-title">${activity.title || 'Activity'}</div>
+            <div class="act-sub">${activity.description || ''}</div>
+            <div class="act-time">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = activityHTML;
+  }
+
+  // Load demo data if Firebase fails
+  function loadDemoData() {
+    console.log('Loading demo data for mentor dashboard');
+    
+    const demoStats = {
+      totalMentees: 12,
+      upcomingSessions: 3,
+      activeMentorships: 8,
+      completedPrograms: 5
+    };
+    
+    updateKPIs(demoStats);
+    
+    const demoMentees = [
+      { id: '1', name: 'Amina Boateng', email: 'amina@ug.edu.gh', programStage: 'Stage 3 of 5', status: 'active' },
+      { id: '2', name: 'Daniel Mensah', email: 'daniel@ug.edu.gh', programStage: 'Stage 2 of 5', status: 'active' },
+      { id: '3', name: 'Efua Asante', email: 'efua@ug.edu.gh', programStage: 'Stage 1 of 5', status: 'pending' }
+    ];
+    
+    renderMentees(demoMentees);
+    
+    const demoSessions = [
+      { id: '1', menteeName: 'Amina Boateng', scheduledTime: { seconds: Math.floor(Date.now()/1000) + 86400 }, topic: 'Career Guidance' },
+      { id: '2', menteeName: 'Daniel Mensah', scheduledTime: { seconds: Math.floor(Date.now()/1000) + 172800 }, topic: 'Portfolio Review' }
+    ];
+    
+    renderSessions(demoSessions);
+    
+    const demoActivities = [
+      { id: '1', title: 'New mentee assigned', description: 'Amina Boateng joined your mentorship program', timestamp: { seconds: Math.floor(Date.now()/1000) - 3600 } },
+      { id: '2', title: 'Session completed', description: 'Career guidance session with Daniel Mensah', timestamp: { seconds: Math.floor(Date.now()/1000) - 86400 } }
+    ];
+    
+    renderActivity(demoActivities);
+  }
+
+  // Navigation handling
+  function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item[data-tab]');
+    
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = item.dataset.tab;
+        
+        // Update active state
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Update page title
+        const titles = {
+          dashboard: 'Dashboard',
+          mentees: 'My Mentees',
+          sessions: 'Sessions',
+          profile: 'My Profile',
+          resources: 'Resources',
+          messages: 'Messages',
+          reports: 'Reports',
+          settings: 'Settings'
+        };
+        
+        document.getElementById('pageTitle').textContent = titles[tab] || 'Dashboard';
+        
+        // For now, just show dashboard content
+        // In future, implement tab content switching
+      });
+    });
+  }
+
+  // Logout functionality
+  function setupLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutModal = document.getElementById('logoutModal');
+    const cancelLogoutBtn = document.getElementById('cancelLogout');
+    const confirmLogoutBtn = document.getElementById('confirmLogout');
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        logoutModal.classList.add('active');
+      });
+    }
+
+    if (cancelLogoutBtn) {
+      cancelLogoutBtn.addEventListener('click', () => {
+        logoutModal.classList.remove('active');
+      });
+    }
+
+    if (confirmLogoutBtn) {
+      confirmLogoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('mb_session');
+        localStorage.removeItem('mb_session');
+        window.location.href = './auth.html';
+      });
+    }
+
+    logoutModal.addEventListener('click', (e) => {
+      if (e.target === logoutModal) {
+        logoutModal.classList.remove('active');
+      }
+    });
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    setupNavigation();
+    setupLogout();
+    initializeDashboard();
+  });
+</script>
+
+</body>
+</html>

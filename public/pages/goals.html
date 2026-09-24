@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Goals & Progress | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6fb; font-family: 'Inter', sans-serif; }
+    .db-shell { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .db-sidebar { width: 260px; flex-shrink: 0; background: #1E202F; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform 0.3s ease; }
+    .db-sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-decoration: none; }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .db-nav-badge { margin-left: auto; background: #2B2D42; color: #1E202F; font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 20px; }
+    .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
+    .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
+    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #fff; }
+    .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .db-sidebar-overlay.open { display: block; }
+
+    /* ── Main ── */
+    .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .db-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0 2rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .db-header-left { display: flex; align-items: center; gap: 1rem; }
+    .db-menu-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #1E202F; padding: 0.3rem; }
+    .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
+    .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .db-icon-btn { position: relative; background: #f4f6fb; border: 1px solid #e8eaf0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.15s; text-decoration: none; color: inherit; }
+    .db-icon-btn:hover { background: #e8eaf0; }
+    .db-notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+    .db-content { padding: 2rem; flex: 1; }
+
+    /* ── Overview cards ── */
+    .goals-overview { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.75rem; }
+    .g-ov-card { background: #fff; border-radius: 14px; border: 1px solid #e8eaf0; padding: 1.1rem 1.25rem; box-shadow: 0 2px 8px rgba(26,0,26,0.05); display: flex; align-items: center; gap: 1rem; transition: transform 0.18s, box-shadow 0.18s; }
+    .g-ov-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(26,0,26,0.09); }
+    .g-ov-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .g-ov-icon--blue { background: rgba(74,144,226,0.12); }
+    .g-ov-icon--gold { background: rgba(43, 45, 66,0.15); }
+    .g-ov-icon--green { background: rgba(35,138,83,0.12); }
+    .g-ov-icon--red { background: rgba(239,68,68,0.1); }
+    .g-ov-card strong { display: block; font-size: 1.25rem; font-weight: 700; color: #1E202F; line-height: 1.2; }
+    .g-ov-card span { font-size: 0.75rem; color: #6b7280; }
+
+    /* ── Two-column layout ── */
+    .goals-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+    .goals-main { display: flex; flex-direction: column; gap: 1.5rem; }
+    .goals-sidebar { display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: calc(68px + 1rem); }
+
+    /* ── Section cards ── */
+    .g-section { background: #fff; border-radius: 16px; border: 1px solid #e8eaf0; box-shadow: 0 2px 8px rgba(26,0,26,0.05); overflow: hidden; }
+    .g-section-header { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.5rem; border-bottom: 1px solid #f0f2f7; gap: 1rem; flex-wrap: wrap; }
+    .g-section-header h2 { font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .g-section-body { padding: 1.25rem 1.5rem; }
+
+    /* ── Filter tabs ── */
+    .goal-filters { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .goal-filter-btn { padding: 0.35rem 0.9rem; border: 1.5px solid #e8eaf0; border-radius: var(--radius-full,9999px); background: #f8f9fc; font-size: 0.75rem; font-weight: 600; color: #6b7280; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .goal-filter-btn:hover { border-color: #2B2D42; color: #1E202F; }
+    .goal-filter-btn.active { background: rgba(43, 45, 66,0.12); border-color: #2B2D42; color: #1E202F; }
+
+    /* ── Goal card ── */
+    .goal-card { background: #fff; border: 1px solid #e8eaf0; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 6px rgba(26,0,26,0.04); transition: box-shadow 0.18s, border-color 0.18s; position: relative; overflow: hidden; }
+    .goal-card::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+    .goal-card.status-in_progress::before { background: #2B2D42; }
+    .goal-card.status-completed::before { background: #238a53; }
+    .goal-card.status-not_started::before { background: #9ca3af; }
+    .goal-card.status-needs_attention::before { background: #ef4444; }
+    .goal-card:hover { box-shadow: 0 6px 20px rgba(26,0,26,0.09); border-color: rgba(43, 45, 66,0.2); }
+    .goal-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .goal-card-title { font-family: 'Poppins', sans-serif; font-size: 0.925rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .goal-card-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.65rem; }
+    .goal-status-pill { font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 20px; }
+    .s-in_progress { background: rgba(43, 45, 66,0.12); color: #1E202F; }
+    .s-completed { background: rgba(35,138,83,0.1); color: #238a53; }
+    .s-not_started { background: rgba(156,163,175,0.15); color: #6b7280; }
+    .s-needs_attention { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .goal-category-badge { font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 20px; background: rgba(26,0,26,0.07); color: #1E202F; }
+    .goal-card-desc { font-size: 0.8rem; color: #6b7280; line-height: 1.6; margin-bottom: 0.85rem; }
+    .goal-progress-wrap { margin-bottom: 0.6rem; }
+    .goal-progress-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+    .goal-progress-label span { font-size: 0.72rem; color: #9ca3af; }
+    .goal-progress-label strong { font-size: 0.75rem; font-weight: 700; color: #2B2D42; }
+    .goal-progress-bar { height: 7px; background: #f0f2f7; border-radius: 20px; overflow: hidden; }
+    .goal-progress-fill { height: 100%; border-radius: 20px; transition: width 0.5s ease; }
+    .fill-in_progress { background: linear-gradient(90deg,#2B2D42,#EDF2F4); }
+    .fill-completed { background: linear-gradient(90deg,#238a53,#4caf79); }
+    .fill-not_started { background: #d1d5db; }
+    .fill-needs_attention { background: linear-gradient(90deg,#ef4444,#f87171); }
+    .goal-card-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f0f2f7; }
+    .goal-target-date { font-size: 0.72rem; color: #9ca3af; }
+    .goal-card-actions { display: flex; gap: 0.4rem; }
+
+    /* ── Feedback snippet ── */
+    .feedback-snippet { background: rgba(43, 45, 66,0.06); border: 1px solid rgba(43, 45, 66,0.2); border-radius: 10px; padding: 0.7rem 0.85rem; margin-top: 0.6rem; }
+    .feedback-snippet p { font-size: 0.75rem; color: #444455; font-style: italic; line-height: 1.55; margin: 0 0 0.3rem; }
+    .feedback-snippet small { font-size: 0.68rem; color: #9ca3af; }
+
+    /* ── Mentor mentee row ── */
+    .mentee-goals-group { margin-bottom: 1.5rem; }
+    .mentee-goals-group:last-child { margin-bottom: 0; }
+    .mentee-goals-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid #f0f2f7; }
+    .mentee-goals-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .mentee-goals-avatar-initials { width: 36px; height: 36px; border-radius: 50%; background: rgba(26,0,26,0.08); color: #1E202F; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mentee-goals-name { font-size: 0.875rem; font-weight: 700; color: #1E202F; }
+
+    /* ── Progress overview sidebar card ── */
+    .progress-overview { text-align: center; padding: 1.25rem; }
+    .progress-circle-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 1rem; }
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring-bg { fill: none; stroke: #f0f2f7; stroke-width: 8; }
+    .progress-ring-fill { fill: none; stroke: #2B2D42; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+    .progress-circle-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 700; color: #1E202F; }
+    .progress-stats { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 0.75rem; }
+    .progress-stat { text-align: center; }
+    .progress-stat strong { display: block; font-size: 1.1rem; font-weight: 700; color: #1E202F; }
+    .progress-stat span { font-size: 0.7rem; color: #9ca3af; }
+
+    /* ── Achievements ── */
+    .achievement-item { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.6rem 0; border-bottom: 1px solid #f0f2f7; }
+    .achievement-item:last-child { border-bottom: none; }
+    .achievement-icon { width: 26px; height: 26px; border-radius: 50%; background: rgba(35,138,83,0.1); color: #238a53; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; }
+    .achievement-item p { font-size: 0.8rem; font-weight: 600; color: #1E202F; margin: 0 0 0.1rem; }
+    .achievement-item span { font-size: 0.68rem; color: #9ca3af; }
+
+    /* ── Next steps ── */
+    .next-step-item { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.6rem 0; border-bottom: 1px solid #f0f2f7; }
+    .next-step-item:last-child { border-bottom: none; }
+    .next-step-icon { width: 26px; height: 26px; border-radius: 50%; background: rgba(74,144,226,0.1); color: #3a7bd5; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; }
+    .next-step-item p { font-size: 0.8rem; color: #1E202F; margin: 0; line-height: 1.5; }
+
+    /* ── Empty ── */
+    .goals-empty { text-align: center; padding: 2.5rem 1rem; }
+    .goals-empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.85rem; }
+    .goals-empty h3 { font-size: 1rem; font-weight: 700; color: #1E202F; margin: 0 0 0.35rem; }
+    .goals-empty p { font-size: 0.82rem; color: #6b7280; margin: 0 0 1.25rem; }
+
+    /* ── Skeleton ── */
+    .g-skel { background: linear-gradient(90deg,#f0f2f7 25%,#e8eaf0 50%,#f0f2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 14px; margin-bottom: 1rem; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Modal ── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(7,15,30,0.65); backdrop-filter: blur(4px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
+    .modal-card { background: #fff; border-radius: 24px; padding: 2rem 2.25rem; max-width: 520px; width: 100%; position: relative; box-shadow: 0 24px 70px rgba(26,0,26,0.16); max-height: 90vh; overflow-y: auto; animation: scaleIn 0.2s ease; }
+    @keyframes scaleIn { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+    .modal-close { position: absolute; top: 0.85rem; right: 0.85rem; font-size: 1rem; color: #6b7280; padding: 0.3rem 0.5rem; border-radius: 6px; background: none; border: none; cursor: pointer; }
+    .modal-close:hover { color: #c0392b; background: rgba(192,57,43,0.08); }
+
+    /* ── Milestone ── */
+    .milestone-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0; border-bottom: 1px solid #f0f2f7; }
+    .milestone-item:last-child { border-bottom: none; }
+    .milestone-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #e8eaf0; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; cursor: pointer; transition: all 0.15s; }
+    .milestone-check.done { background: #238a53; border-color: #238a53; color: #fff; }
+    .milestone-text { font-size: 0.82rem; color: #1E202F; }
+    .milestone-text.done { color: #9ca3af; text-decoration: line-through; }
+
+    /* ── Progress slider ── */
+    .progress-slider-wrap { margin: 1rem 0; }
+    .progress-slider-wrap input[type="range"] { width: 100%; accent-color: #2B2D42; }
+    .progress-slider-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.3rem; }
+    .progress-slider-value { font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 700; color: #2B2D42; text-align: center; margin-bottom: 0.5rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) { .goals-grid { grid-template-columns: 1fr; } .goals-sidebar { position: static; display: grid; grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 900px) { .db-sidebar { transform: translateX(-100%); } .db-sidebar.open { transform: translateX(0); } .db-main { margin-left: 0; } .db-menu-btn { display: flex; } .goals-overview { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .db-content { padding: 1rem; } .goals-overview { grid-template-columns: 1fr 1fr; } .goals-sidebar { grid-template-columns: 1fr; } }
+    @media (max-width: 400px) { .goals-overview { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="goals">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay"></div>
+<div class="db-shell">
+
+  <aside class="db-sidebar" id="dbSidebar" aria-label="Dashboard navigation">
+    <a class="db-sidebar-brand" href="../index.html">
+      <img src="../assets/logo-new.jpg" alt="MentorBridge" />
+      <span>mentor<span class="brand-accent">bridge</span></span>
+    </a>
+    <nav class="db-nav" id="sidebarNav" aria-label="Main"></nav>
+    <div class="db-sidebar-footer">
+      <div class="db-user-row">
+        <div class="db-user-avatar-initials" id="sidebarInitials">AB</div>
+        <div class="db-user-info">
+          <strong id="sidebarName">Loading…</strong>
+          <span id="sidebarRole">Mentee</span>
+        </div>
+      </div>
+      <button class="db-logout-btn" id="logoutBtn" type="button"><span>🚪</span> Log out</button>
+    </div>
+  </aside>
+
+  <div class="db-main">
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="menuBtn" type="button" aria-label="Toggle sidebar">☰</button>
+        <div class="db-welcome">
+          <h1>Goals &amp; Progress</h1>
+          <p id="headerSubtitle">Track your mentorship goals and see how far you've come.</p>
+        </div>
+      </div>
+      <div class="db-header-right">
+        <a href="notifications.html" class="db-icon-btn" aria-label="Notifications">🔔<span class="db-notif-dot"></span></a>
+        <div class="db-header-avatar" id="headerAvatar">AB</div>
+      </div>
+    </header>
+
+    <main class="db-content">
+
+      <!-- Overview cards -->
+      <div class="goals-overview" id="goalsOverview">
+        <div class="g-ov-card"><div class="g-ov-icon g-ov-icon--gold">🎯</div><div><strong id="ovActive">—</strong><span>Active goals</span></div></div>
+        <div class="g-ov-card"><div class="g-ov-icon g-ov-icon--green">✓</div><div><strong id="ovCompleted">—</strong><span>Completed</span></div></div>
+        <div class="g-ov-card"><div class="g-ov-icon g-ov-icon--blue">⏳</div><div><strong id="ovInProgress">—</strong><span>In progress</span></div></div>
+        <div class="g-ov-card"><div class="g-ov-icon g-ov-icon--red">📊</div><div><strong id="ovRate">—</strong><span id="ovRateLabel">Overall progress</span></div></div>
+      </div>
+
+      <div class="goals-grid">
+        <!-- LEFT: main goals -->
+        <div class="goals-main">
+
+          <!-- Mentee-only: My Goals section -->
+          <div class="g-section" id="myGoalsSection">
+            <div class="g-section-header">
+              <h2>My Goals</h2>
+              <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                <div class="goal-filters" id="goalFilterBtns">
+                  <button class="goal-filter-btn active" data-filter="all" type="button">All</button>
+                  <button class="goal-filter-btn" data-filter="in_progress" type="button">In Progress</button>
+                  <button class="goal-filter-btn" data-filter="completed" type="button">Completed</button>
+                  <button class="goal-filter-btn" data-filter="needs_attention" type="button">Needs Attention</button>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="createGoalBtn" type="button">+ Create Goal</button>
+              </div>
+            </div>
+            <div class="g-section-body">
+              <div id="goalsContainer">
+                <div class="g-skel" style="height:110px;"></div>
+                <div class="g-skel" style="height:110px;"></div>
+                <div class="g-skel" style="height:110px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mentor-only: mentees' goals -->
+          <div class="g-section hidden" id="menteeGoalsSection">
+            <div class="g-section-header">
+              <h2>Mentee Goals</h2>
+              <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                <input class="form-input" type="search" id="menteeSearch" placeholder="Search mentee…" style="width:160px;padding:.45rem .85rem;font-size:.8rem;" />
+                <div class="goal-filters" id="mentorFilterBtns">
+                  <button class="goal-filter-btn active" data-filter="all" type="button">All</button>
+                  <button class="goal-filter-btn" data-filter="in_progress" type="button">In Progress</button>
+                  <button class="goal-filter-btn" data-filter="completed" type="button">Completed</button>
+                  <button class="goal-filter-btn" data-filter="needs_attention" type="button">Needs Attention</button>
+                </div>
+              </div>
+            </div>
+            <div class="g-section-body" id="menteeGoalsContainer">
+              <div class="g-skel" style="height:110px;"></div>
+              <div class="g-skel" style="height:80px;"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: sidebar -->
+        <div class="goals-sidebar">
+
+          <!-- Progress overview -->
+          <div class="g-section">
+            <div class="g-section-header"><h2>Overall Progress</h2></div>
+            <div class="g-section-body progress-overview">
+              <div class="progress-circle-wrap">
+                <svg class="progress-ring" width="100" height="100" viewBox="0 0 100 100">
+                  <circle class="progress-ring-bg" cx="50" cy="50" r="42" />
+                  <circle class="progress-ring-fill" id="progressRingFill" cx="50" cy="50" r="42"
+                    stroke-dasharray="263.9" stroke-dashoffset="263.9" />
+                </svg>
+                <div class="progress-circle-text" id="progressRingText">0%</div>
+              </div>
+              <div class="progress-stats">
+                <div class="progress-stat"><strong id="statActive2">0</strong><span>Active</span></div>
+                <div class="progress-stat"><strong id="statCompleted2">0</strong><span>Done</span></div>
+                <div class="progress-stat"><strong id="statNeeds">0</strong><span>Needs help</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent achievements -->
+          <div class="g-section" id="achievementsSection">
+            <div class="g-section-header"><h2>Recent Achievements</h2></div>
+            <div class="g-section-body" id="achievementsList">
+              <div class="g-skel" style="height:28px;margin-bottom:.5rem;"></div>
+              <div class="g-skel" style="height:28px;margin-bottom:.5rem;"></div>
+              <div class="g-skel" style="height:28px;"></div>
+            </div>
+          </div>
+
+          <!-- Next steps -->
+          <div class="g-section" id="nextStepsSection">
+            <div class="g-section-header"><h2>Recommended Next Steps</h2></div>
+            <div class="g-section-body" id="nextStepsList">
+              <div class="g-skel" style="height:28px;margin-bottom:.5rem;"></div>
+              <div class="g-skel" style="height:28px;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- CREATE GOAL MODAL -->
+<div id="createGoalModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="createGoalTitle">
+  <div class="modal-card">
+    <button class="modal-close" id="createGoalClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">New Goal</span>
+    <h2 id="createGoalTitle" style="margin:.3rem 0 1.25rem;font-family:'Poppins',sans-serif;font-size:1.15rem;">Create a Goal</h2>
+    <div class="form-group">
+      <label class="form-label" for="goalTitle">Goal title <span style="color:#ef4444;">*</span></label>
+      <input class="form-input" id="goalTitle" type="text" placeholder="e.g. Improve my CV" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="goalDesc">Description</label>
+      <textarea class="form-textarea" id="goalDesc" rows="2" placeholder="Brief description of what you want to achieve…"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label" for="goalCategory">Category</label>
+        <select class="form-select" id="goalCategory">
+          <option value="Career">Career</option>
+          <option value="Skills">Skills</option>
+          <option value="Education">Education</option>
+          <option value="Professional Development">Professional Development</option>
+          <option value="Personal Development">Personal Development</option>
+          <option value="Networking">Networking</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="goalTarget">Target date</label>
+        <input class="form-input" id="goalTarget" type="date" />
+      </div>
+    </div>
+    <div id="createGoalFeedback" style="font-size:.85rem;min-height:1.2rem;padding:.25rem 0;"></div>
+    <button class="btn btn-primary" style="width:100%;" id="saveGoalBtn" type="button">Create Goal</button>
+  </div>
+</div>
+
+<!-- GOAL DETAIL MODAL -->
+<div id="goalDetailModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="goalDetailTitle">
+  <div class="modal-card" style="max-width:560px;">
+    <button class="modal-close" id="goalDetailClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Goal Details</span>
+    <h2 id="goalDetailTitle" style="margin:.3rem 0 1.25rem;font-family:'Poppins',sans-serif;font-size:1.15rem;"></h2>
+    <div id="goalDetailBody"></div>
+    <div id="goalDetailActions" style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;"></div>
+  </div>
+</div>
+
+<!-- UPDATE PROGRESS MODAL -->
+<div id="updateProgressModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="max-width:460px;">
+    <button class="modal-close" id="updateProgressClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Update Progress</span>
+    <h3 id="updateProgressTitle" style="margin:.3rem 0 .4rem;font-family:'Poppins',sans-serif;font-size:1.1rem;"></h3>
+    <div class="progress-slider-wrap">
+      <div class="progress-slider-value" id="sliderValue">0%</div>
+      <div class="progress-slider-label"><span>0%</span><span>100%</span></div>
+      <input type="range" id="progressSlider" min="0" max="100" step="5" value="0" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="progressNote">Note <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+      <textarea class="form-textarea" id="progressNote" rows="2" placeholder="What progress have you made?"></textarea>
+    </div>
+    <div id="updateProgressFeedback" style="font-size:.85rem;min-height:1.2rem;padding:.25rem 0;"></div>
+    <button class="btn btn-primary" style="width:100%;" id="saveProgressBtn" type="button">Save Progress</button>
+  </div>
+</div>
+
+<!-- MENTOR FEEDBACK MODAL -->
+<div id="feedbackModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="max-width:480px;">
+    <button class="modal-close" id="feedbackClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">Mentor Feedback</span>
+    <h3 id="feedbackGoalTitle" style="margin:.3rem 0 .4rem;font-family:'Poppins',sans-serif;font-size:1.1rem;"></h3>
+    <p id="feedbackMenteeName" style="font-size:.8rem;color:#6b7280;margin-bottom:1.25rem;"></p>
+    <div class="form-group">
+      <label class="form-label" for="feedbackText">Your feedback</label>
+      <textarea class="form-textarea" id="feedbackText" rows="4" placeholder="Share observations, suggestions, and next steps for this goal…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="feedbackStatus">Update goal status</label>
+      <select class="form-select" id="feedbackStatus">
+        <option value="">Keep current status</option>
+        <option value="in_progress">In Progress</option>
+        <option value="needs_attention">Needs Attention</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
+    <div id="feedbackSaveFeedback" style="font-size:.85rem;min-height:1.2rem;padding:.25rem 0;"></div>
+    <button class="btn btn-primary" style="width:100%;" id="saveFeedbackBtn" type="button">Save Feedback</button>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script>
+/* ── Goal store ── */
+var GOALS = [
+  { id:'g1', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Improve My CV', description:'Create a professional CV suitable for internship and graduate role applications.', category:'Career', status:'in_progress', progress:75, targetDate:'2026-08-30', createdDate:'2026-06-01', completedDate:null, feedback:[{author:'Grace Akoto',role:'Mentor',date:'Aug 12',text:"You're making great progress. Focus on quantifying your experience with numbers and outcomes before our next session."}], milestones:[{text:'Review existing CV',done:true},{text:'Rewrite professional summary',done:true},{text:'Improve experience section',done:true},{text:'Mentor review',done:false},{text:'Finalise CV',done:false}] },
+  { id:'g2', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Prepare for Technical Interviews', description:'Practice coding challenges and behavioural questions for software engineering roles.', category:'Skills', status:'needs_attention', progress:40, targetDate:'2026-08-30', createdDate:'2026-06-10', completedDate:null, feedback:[{author:'Grace Akoto',role:'Mentor',date:'Aug 5',text:'You need to spend more time on system design. I suggest doing 2 LeetCode problems per day. This needs attention before your target date.'}], milestones:[{text:'Complete 20 LeetCode problems',done:true},{text:'Study system design basics',done:false},{text:'Complete 2 mock interviews',done:false},{text:'Review data structures',done:false}] },
+  { id:'g3', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Build My Professional Network', description:'Connect with 20 professionals in tech via LinkedIn and attend two networking events.', category:'Networking', status:'in_progress', progress:40, targetDate:'2026-09-15', createdDate:'2026-06-15', completedDate:null, feedback:[], milestones:[{text:'Optimise LinkedIn profile',done:true},{text:'Send 10 connection requests',done:true},{text:'Attend a networking event',done:false},{text:'Get 3 informational interviews',done:false}] },
+  { id:'g4', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Secure a Software Engineering Internship', description:'Apply to 10+ internship positions and secure at least one offer by October.', category:'Career', status:'not_started', progress:10, targetDate:'2026-10-01', createdDate:'2026-07-01', completedDate:null, feedback:[], milestones:[{text:'Shortlist target companies',done:true},{text:'Prepare application materials',done:false},{text:'Submit 10 applications',done:false},{text:'Prepare for interviews',done:false}] },
+  { id:'g5', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Complete Online Certification', description:'Complete the Google Data Analytics Certificate on Coursera.', category:'Education', status:'completed', progress:100, targetDate:'2026-07-20', createdDate:'2026-05-01', completedDate:'Jul 20, 2026', feedback:[{author:'Grace Akoto',role:'Mentor',date:'Jul 21',text:'Excellent work! This certification will add great value to your CV.'}], milestones:[{text:'Enrol in course',done:true},{text:'Complete modules 1–3',done:true},{text:'Complete modules 4–6',done:true},{text:'Pass final assessment',done:true}] },
+  // Mentor's other mentees
+  { id:'g6', menteeId:'s2', menteeName:'Daniel Mensah', menteePhoto:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', title:'Build Portfolio Website', description:'Create a professional portfolio showcasing 3 projects.', category:'Skills', status:'in_progress', progress:65, targetDate:'2026-09-01', createdDate:'2026-06-20', completedDate:null, feedback:[], milestones:[{text:'Choose tech stack',done:true},{text:'Design layout',done:true},{text:'Add 3 projects',done:false},{text:'Deploy online',done:false}] },
+  { id:'g7', menteeId:'s2', menteeName:'Daniel Mensah', menteePhoto:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', title:'Prepare for Interviews', description:'Practice algorithms and system design for technical interviews.', category:'Skills', status:'needs_attention', progress:40, targetDate:'2026-08-15', createdDate:'2026-07-01', completedDate:null, feedback:[], milestones:[] },
+  { id:'g8', menteeId:'s3', menteeName:'Ama Boateng', menteePhoto:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', title:'Research Grad School Options', description:'Identify and research 5 suitable graduate programmes.', category:'Education', status:'in_progress', progress:55, targetDate:'2026-10-01', createdDate:'2026-07-10', completedDate:null, feedback:[], milestones:[] }
+];
+
+var activeFilter = 'all';
+var pendingGoalId = null;
+var currentRole = 'student';
+
+var $ = function(id){ return document.getElementById(id); };
+function statusLabel(s){ return s==='in_progress'?'In Progress':s==='completed'?'Completed':s==='needs_attention'?'Needs Attention':'Not Started'; }
+function fmtDate(d){ if(!d) return '—'; var p=d.split('-'); if(p.length<3) return d; var dt=new Date(p[0],p[1]-1,p[2]); return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function closeModal(id){ $(id).classList.add('hidden'); document.body.style.overflow=''; }
+function openModal(id){ $(id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
+
+function getMenteeGoals(filter){ return GOALS.filter(function(g){ return g.menteeId==='s1' && (filter==='all'||g.status===filter); }); }
+function getAllGoals(filter){ return GOALS.filter(function(g){ return filter==='all'||g.status===filter; }); }
+
+function computeOverallProgress(goals){ if(!goals.length) return 0; return Math.round(goals.reduce(function(sum,g){return sum+g.progress;},0)/goals.length); }
+
+function updateOverview(role){
+  var goals = role==='mentor' ? GOALS : GOALS.filter(function(g){return g.menteeId==='s1';});
+  var active = goals.filter(function(g){return g.status!=='completed';}).length;
+  var done = goals.filter(function(g){return g.status==='completed';}).length;
+  var inProg = goals.filter(function(g){return g.status==='in_progress';}).length;
+  var needsAttn = goals.filter(function(g){return g.status==='needs_attention';}).length;
+  var overall = computeOverallProgress(goals);
+
+  $('ovActive').textContent = active;
+  $('ovCompleted').textContent = done;
+  $('ovInProgress').textContent = inProg;
+
+  if(role==='mentor'){
+    $('ovRate').textContent = (goals.length ? Math.round(done/goals.length*100) : 0)+'%';
+    $('ovRateLabel').textContent = 'Completion rate';
+    // change 4th card icon
+    var cards = document.querySelectorAll('.g-ov-card');
+    if(cards[3]){ cards[3].querySelector('.g-ov-icon').textContent='⚠️'; cards[3].querySelector('.g-ov-icon').className='g-ov-icon g-ov-icon--red'; cards[3].querySelector('span').textContent='Needs attention'; $('ovRate').textContent=needsAttn; }
+  } else {
+    $('ovRate').textContent = overall+'%';
+    $('ovRateLabel').textContent = 'Overall progress';
+  }
+
+  // Ring
+  var pct = role==='mentor' ? (goals.length?Math.round(done/goals.length*100):0) : overall;
+  var circ = 263.9;
+  var offset = circ - (pct/100)*circ;
+  $('progressRingFill').style.strokeDashoffset = offset;
+  $('progressRingText').textContent = pct+'%';
+  $('statActive2').textContent = active;
+  $('statCompleted2').textContent = done;
+  $('statNeeds').textContent = needsAttn;
+}
+
+function renderGoalCard(g, role){
+  var fb = g.feedback && g.feedback.length ? g.feedback[g.feedback.length-1] : null;
+  var fbHtml = fb ? '<div class="feedback-snippet"><p>&#8220;'+fb.text+'&#8221;</p><small>'+fb.author+' · '+fb.date+'</small></div>' : '';
+  var actions = role==='mentor'
+    ? '<button class="btn btn-outline btn-sm view-goal-btn" data-goal-id="'+g.id+'" type="button">View Goal</button>'
+      + '<button class="btn btn-secondary btn-sm feedback-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-mentee-name="'+g.menteeName+'" type="button">Add Feedback</button>'
+    : '<button class="btn btn-outline btn-sm view-goal-btn" data-goal-id="'+g.id+'" type="button">View Goal</button>'
+      + '<button class="btn btn-ghost btn-sm update-progress-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-progress="'+g.progress+'" type="button">Update Progress</button>';
+  var completedBadge = g.status==='completed' ? '<span style="font-size:.75rem;color:#238a53;font-weight:700;">🎉 Completed '+g.completedDate+'</span>' : '<span class="goal-target-date">Target: '+fmtDate(g.targetDate)+'</span>';
+  return '<div class="goal-card status-'+g.status+'">'
+    +'<div class="goal-card-top">'
+    +'<h3 class="goal-card-title">'+g.title+'</h3>'
+    +'</div>'
+    +'<div class="goal-card-meta">'
+    +'<span class="goal-status-pill s-'+g.status+'">'+statusLabel(g.status)+'</span>'
+    +'<span class="goal-category-badge">'+g.category+'</span>'
+    +'</div>'
+    +(g.description ? '<p class="goal-card-desc">'+g.description+'</p>' : '')
+    +'<div class="goal-progress-wrap">'
+    +'<div class="goal-progress-label"><span>Progress</span><strong>'+g.progress+'%</strong></div>'
+    +'<div class="goal-progress-bar"><div class="goal-progress-fill fill-'+g.status+'" style="width:'+g.progress+'%"></div></div>'
+    +'</div>'
+    + fbHtml
+    +'<div class="goal-card-footer">'+completedBadge+'<div class="goal-card-actions">'+actions+'</div></div>'
+    +'</div>';
+}
+
+function renderMenteeGoals(filter){
+  var container = $('goalsContainer');
+  var goals = getMenteeGoals(filter);
+  if(!goals.length){
+    container.innerHTML = '<div class="goals-empty">'
+      +'<div class="goals-empty-icon">🎯</div>'
+      +'<h3>'+(filter==='all'?'No goals yet':'No '+statusLabel(filter).toLowerCase()+' goals')+'</h3>'
+      +'<p>'+(filter==='all'?'Create your first goal and start working toward it with your mentor.':'Try a different filter.')+'</p>'
+      +(filter==='all'?'<button class="btn btn-secondary" id="emptyCreateBtn" type="button">Create Goal</button>':'')
+      +'</div>';
+    if(filter==='all'){ var ecb=$('emptyCreateBtn'); if(ecb) ecb.addEventListener('click',function(){ openModal('createGoalModal'); }); }
+    return;
+  }
+  container.innerHTML = goals.map(function(g){ return renderGoalCard(g,'mentee'); }).join('');
+  bindGoalCardButtons('mentee');
+}
+
+function renderMentorGoals(filter, search){
+  var container = $('menteeGoalsContainer');
+  var menteeIds = ['s1','s2','s3'];
+  var html = '';
+  menteeIds.forEach(function(mid){
+    var goals = GOALS.filter(function(g){
+      return g.menteeId===mid && (filter==='all'||g.status===filter);
+    });
+    if(!goals.length) return;
+    var g0 = goals[0];
+    if(search && !g0.menteeName.toLowerCase().includes(search.toLowerCase())) return;
+    var initials = g0.menteeName.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var avatarHtml = g0.menteePhoto
+      ? '<img class="mentee-goals-avatar" src="'+g0.menteePhoto+'" alt="'+g0.menteeName+'" />'
+      : '<div class="mentee-goals-avatar-initials">'+initials+'</div>';
+    html += '<div class="mentee-goals-group">'
+      +'<div class="mentee-goals-header">'+avatarHtml+'<span class="mentee-goals-name">'+g0.menteeName+'</span><span style="font-size:.72rem;color:#9ca3af;margin-left:.5rem;">'+goals.length+' goal'+(goals.length!==1?'s':'')+'</span></div>'
+      + goals.map(function(g){ return renderGoalCard(g,'mentor'); }).join('')
+      +'</div>';
+  });
+  container.innerHTML = html || '<div class="goals-empty"><div class="goals-empty-icon">🎯</div><h3>No goals found</h3><p>Try adjusting your filters.</p></div>';
+  bindGoalCardButtons('mentor');
+}
+
+function bindGoalCardButtons(role){
+  document.querySelectorAll('.view-goal-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ openGoalDetail(btn.dataset.goalId, role); });
+  });
+  document.querySelectorAll('.update-progress-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      pendingGoalId = btn.dataset.goalId;
+      $('updateProgressTitle').textContent = btn.dataset.goalTitle;
+      var current = parseInt(btn.dataset.progress,10)||0;
+      $('progressSlider').value = current;
+      $('sliderValue').textContent = current+'%';
+      $('progressNote').value='';
+      $('updateProgressFeedback').textContent='';
+      openModal('updateProgressModal');
+    });
+  });
+  document.querySelectorAll('.feedback-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      pendingGoalId = btn.dataset.goalId;
+      $('feedbackGoalTitle').textContent = btn.dataset.goalTitle;
+      $('feedbackMenteeName').textContent = btn.dataset.menteeName;
+      $('feedbackText').value='';
+      $('feedbackStatus').value='';
+      $('feedbackSaveFeedback').textContent='';
+      openModal('feedbackModal');
+    });
+  });
+}
+
+function openGoalDetail(goalId, role){
+  var g = GOALS.find(function(x){return x.id===goalId;});
+  if(!g) return;
+  $('goalDetailTitle').textContent = g.title;
+  var milestonesHtml = '';
+  if(g.milestones && g.milestones.length){
+    milestonesHtml = '<div style="margin-top:1rem;"><p style="font-size:.78rem;font-weight:700;color:#1E202F;margin:0 0 .65rem;">Milestones</p>'
+      + g.milestones.map(function(m,i){
+        return '<div class="milestone-item">'
+          +'<div class="milestone-check'+(m.done?' done':'')+'" data-goal-id="'+g.id+'" data-ms-idx="'+i+'">'+(m.done?'✓':'')+'</div>'
+          +'<span class="milestone-text'+(m.done?' done':'')+'">'+m.text+'</span>'
+          +'</div>';
+      }).join('')
+      +'</div>';
+  }
+  var fbHtml = '';
+  if(g.feedback && g.feedback.length){
+    fbHtml = '<div style="margin-top:1rem;"><p style="font-size:.78rem;font-weight:700;color:#1E202F;margin:0 0 .65rem;">Mentor Feedback</p>'
+      + g.feedback.map(function(f){
+        return '<div class="feedback-snippet" style="margin-bottom:.5rem;"><p>&#8220;'+f.text+'&#8221;</p><small>'+f.author+' · '+f.date+'</small></div>';
+      }).join('')
+      +'</div>';
+  }
+  $('goalDetailBody').innerHTML =
+    '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;">'
+    +'<span class="goal-status-pill s-'+g.status+'">'+statusLabel(g.status)+'</span>'
+    +'<span class="goal-category-badge">'+g.category+'</span>'
+    +'</div>'
+    +(g.description ? '<p style="font-size:.875rem;color:#6b7280;margin-bottom:1rem;line-height:1.7;">'+g.description+'</p>' : '')
+    +'<div style="margin-bottom:.75rem;">'
+    +'<div class="goal-progress-label" style="margin-bottom:.3rem;"><span style="font-size:.8rem;color:#6b7280;">Progress</span><strong style="font-size:.8rem;color:#2B2D42;">'+g.progress+'%</strong></div>'
+    +'<div class="goal-progress-bar"><div class="goal-progress-fill fill-'+g.status+'" style="width:'+g.progress+'%"></div></div>'
+    +'</div>'
+    +'<div style="font-size:.78rem;color:#9ca3af;margin-bottom:.5rem;">Target: '+fmtDate(g.targetDate)+'</div>'
+    +(g.completedDate ? '<div style="font-size:.78rem;color:#238a53;font-weight:600;margin-bottom:.5rem;">🎉 Completed: '+g.completedDate+'</div>' : '')
+    + milestonesHtml + fbHtml;
+
+  var actions = '';
+  if(role==='mentee' && g.status!=='completed'){
+    actions = '<button class="btn btn-primary update-progress-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-progress="'+g.progress+'" type="button">Update Progress</button>';
+  }
+  if(role==='mentor'){
+    actions = '<button class="btn btn-secondary feedback-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-mentee-name="'+g.menteeName+'" type="button">Add Feedback</button>';
+  }
+  $('goalDetailActions').innerHTML = actions;
+  bindGoalCardButtons(role);
+
+  // Milestone toggles (mentee only)
+  $('goalDetailBody').querySelectorAll('.milestone-check').forEach(function(el){
+    if(role!=='mentee') return;
+    el.addEventListener('click', function(){
+      var gObj = GOALS.find(function(x){return x.id===el.dataset.goalId;});
+      var idx = parseInt(el.dataset.msIdx,10);
+      if(!gObj||isNaN(idx)) return;
+      gObj.milestones[idx].done = !gObj.milestones[idx].done;
+      // Recalculate progress from milestones
+      var doneMil = gObj.milestones.filter(function(m){return m.done;}).length;
+      gObj.progress = Math.round(doneMil/gObj.milestones.length*100);
+      openGoalDetail(gObj.id, role); // re-render
+      renderMenteeGoals(activeFilter);
+      updateOverview(role);
+    });
+  });
+
+  openModal('goalDetailModal');
+}
+
+function renderAchievements(){
+  var completed = GOALS.filter(function(g){return g.menteeId==='s1'&&g.status==='completed';});
+  var html = '';
+  completed.forEach(function(g){
+    html += '<div class="achievement-item">'
+      +'<div class="achievement-icon">✓</div>'
+      +'<div><p>Completed "'+g.title+'"</p><span>'+g.completedDate+'</span></div>'
+      +'</div>';
+  });
+  html += '<div class="achievement-item"><div class="achievement-icon">📅</div><div><p>Attended 3 mentorship sessions</p><span>This month</span></div></div>';
+  $('achievementsList').innerHTML = html || '<p style="font-size:.82rem;color:#9ca3af;">No achievements yet. Keep working on your goals!</p>';
+}
+
+function renderNextSteps(){
+  var goals = GOALS.filter(function(g){return g.menteeId==='s1'&&g.status!=='completed';});
+  var steps = [];
+  goals.forEach(function(g){
+    if(g.status==='needs_attention') steps.push('Address mentor feedback on "'+g.title+'"');
+    else if(g.progress<50) steps.push('Make progress on "'+g.title+'"');
+  });
+  steps.push('Schedule your next mentorship session');
+  steps.push('Review your mentor\'s latest feedback');
+  $('nextStepsList').innerHTML = steps.slice(0,4).map(function(s){
+    return '<div class="next-step-item"><div class="next-step-icon">→</div><p>'+s+'</p></div>';
+  }).join('') || '<p style="font-size:.82rem;color:#9ca3af;">All caught up!</p>';
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
+  var role = session.role || 'student';
+  currentRole = role;
+  var name = session.name || (role==='mentor'?'Grace Akoto':'Amina Boateng');
+  var initials = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+
+  if(!session.role){ window.location.replace('auth.html'); return; }
+
+  $('sidebarInitials').textContent = initials;
+  $('sidebarName').textContent = name;
+  $('sidebarRole').textContent = role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
+  $('headerAvatar').textContent = initials;
+  if($('headerSubtitle')) $('headerSubtitle').textContent = role==='mentor'
+    ? 'Monitor your mentees\u2019 goals and support their progress.'
+    : 'Track your mentorship goals and see how far you\u2019ve come.';
+
+  // Show/hide sections
+  if(role==='mentor'){
+    if($('myGoalsSection')) $('myGoalsSection').classList.add('hidden');
+    if($('menteeGoalsSection')) $('menteeGoalsSection').classList.remove('hidden');
+    if($('achievementsSection')) $('achievementsSection').classList.add('hidden');
+    if($('nextStepsSection')) $('nextStepsSection').classList.add('hidden');
+  }
+
+  // Sidebar nav
+  var dashUrl = role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var menteeLinks = [
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentor',icon:'👤',label:'My Mentor'},
+    {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress',active:true},
+    {href:'opportunities.html',icon:'💼',label:'Opportunities'},{href:'messages.html',icon:'💬',label:'Messages'},
+    {href:'resource-centre.html',icon:'📚',label:'Resources'},{href:'notifications.html',icon:'🔔',label:'Notifications'},
+    {href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  var mentorLinks = [
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentees',icon:'👥',label:'My Mentees'},
+    {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress',active:true},
+    {href:'messages.html',icon:'💬',label:'Messages'},{href:'resource-centre.html',icon:'📚',label:'Resources'},
+    {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  $('sidebarNav').innerHTML = (role==='mentor'?mentorLinks:menteeLinks).map(function(l){
+    return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';
+  }).join('');
+
+  // Mobile sidebar
+  var menuBtn=$('menuBtn'), sidebar=$('dbSidebar'), overlay=$('sidebarOverlay');
+  if(menuBtn) menuBtn.addEventListener('click',function(){ sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+  if(overlay) overlay.addEventListener('click',function(){ sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+  (function(){
+    var lBtn = document.getElementById('logoutBtn');
+    var lModal = document.getElementById('logoutConfirmModal');
+    var lConfirm = document.getElementById('logoutConfirmBtn');
+    var lCancel = document.getElementById('logoutCancelBtn');
+    if(lBtn && lModal){
+      lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+      if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+      if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+      lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+    }
+  })();
+
+  // Render
+  updateOverview(role);
+  if(role==='mentor'){ renderMentorGoals('all',''); } else { renderMenteeGoals('all'); renderAchievements(); renderNextSteps(); }
+
+  // Mentee filters
+  document.querySelectorAll('#goalFilterBtns .goal-filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#goalFilterBtns .goal-filter-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderMenteeGoals(activeFilter);
+    });
+  });
+
+  // Mentor filters
+  var mentorFilter = 'all';
+  document.querySelectorAll('#mentorFilterBtns .goal-filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#mentorFilterBtns .goal-filter-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      mentorFilter = btn.dataset.filter;
+      renderMentorGoals(mentorFilter, $('menteeSearch')?$('menteeSearch').value:'');
+    });
+  });
+  var menteeSearchEl = $('menteeSearch');
+  if(menteeSearchEl){ var deb; menteeSearchEl.addEventListener('input',function(){ clearTimeout(deb); deb=setTimeout(function(){ renderMentorGoals(mentorFilter,menteeSearchEl.value); },250); }); }
+
+  // Create goal button
+  if($('createGoalBtn')) $('createGoalBtn').addEventListener('click',function(){ openModal('createGoalModal'); });
+  if($('createGoalClose')) $('createGoalClose').addEventListener('click',function(){ closeModal('createGoalModal'); });
+  if($('goalDetailClose')) $('goalDetailClose').addEventListener('click',function(){ closeModal('goalDetailModal'); });
+  if($('updateProgressClose')) $('updateProgressClose').addEventListener('click',function(){ closeModal('updateProgressModal'); });
+  if($('feedbackClose')) $('feedbackClose').addEventListener('click',function(){ closeModal('feedbackModal'); });
+
+  // Progress slider
+  var slider = $('progressSlider');
+  if(slider){ slider.addEventListener('input',function(){ $('sliderValue').textContent=slider.value+'%'; }); }
+
+  // Save new goal
+  if($('saveGoalBtn')){
+    $('saveGoalBtn').addEventListener('click', function(){
+      var btn=$('saveGoalBtn'), fb=$('createGoalFeedback');
+      var title=$('goalTitle').value.trim();
+      if(!title){ fb.textContent='Please enter a goal title.'; fb.style.color='var(--color-error)'; return; }
+      btn.textContent='Creating…'; btn.disabled=true;
+      var newGoal = {
+        id:'g'+(GOALS.length+10), menteeId:'s1', menteeName:name, menteePhoto:'',
+        title:title, description:$('goalDesc').value.trim(),
+        category:$('goalCategory').value, status:'not_started', progress:0,
+        targetDate:$('goalTarget').value||null, createdDate:new Date().toISOString().split('T')[0],
+        completedDate:null, feedback:[], milestones:[]
+      };
+      GOALS.push(newGoal);
+      setTimeout(function(){
+        closeModal('createGoalModal');
+        btn.textContent='Create Goal'; btn.disabled=false;
+        $('goalTitle').value=''; $('goalDesc').value=''; $('goalTarget').value='';
+        fb.textContent='';
+        renderMenteeGoals(activeFilter);
+        updateOverview(role);
+      },600);
+    });
+  }
+
+  // Save progress update
+  if($('saveProgressBtn')){
+    $('saveProgressBtn').addEventListener('click', function(){
+      var btn=$('saveProgressBtn'), fb=$('updateProgressFeedback');
+      var g = GOALS.find(function(x){return x.id===pendingGoalId;});
+      if(!g) return;
+      var pct=parseInt($('progressSlider').value,10);
+      btn.textContent='Saving…'; btn.disabled=true;
+      g.progress=pct;
+      if(pct===100 && g.status!=='completed'){ g.status='in_progress'; } // mentee sets 100, mentor confirms
+      else if(pct>0 && g.status==='not_started') g.status='in_progress';
+      setTimeout(function(){
+        closeModal('updateProgressModal');
+        btn.textContent='Save Progress'; btn.disabled=false;
+        renderMenteeGoals(activeFilter);
+        updateOverview(role);
+        showToast('Progress updated to '+pct+'%');
+      },600);
+    });
+  }
+
+  // Save mentor feedback
+  if($('saveFeedbackBtn')){
+    $('saveFeedbackBtn').addEventListener('click', function(){
+      var btn=$('saveFeedbackBtn'), fb=$('feedbackSaveFeedback');
+      var text=$('feedbackText').value.trim();
+      if(!text){ fb.textContent='Please enter feedback.'; fb.style.color='var(--color-error)'; return; }
+      var g = GOALS.find(function(x){return x.id===pendingGoalId;});
+      if(!g) return;
+      btn.textContent='Saving…'; btn.disabled=true;
+      var today=new Date(); var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      g.feedback.push({author:name,role:'Mentor',date:months[today.getMonth()]+' '+today.getDate(),text:text});
+      var newStatus=$('feedbackStatus').value;
+      if(newStatus) g.status=newStatus;
+      setTimeout(function(){
+        closeModal('feedbackModal');
+        btn.textContent='Save Feedback'; btn.disabled=false;
+        renderMentorGoals(mentorFilter,$('menteeSearch')?$('menteeSearch').value:'');
+        updateOverview(role);
+        showToast('Feedback saved successfully.');
+      },600);
+    });
+  }
+
+  // Modal backdrop close + Escape
+  document.querySelectorAll('.modal-backdrop').forEach(function(m){
+    m.addEventListener('click',function(e){ if(e.target===m){m.classList.add('hidden');document.body.style.overflow='';} });
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape') document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(function(m){m.classList.add('hidden');document.body.style.overflow='';});
+  });
+});
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1E202F;color:#fff;padding:.75rem 1.5rem;border-radius:12px;font-size:.875rem;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(26,0,26,0.2);';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); },3000);
+}
+</script>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

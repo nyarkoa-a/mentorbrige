@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Script Deduplication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        #console-output {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 Firebase Script Loading Deduplication Test</h1>
+    
+    <div class="test-section info">
+        <h2>Test Overview</h2>
+        <p>This page tests the Firebase script loading deduplication system to ensure:</p>
+        <ul>
+            <li>Firebase scripts are loaded exactly once</li>
+            <li>No "Firebase is already defined" warnings appear</li>
+            <li>Loading state is properly tracked</li>
+            <li>Dependency ordering is respected</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Controls</h2>
+        <button onclick="runScriptLoadingTest()">Test Script Loading</button>
+        <button onclick="testDuplicateLoadAttempt()">Test Duplicate Load Attempt</button>
+        <button onclick="checkLoadingState()">Check Loading State</button>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Loading State</h2>
+        <div id="loading-state">
+            <p>Firebase Libraries Loaded: <span id="libraries-loaded">Unknown</span></p>
+            <p>Scripts Loaded: <span id="scripts-loaded">None</span></p>
+            <p>Scripts Loading: <span id="scripts-loading">None</span></p>
+            <p>Scripts Failed: <span id="scripts-failed">None</span></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <div id="console-output"></div>
+    </div>
+
+    <!-- Load our Firebase script loader -->
+    <script src="public/js/firebase-script-loader.js"></script>
+    
+    <script>
+        // Capture console messages for display
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        const consoleOutput = document.getElementById('console-output');
+        
+        function logToDisplay(level, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${level.toUpperCase()}: ${message}\n`;
+            
+            consoleOutput.textContent += logLine;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logToDisplay('log', ...args);
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logToDisplay('error', ...args);
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logToDisplay('warn', ...args);
+        };
+        
+        // Test functions
+        async function runScriptLoadingTest() {
+            console.log('🧪 Starting Firebase script loading test...');
+            
+            try {
+                const result = await window.firebaseScriptLoader.loadFirebaseScripts(['app', 'auth', 'firestore', 'storage']);
+                console.log('✅ Script loading test completed:', result);
+                updateLoadingStateDisplay();
+            } catch (error) {
+                console.error('❌ Script loading test failed:', error);
+            }
+        }
+        
+        async function testDuplicateLoadAttempt() {
+            console.log('🧪 Testing duplicate script load attempt...');
+            
+            try {
+                // Attempt to load scripts again
+                const result = await window.firebaseScriptLoader.loadFirebaseScripts(['app', 'auth', 'firestore']);
+                console.log('📊 Duplicate load attempt result:', result);
+                updateLoadingStateDisplay();
+            } catch (error) {
+                console.error('❌ Duplicate load test failed:', error);
+            }
+        }
+        
+        function checkLoadingState() {
+            console.log('🔍 Checking current loading state...');
+            
+            if (window.firebaseScriptLoader) {
+                const state = window.firebaseScriptLoader.getLoadingState();
+                console.log('📊 Current loading state:', state);
+                updateLoadingStateDisplay();
+            } else {
+                console.error('❌ Firebase script loader not available');
+            }
+        }
+        
+        function updateLoadingStateDisplay() {
+            if (!window.firebaseScriptLoader) {
+                document.getElementById('libraries-loaded').textContent = 'Script loader not available';
+                return;
+            }
+            
+            const state = window.firebaseScriptLoader.getLoadingState();
+            
+            document.getElementById('libraries-loaded').textContent = state.librariesLoaded ? 'Yes' : 'No';
+            document.getElementById('scripts-loaded').textContent = state.loaded.length > 0 ? state.loaded.join(', ') : 'None';
+            document.getElementById('scripts-loading').textContent = state.loading.length > 0 ? state.loading.join(', ') : 'None';
+            document.getElementById('scripts-failed').textContent = state.failed.length > 0 ? state.failed.join(', ') : 'None';
+        }
+        
+        function clearConsole() {
+            consoleOutput.textContent = '';
+        }
+        
+        // Initialize display on page load
+        window.addEventListener('load', () => {
+            console.log('🚀 Page loaded, initializing test interface...');
+            updateLoadingStateDisplay();
+            
+            // Check if Firebase script loader is available
+            if (window.firebaseScriptLoader) {
+                console.log('✅ Firebase script loader is available');
+                console.log('📦 Script loader methods:', Object.keys(window.firebaseScriptLoader));
+            } else {
+                console.error('❌ Firebase script loader not found');
+            }
+        });
+    </script>
+</body>
+</html>

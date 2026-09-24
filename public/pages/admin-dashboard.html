@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | MentorBridge</title>
+  <meta http-equiv="refresh" content="0;url=/admin/dashboard" />
+  <script>window.location.replace('/admin/dashboard');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- EmailJS SDK for sending approval/decline emails -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  
+  <!-- Admin Session Check -->
+  <script>
+    // Check admin session before loading dashboard
+    (function() {
+      var session = null;
+      try {
+        session = JSON.parse(sessionStorage.getItem('mb_session') || 'null');
+      } catch(e) {
+        console.warn('Invalid session data');
+      }
+      
+      if (!session || session.role !== 'admin') {
+        console.log('No valid admin session found. Redirecting to login...');
+        window.location.replace('admin-login.html');
+        return;
+      }
+      
+      console.log('✅ Admin session validated:', session.email);
+      
+      // Update admin info in the UI
+      document.addEventListener('DOMContentLoaded', function() {
+        var adminName = document.getElementById('adminName');
+        var adminInitials = document.getElementById('adminInitials');
+        var headerAdminAvatar = document.getElementById('headerAdminAvatar');
+        
+        if (session.name && adminName) {
+          adminName.textContent = session.name;
+        }
+        
+        if (session.name && adminInitials) {
+          var initials = session.name.split(' ').map(n => n[0]).join('').toUpperCase();
+          adminInitials.textContent = initials;
+          headerAdminAvatar.textContent = initials;
+        }
+        
+        // Setup logout functionality
+        var logoutBtn = document.getElementById('adminLogout');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to log out?')) {
+              sessionStorage.removeItem('mb_session');
+              window.location.href = 'admin-login.html';
+            }
+          });
+        }
+      });
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin:0; background:#f0f2f8; font-family:'Inter',sans-serif; }
+    .db-shell { display:flex; min-height:100vh; }
+
+    /* ── Sidebar ── */
+    .db-sidebar {
+      width:250px; flex-shrink:0;
+      background:#1E202F;
+      display:flex; flex-direction:column;
+      position:fixed; top:0; left:0; bottom:0; z-index:200;
+      transition:transform .3s ease;
+    }
+    .db-sidebar-brand {
+      display:flex; align-items:center; gap:.7rem;
+      padding:1.25rem 1.25rem .85rem;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      text-decoration:none;
+    }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-sidebar-tag {
+      margin:0 1.25rem .85rem;
+      background:rgba(239,68,68,.15); color:#fca5a5;
+      font-size:.62rem; font-weight:700; letter-spacing:.1em;
+      text-transform:uppercase; padding:.2rem .6rem;
+      border-radius:20px; display:inline-block;
+    }
+    .db-nav { flex:1; padding:.25rem 0; overflow-y:auto; }
+    .db-nav a {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.62rem 1.25rem;
+      color:rgba(255,255,255,.6);
+      text-decoration:none; font-size:.82rem; font-weight:500;
+      transition:background .15s, color .15s; position:relative;
+    }
+    .db-nav a:hover { background:rgba(255,255,255,.06); color:#fff; }
+    .db-nav a.active {
+      background:rgba(43, 45, 66,.12); color:#2B2D42; font-weight:600;
+    }
+    .db-nav a.active::before {
+      content:''; position:absolute; left:0; top:0; bottom:0;
+      width:3px; background:#2B2D42; border-radius:0 2px 2px 0;
+    }
+    .db-nav-icon { font-size:.95rem; width:18px; text-align:center; flex-shrink:0; }
+    .db-nav-badge {
+      margin-left:auto; background:#ef4444; color:#fff;
+      font-size:.6rem; font-weight:700;
+      padding:.1rem .4rem; border-radius:20px;
+    }
+    .db-nav-section {
+      font-size:.6rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.12em; color:rgba(255,255,255,.25);
+      padding:.85rem 1.25rem .3rem;
+    }
+    .db-sidebar-footer {
+      border-top:1px solid rgba(255,255,255,.07);
+      padding:.85rem 1.25rem;
+    }
+    /* ── User strip ── */
+    .db-user-row { display:flex; align-items:center; gap:.65rem; }
+    .db-user-initials {
+      width:38px; height:38px; border-radius:50%; flex-shrink:0;
+      background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+      color:#fff; font-weight:700; font-size:.82rem;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid rgba(255,255,255,.18);
+      box-shadow:0 2px 8px rgba(239,68,68,.45);
+      letter-spacing:.02em;
+    }
+    .db-user-info strong { display:block; color:#fff; font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .db-user-info span { color:rgba(255,255,255,.4); font-size:.68rem; }
+    .db-user-menu-btn {
+      background:none; border:none; cursor:pointer; flex-shrink:0;
+      color:rgba(255,255,255,.4); font-size:1.1rem; padding:.2rem .3rem;
+      border-radius:6px; line-height:1; transition:background .15s, color .15s;
+    }
+    .db-user-menu-btn:hover { background:rgba(255,255,255,.08); color:#fff; }
+    .db-user-dropdown {
+      position:absolute; bottom:4.5rem; left:1.25rem; right:1.25rem;
+      background:#fff; border-radius:12px;
+      box-shadow:0 8px 28px rgba(0,0,0,.18); border:1px solid #e8eaf0;
+      padding:.35rem 0; z-index:300; display:none;
+    }
+    .db-user-dropdown.open { display:block; }
+    .db-user-dropdown a, .db-user-dropdown button {
+      display:flex; align-items:center; gap:.6rem;
+      padding:.6rem 1rem; color:#1E202F; text-decoration:none;
+      font-size:.8rem; font-weight:500; background:none; border:none;
+      width:100%; text-align:left; cursor:pointer; font-family:inherit; transition:background .1s;
+    }
+    .db-user-dropdown a:hover, .db-user-dropdown button:hover { background:#f4f6fb; }
+    .db-user-dropdown hr { border:none; border-top:1px solid #e8eaf0; margin:.25rem 0; }
+    .db-user-dropdown .drop-danger { color:#e53e3e; }
+    .db-user-dropdown .drop-danger:hover { background:#fff5f5; }
+
+    /* ── Main ── */
+    .db-main { margin-left:250px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+    /* ── Header ── */
+    .db-header {
+      background:#fff; border-bottom:1px solid #e5e7ef;
+      padding:0 1.75rem; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 1px 4px rgba(26,0,26,.05);
+    }
+    .db-header-left { display:flex; align-items:center; gap:.85rem; }
+    .db-menu-btn { display:none; background:none; border:none; cursor:pointer; font-size:1.2rem; color:#1E202F; }
+    .db-welcome h1 { font-family:'Poppins',sans-serif; font-size:1rem; font-weight:700; color:#1E202F; margin:0; }
+    .db-welcome p { font-size:.72rem; color:#6b7280; margin:.05rem 0 0; }
+    .db-header-right { display:flex; align-items:center; gap:.6rem; }
+    .db-search {
+      display:flex; align-items:center; gap:.4rem;
+      background:#f4f6fb; border:1px solid #e5e7ef;
+      border-radius:9px; padding:.38rem .85rem;
+    }
+    .db-search input { border:none; background:transparent; font-size:.78rem; outline:none; width:160px; font-family:inherit; color:#1E202F; }
+    .db-search input::placeholder { color:#9ca3af; }
+    .db-hbtn {
+      position:relative; background:#f4f6fb; border:1px solid #e5e7ef;
+      border-radius:9px; width:36px; height:36px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:.9rem; transition:background .15s;
+    }
+    .db-hbtn:hover { background:#e5e7ef; }
+    .db-dot { position:absolute; top:5px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:2px solid #fff; }
+    .db-hadmin {
+      width:36px; height:36px; border-radius:50%;
+      background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+      color:#fff; font-weight:700; font-size:.78rem;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid rgba(239,68,68,.3);
+      box-shadow:0 2px 6px rgba(239,68,68,.35);
+      cursor:pointer; letter-spacing:.02em; transition:box-shadow .15s;
+    }
+    .db-hadmin:hover { box-shadow:0 3px 10px rgba(239,68,68,.5); }
+
+    /* ── Content ── */
+    .db-content { padding:1.5rem; flex:1; }
+
+    /* ── Stat cards ── */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card {
+      background:#fff; border-radius:14px; border:1px solid #e5e7ef;
+      padding:1.1rem 1.25rem;
+      box-shadow:0 2px 6px rgba(26,0,26,.04);
+      display:flex; justify-content:space-between; align-items:flex-start;
+      transition:transform .18s, box-shadow .18s;
+    }
+    .stat-card:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(26,0,26,.08); }
+    .stat-card-left strong { display:block; font-size:1.7rem; font-weight:800; color:#1E202F; line-height:1.1; font-family:'Poppins',sans-serif; }
+    .stat-card-left span { font-size:.75rem; color:#6b7280; display:block; margin:.2rem 0; }
+    .stat-trend { font-size:.68rem; font-weight:700; padding:.15rem .5rem; border-radius:20px; }
+    .trend-up { background:rgba(35,138,83,.1); color:#238a53; }
+    .trend-neutral { background:rgba(107,114,128,.1); color:#6b7280; }
+    .stat-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; flex-shrink:0; }
+    .si-blue { background:rgba(74,144,226,.1); }
+    .si-gold { background:rgba(43, 45, 66,.12); }
+    .si-green { background:rgba(35,138,83,.1); }
+    .si-purple { background:rgba(139,92,246,.1); }
+
+    /* ── Grid layouts ── */
+    .db-row { display:grid; gap:1.25rem; margin-bottom:1.25rem; }
+    .db-row-3-1 { grid-template-columns:1fr 340px; }
+    .db-row-2 { grid-template-columns:1fr 1fr; }
+    .db-row-full { grid-template-columns:1fr; }
+
+    /* ── Section card ── */
+    .adm-card {
+      background:#fff; border-radius:14px; border:1px solid #e5e7ef;
+      box-shadow:0 2px 6px rgba(26,0,26,.04); overflow:hidden;
+    }
+    .adm-card-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.9rem 1.25rem; border-bottom:1px solid #f0f2f8;
+    }
+    .adm-card-header h2 { font-family:'Poppins',sans-serif; font-size:.88rem; font-weight:700; color:#1E202F; margin:0; }
+    .adm-card-body { padding:1.1rem 1.25rem; }
+    .adm-link { font-size:.72rem; font-weight:600; color:#2B2D42; text-decoration:none; display:flex; align-items:center; gap:.2rem; }
+    .adm-link:hover { color:#1E202F; }
+
+    /* ── Quick actions ── */
+    .quick-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
+    .qa-btn {
+      display:flex; align-items:center; gap:.5rem;
+      background:#f4f6fb; border:1px solid #e5e7ef;
+      border-radius:10px; padding:.55rem 1rem;
+      font-size:.78rem; font-weight:600; color:#1E202F;
+      cursor:pointer; font-family:inherit;
+      transition:background .15s, border-color .15s;
+    }
+    .qa-btn:hover { background:#e8eaf5; border-color:#cbd0e8; }
+    .qa-btn span:first-child { font-size:1rem; }
+  </style>
+</head>
+<body data-page="admin-dashboard">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;"></div>
+<div class="db-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="db-sidebar" id="dbSidebar">
+    <a class="db-sidebar-brand" href="../index.html">
+      <img src="../assets/newl.png" alt="MentorBridge" style="width:40px; height:40px;" />
+      <span>mentor<span class="brand-accent">bridge</span></span>
+    </a>
+    <span class="db-sidebar-tag">Admin Panel</span>
+
+    <nav class="db-nav">
+      <a href="admin-dashboard.html" class="active">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/>
+          </svg>
+        </span> 
+        Dashboard
+      </a>
+      <span class="db-nav-section">User Management</span>
+      <a href="admin-dashboard.html#users">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,4C18.2,4 20,5.8 20,8C20,10.2 18.2,12 16,12C13.8,12 12,10.2 12,8C12,5.8 13.8,4 16,4M16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5M16,13C18.67,13 24,14.33 24,17V20H8V17C8,14.33 13.33,13 16,13M16,14.9C14.03,14.9 9.9,15.36 9.9,17V18.1H22.1V17C22.1,15.36 17.97,14.9 16,14.9M8,10H5V7H8V10M8,6H5V3H8V6M8,14H5V11H8V14Z"/>
+          </svg>
+        </span> 
+        Users
+      </a>
+      <a href="admin-dashboard.html#mentors">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5,16L3,5H1V3H4L6,14H18.5L21,6H8V4H22L19,17H6M7,18A2,2 0 0,1 9,20A2,2 0 0,1 7,22A2,2 0 0,1 5,20A2,2 0 0,1 7,18M17,18A2,2 0 0,1 19,20A2,2 0 0,1 17,22A2,2 0 0,1 15,20A2,2 0 0,1 17,18M12,8L15.5,5L17,6.5L14.5,9L17,11.5L15.5,13L12,9.5L8.5,13L7,11.5L9.5,9L7,6.5L8.5,5L12,8Z"/>
+          </svg>
+        </span> 
+        Mentors
+      </a>
+      <a href="admin-dashboard.html#mentees">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9.5,12A1.5,1.5 0 0,1 11,10.5A1.5,1.5 0 0,1 12.5,12A1.5,1.5 0 0,1 11,13.5A1.5,1.5 0 0,1 9.5,12M6.5,15.25L8.5,16.25L11,13L13.5,16.25L15.5,15.25L13,11.75L15.5,8.25L13.5,7.25L11,10.5L8.5,7.25L6.5,8.25L9,11.75L6.5,15.25M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+          </svg>
+        </span> 
+        Mentees
+      </a>
+      <a href="admin-dashboard.html#matching">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7L15,11L11,15V13H7A5,5 0 0,0 2,18A5,5 0 0,0 7,23H20A2,2 0 0,0 22,21A2,2 0 0,0 20,19H7A3,3 0 0,1 4,16A3,3 0 0,1 7,13H11V11H7C5.29,11 3.9,10.29 3.9,12Z"/>
+          </svg>
+        </span> 
+        Mentor Matching <span class="db-nav-badge">24</span>
+      </a>
+      <span class="db-nav-section">Platform</span>
+      <a href="sessions.html">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z"/>
+          </svg>
+        </span> 
+        Sessions
+      </a>
+      <a href="opportunities.html">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,3C13.73,3 16.39,3.71 18.42,5.74C20.45,7.77 21.16,10.43 21.16,12.16C21.16,13.89 20.45,16.55 18.42,18.58C16.39,20.61 13.73,21.32 12,21.32C10.27,21.32 7.61,20.61 5.58,18.58C3.55,16.55 2.84,13.89 2.84,12.16C2.84,10.43 3.55,7.77 5.58,5.74C7.61,3.71 10.27,3 12,3M12,6.65C10.5,6.65 9.31,7.84 9.31,9.35S10.5,12.04 12,12.04C13.5,12.04 14.69,10.85 14.69,9.35C14.69,7.84 13.5,6.65 12,6.65Z"/>
+          </svg>
+        </span> 
+        Opportunities
+      </a>
+      <a href="resource-centre.html">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,2L14,6.5V17.5L19,13V2M6.5,5C4.55,5 2.45,5.4 1,6.5V21.16C1,21.41 1.25,21.66 1.5,21.66C1.6,21.66 1.65,21.59 1.75,21.59C3.1,20.94 5.05,20.5 6.5,20.5C8.45,20.5 10.55,20.9 12,22C13.35,21.15 15.8,20.5 17.5,20.5C19.15,20.5 20.85,20.81 22.25,21.56C22.35,21.61 22.4,21.68 22.5,21.68C22.75,21.68 23,21.43 23,21.18V6.5C22.4,6.05 21.75,5.75 21,5.5V19C19.9,18.65 18.7,18.5 17.5,18.5C15.8,18.5 13.35,19.15 12,20V6.5C10.55,5.4 8.45,5 6.5,5Z"/>
+          </svg>
+        </span> 
+        Resources
+      </a>
+      <a href="admin-dashboard.html#announcements">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+          </svg>
+        </span> 
+        Announcements
+      </a>
+      <span class="db-nav-section">Reports</span>
+      <a href="admin-dashboard.html#analytics">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22,21H2V3H4V19H6V17H10V19H12V16H16V19H18V17H22V21M16,15H12V6H16V15M10,15H6V9H10V15Z"/>
+          </svg>
+        </span> 
+        Reports &amp; Analytics
+      </a>
+      <a href="notifications.html">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,21H14A2,2 0 0,1 12,23A2,2 0 0,1 10,21M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M17,11A5,5 0 0,0 12,6A5,5 0 0,0 7,11V18H17V11Z"/>
+          </svg>
+        </span> 
+        Notifications <span class="db-nav-badge">5</span>
+      </a>
+      <a href="settings.html">
+        <span class="db-nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+          </svg>
+        </span> 
+        Settings
+      </a>
+    </nav>
+
+    <div class="db-sidebar-footer" style="position:relative;">
+      <div id="dbUserDropdown" class="db-user-dropdown">
+        <a href="settings.html">⚙️ Settings</a>
+        <hr/>
+        <button class="drop-danger" id="adminLogout" type="button">🚪 Log out</button>
+      </div>
+      <div class="db-user-row">
+        <div class="db-user-initials" id="adminInitials">AU</div>
+        <div class="db-user-info">
+          <strong id="adminName">Admin User</strong>
+          <span id="adminRoleLabel">Administrator</span>
+        </div>
+        <button class="db-user-menu-btn" id="dbUserMenuBtn" type="button" aria-label="Account options" aria-expanded="false">···</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="db-main">
+
+    <!-- HEADER -->
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="dbMenuBtn" type="button">☰</button>
+        <div class="db-welcome">
+          <h1 id="headerGreeting">Good morning, Admin 👋</h1>
+          <p>Here's what's happening across MentorBridge today.</p>
+        </div>
+      </div>
+      <div class="db-header-right">
+        <div class="db-search">
+          <span style="color:#9ca3af;">🔍</span>
+          <input type="search" placeholder="Search users, sessions…" />
+        </div>
+        <button class="db-hbtn" type="button" aria-label="Notifications">
+          🔔 <span class="db-dot"></span>
+        </button>
+        <div class="db-hadmin" id="headerAdminAvatar">AU</div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="db-content">
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <strong id="statMentees">1,248</strong>
+            <span>Total Mentees</span>
+            <span class="stat-trend trend-up">+12% this month</span>
+          </div>
+          <div class="stat-icon si-blue">🎓</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <strong id="statMentors">186</strong>
+            <span>Active Mentors</span>
+            <span class="stat-trend trend-up">+8 this month</span>
+          </div>
+          <div class="stat-icon si-gold">🏆</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <strong id="statMatches">932</strong>
+            <span>Active Matches</span>
+            <span class="stat-trend trend-up">78% matched</span>
+          </div>
+          <div class="stat-icon si-green">🔗</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <strong id="statSessions">246</strong>
+            <span>Upcoming Sessions</span>
+            <span class="stat-trend trend-neutral">This month</span>
+          </div>
+          <div class="stat-icon si-purple">📅</div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="adm-card" style="margin-bottom:1.25rem;">
+        <div class="adm-card-header"><h2>Quick Actions</h2></div>
+        <div class="adm-card-body">
+          <div class="quick-actions">
+            <button class="qa-btn" type="button"><span>➕</span> Add Mentor</button>
+            <button class="qa-btn" type="button"><span>➕</span> Add Mentee</button>
+            <button class="qa-btn" type="button"><span>💼</span> Create Opportunity</button>
+            <button class="qa-btn" type="button"><span>📚</span> Add Resource</button>
+            <button class="qa-btn" type="button" onclick="document.getElementById('announcementModal').classList.remove('hidden')"><span>📢</span> Send Announcement</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING MENTOR APPROVALS — appears at top of admin dashboard -->
+      <div class="adm-card" id="pendingMentorsSection" style="margin-bottom:1.5rem;">
+        <div class="adm-card-header">
+          <h2>⏳ Mentor Applications Awaiting Approval</h2>
+          <span id="pendingMentorCount" style="font-size:.72rem;background:rgba(245,158,11,.12);color:#b45309;font-weight:700;padding:.2rem .65rem;border-radius:20px;">0 pending</span>
+        </div>
+        <div class="adm-card-body" id="pendingMentorsList">
+          <p style="font-size:.82rem;color:#9C97A0;text-align:center;padding:.5rem 0;">No pending mentor applications right now.</p>
+        </div>
+      </div>
+
+      <!-- ROW: Matching + Recent Users -->
+      <div class="db-row db-row-3-1">
+
+        <!-- MENTOR MATCHING -->
+        <div class="adm-card">
+          <div class="adm-card-header">
+            <h2>Mentor Matching</h2>
+            <a href="#" class="adm-link">View all requests →</a>
+          </div>
+          <div class="adm-card-body">
+            <!-- Summary pills -->
+            <div style="display:flex;gap:.75rem;margin-bottom:1.1rem;flex-wrap:wrap;">
+              <div style="background:#fff8e6;border:1px solid rgba(43, 45, 66,.25);border-radius:10px;padding:.55rem .9rem;text-align:center;">
+                <strong style="display:block;font-size:1.2rem;color:#1E202F;font-family:'Poppins',sans-serif;">24</strong>
+                <span style="font-size:.68rem;color:#6b7280;">Awaiting Match</span>
+              </div>
+              <div style="background:#f0faf4;border:1px solid rgba(35,138,83,.2);border-radius:10px;padding:.55rem .9rem;text-align:center;">
+                <strong style="display:block;font-size:1.2rem;color:#1E202F;font-family:'Poppins',sans-serif;">932</strong>
+                <span style="font-size:.68rem;color:#6b7280;">Active Matches</span>
+              </div>
+              <div style="background:#eef6ff;border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:.55rem .9rem;text-align:center;">
+                <strong style="display:block;font-size:1.2rem;color:#1E202F;font-family:'Poppins',sans-serif;">856</strong>
+                <span style="font-size:.68rem;color:#6b7280;">Active Mentorships</span>
+              </div>
+            </div>
+            <!-- Table -->
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+                <thead>
+                  <tr style="border-bottom:1px solid #f0f2f8;">
+                    <th style="text-align:left;padding:.5rem .4rem;color:#6b7280;font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;">Mentee</th>
+                    <th style="text-align:left;padding:.5rem .4rem;color:#6b7280;font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;">Area of Interest</th>
+                    <th style="text-align:left;padding:.5rem .4rem;color:#6b7280;font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;">Date Joined</th>
+                    <th style="text-align:left;padding:.5rem .4rem;color:#6b7280;font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;">Status</th>
+                    <th style="padding:.5rem .4rem;"></th>
+                  </tr>
+                </thead>
+                <tbody id="matchingTable">
+                  <tr style="border-bottom:1px solid #f8f9fc;">
+                    <td style="padding:.6rem .4rem;"><strong style="color:#1E202F;">Ama Boateng</strong></td>
+                    <td style="padding:.6rem .4rem;color:#444455;">Software Development</td>
+                    <td style="padding:.6rem .4rem;color:#6b7280;">Aug 10, 2026</td>
+                    <td style="padding:.6rem .4rem;"><span style="background:rgba(215,140,21,.1);color:#b07d10;font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;">Awaiting Match</span></td>
+                    <td style="padding:.6rem .4rem;"><button class="btn btn-outline btn-sm" style="font-size:.7rem;padding:.25rem .7rem;">Match Mentor</button></td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #f8f9fc;">
+                    <td style="padding:.6rem .4rem;"><strong style="color:#1E202F;">Kwame Darko</strong></td>
+                    <td style="padding:.6rem .4rem;color:#444455;">Finance &amp; Banking</td>
+                    <td style="padding:.6rem .4rem;color:#6b7280;">Aug 9, 2026</td>
+                    <td style="padding:.6rem .4rem;"><span style="background:rgba(215,140,21,.1);color:#b07d10;font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;">Awaiting Match</span></td>
+                    <td style="padding:.6rem .4rem;"><button class="btn btn-outline btn-sm" style="font-size:.7rem;padding:.25rem .7rem;">Match Mentor</button></td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #f8f9fc;">
+                    <td style="padding:.6rem .4rem;"><strong style="color:#1E202F;">Efua Mensah</strong></td>
+                    <td style="padding:.6rem .4rem;color:#444455;">Healthcare &amp; Medicine</td>
+                    <td style="padding:.6rem .4rem;color:#6b7280;">Aug 8, 2026</td>
+                    <td style="padding:.6rem .4rem;"><span style="background:rgba(215,140,21,.1);color:#b07d10;font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;">Awaiting Match</span></td>
+                    <td style="padding:.6rem .4rem;"><button class="btn btn-outline btn-sm" style="font-size:.7rem;padding:.25rem .7rem;">Match Mentor</button></td>
+                  </tr>
+                  <tr>
+                    <td style="padding:.6rem .4rem;"><strong style="color:#1E202F;">Samuel Asiedu</strong></td>
+                    <td style="padding:.6rem .4rem;color:#444455;">Marketing &amp; Comms</td>
+                    <td style="padding:.6rem .4rem;color:#6b7280;">Aug 7, 2026</td>
+                    <td style="padding:.6rem .4rem;"><span style="background:rgba(215,140,21,.1);color:#b07d10;font-size:.65rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;">Awaiting Match</span></td>
+                    <td style="padding:.6rem .4rem;"><button class="btn btn-outline btn-sm" style="font-size:.7rem;padding:.25rem .7rem;">Match Mentor</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT USERS -->
+        <div class="adm-card">
+          <div class="adm-card-header">
+            <h2>Recent Users</h2>
+            <a href="#" class="adm-link">Manage →</a>
+          </div>
+          <div class="adm-card-body" style="padding:.75rem 1rem;">
+            <div style="display:flex;flex-direction:column;gap:.1rem;">
+
+              <div style="display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-bottom:1px solid #f8f9fc;">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&crop=face" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="Ama Osei" />
+                <div style="flex:1;">
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Ama Osei</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Mentee · Joined today</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-bottom:1px solid #f8f9fc;">
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop&crop=face" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="Daniel Smith" />
+                <div style="flex:1;">
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Daniel Smith</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Mentor · Joined yesterday</span>
+                </div>
+                <span style="background:rgba(43, 45, 66,.12);color:#1E202F;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Pending</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-bottom:1px solid #f8f9fc;">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=40&h=40&fit=crop&crop=face" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="Abena Darko" />
+                <div style="flex:1;">
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Abena Darko</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Mentor · 2 days ago</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-bottom:1px solid #f8f9fc;">
+                <div style="width:34px;height:34px;border-radius:50%;background:rgba(26,0,26,.08);color:#1E202F;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">KA</div>
+                <div style="flex:1;">
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Kofi Asante</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Mentee · 3 days ago</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:.7rem;padding:.65rem 0;">
+                <div style="width:34px;height:34px;border-radius:50%;background:rgba(26,0,26,.08);color:#1E202F;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">EN</div>
+                <div style="flex:1;">
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Efua Nyarko</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Mentee · 4 days ago</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.db-row-3-1 -->
+
+      <!-- ROW: Sessions + Opportunities -->
+      <div class="db-row db-row-2">
+
+        <!-- UPCOMING SESSIONS -->
+        <div class="adm-card">
+          <div class="adm-card-header">
+            <h2>Upcoming Sessions</h2>
+            <a href="#" class="adm-link">View all →</a>
+          </div>
+          <div class="adm-card-body" style="display:flex;flex-direction:column;gap:.85rem;">
+
+            <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+              <div style="width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid #e5e7ef;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;">📹</div>
+              <div style="flex:1;">
+                <strong style="display:block;font-size:.82rem;color:#1E202F;margin-bottom:.2rem;">Career Development Session</strong>
+                <span style="font-size:.72rem;color:#6b7280;">Grace Akoto × Ama Boateng</span><br>
+                <span style="font-size:.72rem;color:#6b7280;">August 12 · 2:00 PM</span>
+              </div>
+              <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;white-space:nowrap;">Confirmed</span>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+              <div style="width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid #e5e7ef;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;">💬</div>
+              <div style="flex:1;">
+                <strong style="display:block;font-size:.82rem;color:#1E202F;margin-bottom:.2rem;">CV Review Session</strong>
+                <span style="font-size:.72rem;color:#6b7280;">Abena Darko × Kofi Mensah</span><br>
+                <span style="font-size:.72rem;color:#6b7280;">August 13 · 4:30 PM</span>
+              </div>
+              <span style="background:rgba(43, 45, 66,.12);color:#1E202F;font-size:.62rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;white-space:nowrap;">Pending</span>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:.85rem;padding:.8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+              <div style="width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid #e5e7ef;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;">🎯</div>
+              <div style="flex:1;">
+                <strong style="display:block;font-size:.82rem;color:#1E202F;margin-bottom:.2rem;">Interview Preparation</strong>
+                <span style="font-size:.72rem;color:#6b7280;">Dr. Kwame Asante × Efua Nyarko</span><br>
+                <span style="font-size:.72rem;color:#6b7280;">August 14 · 6:00 PM</span>
+              </div>
+              <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .55rem;border-radius:20px;white-space:nowrap;">Confirmed</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- OPPORTUNITIES -->
+        <div class="adm-card">
+          <div class="adm-card-header">
+            <h2>Opportunities</h2>
+            <a href="#" class="adm-link">Manage →</a>
+          </div>
+          <div class="adm-card-body">
+            <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+              <div style="background:#f0faf4;border:1px solid rgba(35,138,83,.2);border-radius:10px;padding:.5rem .85rem;text-align:center;flex:1;">
+                <strong style="display:block;font-size:1.1rem;color:#1E202F;font-family:'Poppins',sans-serif;">12</strong>
+                <span style="font-size:.65rem;color:#6b7280;">Active</span>
+              </div>
+              <div style="background:#fff8e6;border:1px solid rgba(215,140,21,.2);border-radius:10px;padding:.5rem .85rem;text-align:center;flex:1;">
+                <strong style="display:block;font-size:1.1rem;color:#1E202F;font-family:'Poppins',sans-serif;">3</strong>
+                <span style="font-size:.65rem;color:#6b7280;">Expiring Soon</span>
+              </div>
+              <div style="background:#eef6ff;border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:.5rem .85rem;text-align:center;flex:1;">
+                <strong style="display:block;font-size:1.1rem;color:#1E202F;font-family:'Poppins',sans-serif;">5</strong>
+                <span style="font-size:.65rem;color:#6b7280;">Added This Week</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.65rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.65rem .8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+                <div>
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Software Engineering Internship</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Deadline: Aug 30</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.65rem .8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+                <div>
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">UX Design Workshop</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Deadline: Sep 5</span>
+                </div>
+                <span style="background:rgba(35,138,83,.1);color:#238a53;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Active</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.65rem .8rem;background:#f8f9fc;border-radius:10px;border:1px solid #eef0f6;">
+                <div>
+                  <strong style="display:block;font-size:.8rem;color:#1E202F;">Women in Tech Scholarship</strong>
+                  <span style="font-size:.68rem;color:#6b7280;">Deadline: Sep 15</span>
+                </div>
+                <span style="background:rgba(215,140,21,.1);color:#b07d10;font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;">Expiring</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.db-row-2 -->
+
+      <!-- ROW: Analytics + Activity + System -->
+      <div class="db-row db-row-3-1">
+
+        <!-- ANALYTICS CHART -->
+        <div class="adm-card">
+          <div class="adm-card-header">
+            <h2>MentorBridge Growth</h2>
+            <a href="#" class="adm-link">Full analytics →</a>
+          </div>
+          <div class="adm-card-body">
+            <canvas id="growthChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <!-- ACTIVITY + SYSTEM -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+          <!-- RECENT ACTIVITY -->
+          <div class="adm-card">
+            <div class="adm-card-header"><h2>Recent Activity</h2></div>
+            <div class="adm-card-body" style="padding:.75rem 1rem;display:flex;flex-direction:column;gap:.65rem;">
+              <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:rgba(35,138,83,.1);color:#238a53;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</span>
+                <div><strong style="font-size:.78rem;color:#1E202F;">New mentor registered</strong><br><span style="font-size:.68rem;color:#9ca3af;">2 min ago</span></div>
+              </div>
+              <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:rgba(35,138,83,.1);color:#238a53;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</span>
+                <div><strong style="font-size:.78rem;color:#1E202F;">3 mentees were matched</strong><br><span style="font-size:.68rem;color:#9ca3af;">15 min ago</span></div>
+              </div>
+              <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:rgba(74,144,226,.1);color:#3a7bd5;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📢</span>
+                <div><strong style="font-size:.78rem;color:#1E202F;">New opportunity published</strong><br><span style="font-size:.68rem;color:#9ca3af;">1 hour ago</span></div>
+              </div>
+              <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:rgba(35,138,83,.1);color:#238a53;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</span>
+                <div><strong style="font-size:.78rem;color:#1E202F;">New resource added</strong><br><span style="font-size:.68rem;color:#9ca3af;">2 hours ago</span></div>
+              </div>
+              <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:rgba(35,138,83,.1);color:#238a53;font-size:.65rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✓</span>
+                <div><strong style="font-size:.78rem;color:#1E202F;">12 users joined today</strong><br><span style="font-size:.68rem;color:#9ca3af;">Today</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SYSTEM STATUS -->
+          <div class="adm-card">
+            <div class="adm-card-header"><h2>Platform Status</h2></div>
+            <div class="adm-card-body" style="padding:.75rem 1rem;display:flex;flex-direction:column;gap:.65rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:.78rem;color:#1E202F;">Platform Status</span>
+                <span style="font-size:.72rem;font-weight:700;color:#238a53;">🟢 Operational</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.4rem;border-top:1px solid #f0f2f8;">
+                <span style="font-size:.78rem;color:#6b7280;">Active Users</span>
+                <strong style="font-size:.82rem;color:#1E202F;">1,024</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.4rem;border-top:1px solid #f0f2f8;">
+                <span style="font-size:.78rem;color:#6b7280;">Sessions This Week</span>
+                <strong style="font-size:.82rem;color:#1E202F;">68</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.4rem;border-top:1px solid #f0f2f8;">
+                <span style="font-size:.78rem;color:#6b7280;">Unread Notifications</span>
+                <strong style="font-size:.82rem;color:#ef4444;">12</strong>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /.db-row-3-1 analytics -->
+
+    </main>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT MODAL -->
+<div id="announcementModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" style="max-width:480px;">
+    <button class="modal-close btn btn-ghost" onclick="document.getElementById('announcementModal').classList.add('hidden')" type="button">✕</button>
+    <h3 style="margin-bottom:1rem;">Send Platform Announcement</h3>
+    <div class="form-group">
+      <label class="form-label" for="annTitle">Title</label>
+      <input class="form-input" id="annTitle" type="text" placeholder="e.g. New resources available" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="annBody">Message</label>
+      <textarea class="form-textarea" id="annBody" rows="4" placeholder="Write your announcement here…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="annAudience">Send to</label>
+      <select class="form-select" id="annAudience">
+        <option>All Users</option>
+        <option>Mentees Only</option>
+        <option>Mentors Only</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="document.getElementById('announcementModal').classList.add('hidden');alert('Announcement sent!');">Send Announcement</button>
+  </div>
+</div>
+
+<style>
+  .db-sidebar-overlay.open { display:block !important; }
+  @media(max-width:900px) {
+    .db-sidebar { transform:translateX(-100%); }
+    .db-sidebar.open { transform:translateX(0); }
+    .db-main { margin-left:0; }
+    .db-menu-btn { display:flex !important; }
+    .stat-row { grid-template-columns:1fr 1fr; }
+    .db-row-3-1, .db-row-2 { grid-template-columns:1fr; }
+  }
+  @media(max-width:560px) {
+    .stat-row { grid-template-columns:1fr 1fr; }
+    .db-content { padding:1rem; }
+    .db-search { display:none; }
+    .quick-actions { gap:.5rem; }
+    .qa-btn { font-size:.72rem; padding:.45rem .75rem; }
+  }
+  @media(max-width:400px) {
+    .stat-row { grid-template-columns:1fr; }
+  }
+</style>
+
+<script src="../js/theme.js"></script>
+<script src="../js/chat.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Greeting
+  var hour = new Date().getHours();
+  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  var session = {};
+  try { session = JSON.parse(sessionStorage.getItem('mb_session') || '{}'); } catch(e) {}
+  // Access control — admin only
+  if (!session.role) { window.location.replace('admin-login.html'); return; }
+  if (session.role !== 'admin') {
+    if (session.role === 'mentor') { window.location.replace('mentor-dashboard.html'); return; }
+    window.location.replace('student-dashboard.html'); return;
+  }
+  var name = session.role === 'admin' ? (session.name || 'Admin') : 'Admin';
+  var firstName = name.split(' ')[0];
+  var initials = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+
+  var hg = document.getElementById('headerGreeting');
+  if (hg) hg.textContent = greeting + ', ' + firstName + ' \uD83D\uDC4B';
+  var an = document.getElementById('adminName');
+  if (an) an.textContent = name;
+  var ai = document.getElementById('adminInitials');
+  if (ai) ai.textContent = initials;
+  var rl = document.getElementById('adminRoleLabel');
+  if (rl) rl.textContent = 'Administrator';
+  var ha = document.getElementById('headerAdminAvatar');
+  if (ha) {
+    ha.textContent = initials;
+    ha.addEventListener('click', function(){ window.location.href = 'settings.html'; });
+    ha.setAttribute('role','button'); ha.setAttribute('tabindex','0'); ha.setAttribute('title','Account');
+    ha.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') window.location.href='settings.html'; });
+  }
+
+  // Three-dot user menu toggle
+  (function(){
+    var menuBtn2  = document.getElementById('dbUserMenuBtn');
+    var dropdown = document.getElementById('dbUserDropdown');
+    if (!menuBtn2 || !dropdown) return;
+    menuBtn2.addEventListener('click', function(e){
+      e.stopPropagation();
+      var isOpen = dropdown.classList.toggle('open');
+      menuBtn2.setAttribute('aria-expanded', isOpen);
+    });
+    document.addEventListener('click', function(){ dropdown.classList.remove('open'); if(menuBtn2) menuBtn2.setAttribute('aria-expanded','false'); });
+    dropdown.addEventListener('click', function(e){ e.stopPropagation(); });
+  })();
+
+  // Sidebar toggle
+  var menuBtn = document.getElementById('dbMenuBtn');
+  var sidebar = document.getElementById('dbSidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+  }
+  if (overlay) {
+    overlay.addEventListener('click', function() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  }
+
+  // Logout
+  (function(){
+    var lBtn = document.getElementById('adminLogout');
+    var lModal = document.getElementById('logoutConfirmModal');
+    var lConfirm = document.getElementById('logoutConfirmBtn');
+    var lCancel = document.getElementById('logoutCancelBtn');
+    if(lBtn && lModal){
+      lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+      if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+      if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+      lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+    }
+  })();
+
+  // Modal close
+  document.querySelectorAll('.modal-backdrop').forEach(function(m) {
+    m.addEventListener('click', function(e) { if (e.target === m) m.classList.add('hidden'); });
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(function(m){ m.classList.add('hidden'); });
+    }
+  });
+
+  // Load real stats from API
+  Promise.all([
+    fetch('/api/mentors').then(function(r){return r.json();}).catch(function(){return {total:186};}),
+    fetch('/api/users/students').then(function(r){return r.json();}).catch(function(){return {students:[]};}),
+    fetch('/api/users/requests').then(function(r){return r.json();}).catch(function(){return {requests:[]};}),
+  ]).then(function(results) {
+    var mentorCount = results[0].total || 186;
+    var studentCount = results[1].students ? results[1].students.length : 1248;
+    var requestCount = results[2].requests ? results[2].requests.length : 246;
+    var sm = document.getElementById('statMentors');
+    var ss = document.getElementById('statMentees');
+    var sr = document.getElementById('statSessions');
+    if (sm) sm.textContent = mentorCount;
+    if (ss) ss.textContent = studentCount.toLocaleString();
+    if (sr) sr.textContent = requestCount;
+  });
+
+  // Growth chart
+  var ctx = document.getElementById('growthChart');
+  if (ctx && window.Chart) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+        datasets: [
+          {
+            label: 'Mentees',
+            data: [820, 940, 1020, 1100, 1160, 1210, 1248],
+            borderColor: '#4A90E2',
+            backgroundColor: 'rgba(74,144,226,0.08)',
+            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3
+          },
+          {
+            label: 'Mentors',
+            data: [120, 138, 150, 162, 170, 180, 186],
+            borderColor: '#2B2D42',
+            backgroundColor: 'rgba(43, 45, 66,0.07)',
+            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3
+          },
+          {
+            label: 'Active Matches',
+            data: [610, 700, 760, 820, 870, 910, 932],
+            borderColor: '#238a53',
+            backgroundColor: 'rgba(35,138,83,0.07)',
+            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, family: 'Inter' }, boxWidth: 12 } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: '#f0f2f8' }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+});
+</script>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── EmailJS Configuration ─────────────────────────────────────────────────────
+// Replace these with your actual EmailJS credentials from emailjs.com
+var EMAILJS_PUBLIC_KEY  = '5lrwQuwo9p84b7wqC';
+var EMAILJS_SERVICE_ID  = 'service_m13lxl4';
+var EMAILJS_TEMPLATE_APPROVED = 'mentor_approved';
+var EMAILJS_TEMPLATE_DECLINED = 'mentor_declined';
+var SITE_URL = window.location.origin; // e.g. http://localhost:3000
+
+// Initialise EmailJS
+if (typeof emailjs !== 'undefined') {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+// ── Pending Mentor Approvals ──────────────────────────────────────────────────
+(function() {
+  var container = document.getElementById('pendingMentorsList');
+  var countEl   = document.getElementById('pendingMentorCount');
+
+  function loadPending() {
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem('mb_pending_mentors') || '[]'); } catch(e) {}
+    var pending = list.filter(function(m){ return m.status === 'pending'; });
+
+    if (countEl) countEl.textContent = pending.length + ' pending';
+
+    if (!container) return;
+
+    if (!pending.length) {
+      container.innerHTML = '<p style="font-size:.82rem;color:#9C97A0;text-align:center;padding:.5rem 0;">No pending mentor applications right now.</p>';
+      return;
+    }
+
+    container.innerHTML = pending.map(function(m) {
+      var submitted = m.submittedAt ? new Date(m.submittedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'Recently';
+      return '<div style="border:1px solid #D5D8DC;border-radius:14px;padding:1.1rem 1.25rem;margin-bottom:.85rem;background:#fff;">'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'
+        + '<div>'
+        + '<strong style="display:block;font-size:.9rem;color:#242124;margin-bottom:.2rem;">' + esc(m.name) + '</strong>'
+        + '<span style="font-size:.75rem;color:#6B6570;">' + esc(m.email) + '</span><br>'
+        + '<span style="font-size:.75rem;color:#6B6570;">' + esc(m.title || '—') + ' &nbsp;·&nbsp; ' + esc(m.industry || '—') + '</span>'
+        + '</div>'
+        + '<span style="font-size:.68rem;color:#9C97A0;flex-shrink:0;">Submitted: ' + submitted + '</span>'
+        + '</div>'
+        + '<div style="margin-top:.75rem;background:#EDF2F4;border-radius:10px;padding:.75rem 1rem;font-size:.78rem;color:#555;">'
+        + '<strong style="color:#242124;">Expertise:</strong> ' + esc(m.expertise || '—') + ' &nbsp;|&nbsp; '
+        + '<strong style="color:#242124;">Experience:</strong> ' + esc(m.experience || '—') + ' &nbsp;|&nbsp; '
+        + '<strong style="color:#242124;">Availability:</strong> ' + esc(m.availability || '—')
+        + (m.bio ? '<br><strong style="color:#242124;">Bio:</strong> ' + esc(m.bio.slice(0,120)) + (m.bio.length>120?'…':'') : '')
+        + '</div>'
+        + '<div style="display:flex;gap:.65rem;margin-top:.85rem;flex-wrap:wrap;">'
+        + '<button class="approve-btn" data-id="' + m.id + '" data-name="' + esc(m.name) + '" data-email="' + esc(m.email) + '" type="button" style="padding:.55rem 1.1rem;background:#22A06B;color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;">✓ Approve</button>'
+        + '<button class="decline-btn" data-id="' + m.id + '" data-name="' + esc(m.name) + '" data-email="' + esc(m.email) + '" type="button" style="padding:.55rem 1.1rem;background:#DC3545;color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;">✗ Decline</button>'
+        + '<button class="view-details-btn" data-id="' + m.id + '" type="button" style="padding:.55rem 1.1rem;background:transparent;color:#2B2D42;border:1.5px solid #2B2D42;border-radius:9px;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;">View Full Application</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    // Bind approve buttons
+    container.querySelectorAll('.approve-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.dataset.id, name = btn.dataset.name, email = btn.dataset.email;
+        if (!confirm('Approve ' + name + ' as a MentorBridge mentor?')) return;
+        updateStatus(id, 'approved');
+        // Send approval notification (stored in notifications)
+        addMentorNotification(name, email, 'approved');
+        loadPending();
+        showAdminToast('✓ ' + name + ' approved. Notification sent.');
+      });
+    });
+
+    // Bind decline buttons
+    container.querySelectorAll('.decline-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.dataset.id, name = btn.dataset.name, email = btn.dataset.email;
+        if (!confirm('Decline ' + name + '\'s application?')) return;
+        updateStatus(id, 'declined');
+        addMentorNotification(name, email, 'declined');
+        loadPending();
+        showAdminToast('✗ ' + name + '\'s application declined. Notification sent.');
+      });
+    });
+  }
+
+  function updateStatus(id, status) {
+    try {
+      var list = JSON.parse(localStorage.getItem('mb_pending_mentors') || '[]');
+      list = list.map(function(m){ return m.id === id ? Object.assign({}, m, {status:status, decidedAt:new Date().toISOString()}) : m; });
+      localStorage.setItem('mb_pending_mentors', JSON.stringify(list));
+    } catch(e) {}
+  }
+
+  function addMentorNotification(name, email, decision) {
+    // Store decision so mentor-pending.html can read it
+    try {
+      var decisions = JSON.parse(localStorage.getItem('mb_mentor_decisions') || '{}');
+      decisions[email] = { decision: decision, decidedAt: new Date().toISOString(), name: name };
+      localStorage.setItem('mb_mentor_decisions', JSON.stringify(decisions));
+
+      // Add to platform notifications visible to that mentor
+      var notifs = JSON.parse(localStorage.getItem('mb_notifications_' + email) || '[]');
+      if (decision === 'approved') {
+        notifs.unshift({
+          id: 'n_' + Date.now(), type: 'mentor_approved', read: false,
+          title: 'Your MentorBridge application has been approved! 🎉',
+          message: 'Congratulations ' + name + '! Your mentor application has been reviewed and approved. You can now sign in to your mentor dashboard and start connecting with mentees.',
+          link: 'auth.html?mode=signin',
+          linkLabel: 'Sign in to Mentor Dashboard',
+          ts: Date.now()
+        });
+      } else {
+        notifs.unshift({
+          id: 'n_' + Date.now(), type: 'mentor_declined', read: false,
+          title: 'Update on your MentorBridge application',
+          message: 'Thank you for applying to become a mentor on MentorBridge, ' + name + '. After reviewing your application, we are unable to approve your mentor account at this time. You are welcome to reapply in the future.',
+          ts: Date.now()
+        });
+      }
+      localStorage.setItem('mb_notifications_' + email, JSON.stringify(notifs));
+    } catch(e) {}
+
+    // ── Send email via EmailJS ─────────────────────────────────────────────
+    if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+      console.warn('EmailJS not configured. Set EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID and template IDs in admin-dashboard.html');
+      return;
+    }
+
+    var signinLink = SITE_URL + '/pages/auth.html?mode=signin&role=mentor';
+
+    var templateParams = {
+      to_name:    name,
+      to_email:   email,
+      from_name:  'MentorBridge Team',
+      signin_link: signinLink,
+      site_url:   SITE_URL
+    };
+
+    var templateId = decision === 'approved' ? EMAILJS_TEMPLATE_APPROVED : EMAILJS_TEMPLATE_DECLINED;
+
+    emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams)
+      .then(function() {
+        console.log('Email sent to ' + email + ' (' + decision + ')');
+      })
+      .catch(function(err) {
+        console.error('EmailJS error:', err);
+        showAdminToast('⚠️ Email could not be sent. Check EmailJS configuration.');
+      });
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function showAdminToast(msg) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:2rem;right:2rem;background:#242124;color:#fff;padding:.75rem 1.25rem;border-radius:12px;font-size:.82rem;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);';
+    t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3500);
+  }
+
+  loadPending();
+  // Refresh every 30s in case new applications arrive
+  setInterval(loadPending, 30000);
+})();
+</script>
+
+</body>
+</html>

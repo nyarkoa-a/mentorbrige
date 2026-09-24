@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Sign-In Test</title>
+    <link rel="stylesheet" href="./public/css/variables.css">
+    <link rel="stylesheet" href="./public/css/base.css">
+    <link rel="stylesheet" href="./public/css/components.css">
+    <style>
+        .test-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #e8eaf0;
+            border-radius: 8px;
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status.success {
+            background: rgba(35,138,83,.1);
+            color: #238a53;
+        }
+        .status.warning {
+            background: rgba(245,158,11,.1);
+            color: #b45309;
+        }
+        .status.error {
+            background: rgba(192,57,43,.1);
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Email Verification Sign-In Test</h1>
+        <p>This page tests the email verification checking functionality during sign-in.</p>
+        
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <div class="test-controls">
+                <button id="testUnverifiedUser" class="btn btn-warning btn-sm">Test Unverified User Sign-In</button>
+                <button id="testVerifiedUser" class="btn btn-success btn-sm">Test Verified User Sign-In</button>
+                <button id="clearNotifications" class="btn btn-outline btn-sm">Clear Notifications</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="testResults">
+                <p class="status">Click test buttons above to verify functionality</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Notification Display Area</h2>
+            <div id="authMessage" class="auth-message" aria-live="polite"></div>
+            <div id="authNotificationsContainer" class="auth-notifications-container" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <!-- Firebase Script Loading with Centralized Manager -->
+    <script src="./public/js/firebase-script-loader.js"></script>
+    <script src="./public/js/firebase-manager.js"></script>
+    <script>
+        // Initialize Firebase using centralized manager
+        (async function() {
+            try {
+                console.log('🔥 Initializing Firebase using centralized manager...');
+                
+                // Use the Firebase Manager to coordinate all initialization
+                await window.firebaseManager.initialize({
+                    services: ['app', 'auth', 'firestore', 'storage'],
+                    initializeUI: true
+                });
+                
+            } catch (error) {
+                console.error('❌ Firebase centralized initialization error:', error);
+            }
+        })();
+    </script>
+    <script src="./public/js/firebase-config.js"></script>
+    <script src="./public/js/firebase-service.js"></script>
+    <script src="./public/js/firebase-auth.js"></script>
+    <script src="./public/js/auth-ui-integration.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🧪 Email Verification Sign-In Test Page loaded');
+            
+            // Wait for services to be ready
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const testResults = document.getElementById('testResults');
+            
+            function updateStatus(message, type = 'success') {
+                testResults.innerHTML = `<p class="status ${type}">${message}</p>`;
+            }
+            
+            function clearNotifications() {
+                if (window.authUIIntegration && window.authUIIntegration.clearPreviousMessages) {
+                    window.authUIIntegration.clearPreviousMessages();
+                    updateStatus('Notifications cleared', 'success');
+                } else {
+                    updateStatus('Auth UI Integration not available', 'error');
+                }
+            }
+            
+            // Test unverified user sign-in
+            document.getElementById('testUnverifiedUser').addEventListener('click', async () => {
+                try {
+                    updateStatus('Testing unverified user sign-in...', 'warning');
+                    
+                    if (!window.authUIIntegration || !window.authUIIntegration.showEmailNotVerifiedMessage) {
+                        updateStatus('Auth UI Integration not available', 'error');
+                        return;
+                    }
+                    
+                    // Simulate unverified user sign-in result
+                    const testEmail = 'test@example.com';
+                    window.authUIIntegration.showEmailNotVerifiedMessage(testEmail, true);
+                    
+                    updateStatus('✅ Email verification warning displayed successfully', 'success');
+                    
+                } catch (error) {
+                    console.error('Test error:', error);
+                    updateStatus(`❌ Test failed: ${error.message}`, 'error');
+                }
+            });
+            
+            // Test verified user sign-in  
+            document.getElementById('testVerifiedUser').addEventListener('click', async () => {
+                try {
+                    updateStatus('Testing verified user sign-in...', 'warning');
+                    
+                    if (!window.authUIIntegration || !window.authUIIntegration.showSuccessMessage) {
+                        updateStatus('Auth UI Integration not available', 'error');
+                        return;
+                    }
+                    
+                    // Simulate verified user sign-in success
+                    clearNotifications();
+                    window.authUIIntegration.showSuccessMessage('Welcome back! Redirecting to your dashboard...');
+                    
+                    updateStatus('✅ Success message displayed for verified user', 'success');
+                    
+                } catch (error) {
+                    console.error('Test error:', error);
+                    updateStatus(`❌ Test failed: ${error.message}`, 'error');
+                }
+            });
+            
+            // Clear notifications button
+            document.getElementById('clearNotifications').addEventListener('click', clearNotifications);
+            
+            // Initial status
+            updateStatus('Test page ready. Services loading...', 'warning');
+            
+            // Check service availability after delay
+            setTimeout(() => {
+                const available = !!(window.authUIIntegration && window.authUIIntegration.showEmailNotVerifiedMessage);
+                if (available) {
+                    updateStatus('✅ All services ready. You can run tests.', 'success');
+                } else {
+                    updateStatus('❌ Some services not available. Check console for errors.', 'error');
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

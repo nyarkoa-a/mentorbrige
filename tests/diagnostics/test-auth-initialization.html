@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Initialization Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #cce7ff; color: #004085; border: 1px solid #b8daff; }
+        .loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #testLogin { margin-top: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Authentication Initialization Test</h1>
+    
+    <div id="testResults"></div>
+    
+    <div id="testLogin">
+        <h3>Test Login Form</h3>
+        <input type="email" id="testEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="testPassword" placeholder="Password" value="password123">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <!-- Firebase Script Loading -->
+    <script src="public/js/firebase-script-loader.js"></script>
+    <script src="public/js/firebase-manager.js"></script>
+    <script src="public/js/firebase-config.js"></script>
+    <script src="public/js/firebase-service.js"></script>
+    <script src="public/js/firebase-auth.js"></script>
+    <script src="public/js/auth-ui-integration.js"></script>
+
+    <script>
+        let testResults = [];
+        
+        function addTestResult(name, status, message) {
+            const result = { name, status, message, timestamp: new Date() };
+            testResults.push(result);
+            updateUI();
+        }
+        
+        function updateUI() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = testResults.map(result => 
+                `<div class="test-result ${result.status}">
+                    <strong>${result.name}:</strong> ${result.message}
+                    <span style="float: right; font-size: 12px;">${result.timestamp.toLocaleTimeString()}</span>
+                </div>`
+            ).join('');
+        }
+        
+        async function runTests() {
+            addTestResult('Test Start', 'info', 'Starting authentication initialization tests...');
+            
+            // Test 1: Check if Firebase Manager is loaded
+            if (window.firebaseManager) {
+                addTestResult('Firebase Manager', 'pass', 'Firebase Manager loaded successfully');
+            } else {
+                addTestResult('Firebase Manager', 'fail', 'Firebase Manager not found');
+                return;
+            }
+            
+            // Test 2: Initialize Firebase Manager
+            try {
+                await window.firebaseManager.initialize({
+                    services: ['app', 'auth', 'firestore', 'storage'],
+                    initializeUI: true
+                });
+                
+                if (window.firebaseManager.isReady()) {
+                    addTestResult('Firebase Initialization', 'pass', 'Firebase Manager initialized and ready');
+                } else {
+                    addTestResult('Firebase Initialization', 'fail', 'Firebase Manager initialized but not ready');
+                }
+            } catch (error) {
+                addTestResult('Firebase Initialization', 'fail', `Firebase initialization failed: ${error.message}`);
+            }
+            
+            // Wait a moment for all services to initialize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test 3: Check MentorBridge Auth
+            if (window.mentorBridgeAuth) {
+                if (window.mentorBridgeAuth.initialized) {
+                    addTestResult('MentorBridge Auth', 'pass', 'MentorBridge Auth initialized');
+                } else {
+                    addTestResult('MentorBridge Auth', 'loading', 'MentorBridge Auth loaded but not initialized');
+                }
+            } else {
+                addTestResult('MentorBridge Auth', 'fail', 'MentorBridge Auth not found');
+            }
+            
+            // Test 4: Check Auth UI Integration
+            if (window.authUIIntegration) {
+                if (window.authUIIntegration.initialized) {
+                    addTestResult('Auth UI Integration', 'pass', 'Auth UI Integration initialized');
+                } else {
+                    addTestResult('Auth UI Integration', 'loading', 'Auth UI Integration loaded but not initialized');
+                }
+            } else {
+                addTestResult('Auth UI Integration', 'fail', 'Auth UI Integration not found');
+            }
+            
+            // Test 5: Check Auth Operations
+            if (window.authOperations) {
+                if (typeof window.authOperations.login === 'function') {
+                    addTestResult('Auth Operations', 'pass', 'Auth Operations API available');
+                } else {
+                    addTestResult('Auth Operations', 'fail', 'Auth Operations incomplete');
+                }
+            } else {
+                addTestResult('Auth Operations', 'fail', 'Auth Operations not found');
+            }
+            
+            // Test 6: Check Global Flags
+            const flags = {
+                'firebaseLibrariesLoaded': window.firebaseLibrariesLoaded,
+                'authUIIntegrationInitialized': window.authUIIntegrationInitialized,
+            };
+            
+            addTestResult('Global Flags', 'info', `Flags: ${JSON.stringify(flags)}`);
+            
+            addTestResult('Tests Complete', 'info', 'All initialization tests completed');
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            resultDiv.innerHTML = '<div class="loading">Testing login...</div>';
+            
+            try {
+                if (!window.authOperations) {
+                    throw new Error('Auth Operations not available');
+                }
+                
+                if (!window.authOperations.login) {
+                    throw new Error('Login function not available');
+                }
+                
+                // This will likely fail with actual Firebase (demo mode)
+                await window.authOperations.login(email, password, 'student');
+                resultDiv.innerHTML = '<div class="pass">Login test passed (unexpected - check console)</div>';
+                
+            } catch (error) {
+                if (error.message.includes('Authentication service not initialized')) {
+                    resultDiv.innerHTML = '<div class="fail">❌ Authentication service not initialized - this is the bug we\'re fixing</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="info">Login attempt made: ${error.message}</div>`;
+                }
+            }
+        }
+        
+        // Start tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTests, 500);
+        });
+        
+        // Log all global objects for debugging
+        console.log('🔍 Debug Info:');
+        console.log('window.firebaseManager:', window.firebaseManager);
+        console.log('window.mentorBridgeAuth:', window.mentorBridgeAuth);
+        console.log('window.authUIIntegration:', window.authUIIntegration);
+        console.log('window.authOperations:', window.authOperations);
+    </script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication System Checkpoint Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #f8f9fa;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      background: white;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .status-indicator {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .status-loading { background: #e3f2fd; color: #1565c0; }
+    .status-success { background: #e8f5e8; color: #2e7d32; }
+    .status-error { background: #ffebee; color: #c62828; }
+    .test-controls {
+      margin: 1rem 0;
+      text-align: center;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      margin: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #1976d2; color: white; }
+    .btn-primary:hover { background: #1565c0; }
+    .btn-secondary { background: #757575; color: white; }
+    .btn-secondary:hover { background: #616161; }
+    .test-results {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #f5f5f5;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .checkpoint-requirements {
+      background: #fff3e0;
+      padding: 1.5rem;
+      border-left: 4px solid #ff9800;
+      margin: 1rem 0;
+    }
+    .requirement-item {
+      margin: 0.5rem 0;
+      display: flex;
+      align-items: center;
+    }
+    .requirement-status {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔐 Authentication System Checkpoint</h1>
+    <p>Task 3: Verify authentication system functionality</p>
+    <div id="overallStatus" class="status-indicator status-loading">Initializing...</div>
+  </div>
+
+  <div class="checkpoint-requirements">
+    <h3>📋 Checkpoint Requirements</h3>
+    <div class="requirement-item">
+      <span id="req1" class="requirement-status">⏳</span>
+      <span>Firebase authentication configured and connecting</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req2" class="requirement-status">⏳</span>
+      <span>User registration flow (email/password validation, profile creation)</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req3" class="requirement-status">⏳</span>
+      <span>Login flow (credential validation, session persistence)</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req4" class="requirement-status">⏳</span>
+      <span>Password reset functionality</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req5" class="requirement-status">⏳</span>
+      <span>UI integration updates navigation and features immediately</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req6" class="requirement-status">⏳</span>
+      <span>Role-based dashboard routing</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req7" class="requirement-status">⏳</span>
+      <span>Loading states and error handling</span>
+    </div>
+    <div class="requirement-item">
+      <span id="req8" class="requirement-status">⏳</span>
+      <span>Authentication state persistence across browser sessions</span>
+    </div>
+  </div>
+
+  <div class="test-controls">
+    <button id="runTestsBtn" class="btn btn-primary">🧪 Run Authentication Tests</button>
+    <button id="clearResultsBtn" class="btn btn-secondary">🗑️ Clear Results</button>
+    <button id="exportResultsBtn" class="btn btn-secondary">📄 Export Results</button>
+  </div>
+
+  <div class="test-section">
+    <h3>🔍 System Status</h3>
+    <div id="systemStatus">
+      <p><strong>Firebase Config:</strong> <span id="firebaseConfigStatus">Checking...</span></p>
+      <p><strong>Firebase Auth:</strong> <span id="firebaseAuthStatus">Checking...</span></p>
+      <p><strong>MentorBridge Auth:</strong> <span id="mentorAuthStatus">Checking...</span></p>
+      <p><strong>UI Integration:</strong> <span id="uiIntegrationStatus">Checking...</span></p>
+      <p><strong>Connection Health:</strong> <span id="connectionHealthStatus">Checking...</span></p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>📊 Test Results</h3>
+    <div id="testSummary"></div>
+    <div id="testResults" class="test-results">
+      Click "Run Authentication Tests" to begin comprehensive testing...
+    </div>
+  </div>
+
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- MentorBridge Scripts -->
+  <script src="public/js/firebase-config.js"></script>
+  <script src="public/js/firebase-service.js"></script>
+  <script src="public/js/firebase-auth.js"></script>
+  <script src="public/js/auth-ui-integration.js"></script>
+  <script src="auth-system-test.js"></script>
+
+  <script>
+    // DOM elements
+    const overallStatus = document.getElementById('overallStatus');
+    const systemStatus = document.getElementById('systemStatus');
+    const testResults = document.getElementById('testResults');
+    const testSummary = document.getElementById('testSummary');
+    const runTestsBtn = document.getElementById('runTestsBtn');
+    const clearResultsBtn = document.getElementById('clearResultsBtn');
+    const exportResultsBtn = document.getElementById('exportResultsBtn');
+
+    // Status elements
+    const statusElements = {
+      firebaseConfig: document.getElementById('firebaseConfigStatus'),
+      firebaseAuth: document.getElementById('firebaseAuthStatus'),
+      mentorAuth: document.getElementById('mentorAuthStatus'),
+      uiIntegration: document.getElementById('uiIntegrationStatus'),
+      connectionHealth: document.getElementById('connectionHealthStatus')
+    };
+
+    // Requirement elements
+    const requirementElements = {
+      req1: document.getElementById('req1'),
+      req2: document.getElementById('req2'),
+      req3: document.getElementById('req3'),
+      req4: document.getElementById('req4'),
+      req5: document.getElementById('req5'),
+      req6: document.getElementById('req6'),
+      req7: document.getElementById('req7'),
+      req8: document.getElementById('req8')
+    };
+
+    let currentTestResults = null;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('🚀 Authentication Checkpoint Test Page Loaded');
+      
+      // Check initial system status
+      await checkSystemStatus();
+      
+      // Set up event listeners
+      runTestsBtn.addEventListener('click', runComprehensiveTests);
+      clearResultsBtn.addEventListener('click', clearResults);
+      exportResultsBtn.addEventListener('click', exportResults);
+
+      // Auto-run tests after a delay
+      setTimeout(async () => {
+        console.log('🤖 Auto-running tests...');
+        await runComprehensiveTests();
+      }, 3000);
+    });
+
+    /**
+     * Check system status before running tests
+     */
+    async function checkSystemStatus() {
+      console.log('🔍 Checking system status...');
+      
+      try {
+        // Check Firebase Config
+        if (window.firebaseConfig && window.firebaseConfig.apiKey) {
+          updateStatus('firebaseConfig', '✅ Loaded', 'success');
+        } else {
+          updateStatus('firebaseConfig', '❌ Not loaded', 'error');
+        }
+
+        // Check Firebase Auth
+        if (window.firebaseAuth) {
+          updateStatus('firebaseAuth', '✅ Initialized', 'success');
+        } else {
+          updateStatus('firebaseAuth', '❌ Not initialized', 'error');
+        }
+
+        // Check MentorBridge Auth
+        if (window.mentorBridgeAuth) {
+          const initialized = window.mentorBridgeAuth.initialized;
+          if (initialized) {
+            updateStatus('mentorAuth', '✅ Initialized', 'success');
+          } else {
+            updateStatus('mentorAuth', '⏳ Initializing...', 'loading');
+            // Try to initialize
+            await window.mentorBridgeAuth.initialize();
+            updateStatus('mentorAuth', '✅ Initialized', 'success');
+          }
+        } else {
+          updateStatus('mentorAuth', '❌ Not available', 'error');
+        }
+
+        // Check UI Integration
+        if (window.authUIIntegration) {
+          const initialized = window.authUIIntegration.initialized;
+          if (initialized) {
+            updateStatus('uiIntegration', '✅ Initialized', 'success');
+          } else {
+            updateStatus('uiIntegration', '⏳ Initializing...', 'loading');
+            await window.authUIIntegration.initialize();
+            updateStatus('uiIntegration', '✅ Initialized', 'success');
+          }
+        } else {
+          updateStatus('uiIntegration', '❌ Not available', 'error');
+        }
+
+        // Check connection health
+        if (typeof testFirebaseConnectivity === 'function') {
+          const healthTest = await testFirebaseConnectivity();
+          if (healthTest.success) {
+            updateStatus('connectionHealth', `✅ ${healthTest.healthScore}% healthy`, 'success');
+          } else {
+            updateStatus('connectionHealth', '❌ Connection issues', 'error');
+          }
+        } else {
+          updateStatus('connectionHealth', '⚠️ Cannot test', 'warning');
+        }
+
+        overallStatus.textContent = 'System Ready';
+        overallStatus.className = 'status-indicator status-success';
+
+      } catch (error) {
+        console.error('System status check failed:', error);
+        overallStatus.textContent = 'System Error';
+        overallStatus.className = 'status-indicator status-error';
+      }
+    }
+
+    /**
+     * Update status display
+     */
+    function updateStatus(key, text, type) {
+      if (statusElements[key]) {
+        statusElements[key].textContent = text;
+        statusElements[key].className = `status-${type}`;
+      }
+    }
+
+    /**
+     * Run comprehensive authentication tests
+     */
+    async function runComprehensiveTests() {
+      console.log('🧪 Running comprehensive authentication tests...');
+      
+      runTestsBtn.disabled = true;
+      runTestsBtn.textContent = '⏳ Testing...';
+      
+      testResults.textContent = 'Running comprehensive authentication tests...\n';
+      
+      // Reset requirements
+      Object.values(requirementElements).forEach(el => {
+        el.textContent = '⏳';
+      });
+
+      try {
+        // Create and run tester
+        const tester = new AuthSystemTester();
+        
+        // Capture console output
+        const originalConsoleLog = console.log;
+        let testOutput = '';
+        
+        console.log = (...args) => {
+          const message = args.join(' ');
+          testOutput += message + '\n';
+          testResults.textContent = testOutput;
+          testResults.scrollTop = testResults.scrollHeight;
+          originalConsoleLog(...args);
+        };
+
+        // Run all tests
+        await tester.runAllTests();
+        
+        // Restore console
+        console.log = originalConsoleLog;
+        
+        // Store results
+        currentTestResults = tester.getResults();
+        
+        // Update requirements based on test results
+        updateRequirementsFromTests(currentTestResults);
+        
+        // Update summary
+        updateTestSummary(currentTestResults);
+        
+        console.log('✅ All tests completed');
+        
+      } catch (error) {
+        console.error('❌ Test execution failed:', error);
+        testResults.textContent += `\n❌ Test execution failed: ${error.message}`;
+      } finally {
+        runTestsBtn.disabled = false;
+        runTestsBtn.textContent = '🧪 Run Authentication Tests';
+      }
+    }
+
+    /**
+     * Update checkpoint requirements based on test results
+     */
+    function updateRequirementsFromTests(results) {
+      const tests = results.results;
+      
+      // Req 1: Firebase authentication configured
+      const firebaseTests = tests.filter(t => 
+        t.testName.includes('Firebase') || 
+        t.testName.includes('Connectivity')
+      );
+      const firebasePassed = firebaseTests.every(t => t.passed);
+      requirementElements.req1.textContent = firebasePassed ? '✅' : '❌';
+      
+      // Req 2: User registration flow
+      const registrationTests = tests.filter(t => 
+        t.testName.includes('Registration') || 
+        t.testName.includes('Profile Creation')
+      );
+      const registrationPassed = registrationTests.some(t => t.passed);
+      requirementElements.req2.textContent = registrationPassed ? '✅' : '❌';
+      
+      // Req 3: Login flow
+      const loginTests = tests.filter(t => 
+        t.testName.includes('Login') || 
+        t.testName.includes('Auth State')
+      );
+      const loginPassed = loginTests.some(t => t.passed);
+      requirementElements.req3.textContent = loginPassed ? '✅' : '❌';
+      
+      // Req 4: Password reset
+      const resetTests = tests.filter(t => t.testName.includes('Password Reset'));
+      const resetPassed = resetTests.some(t => t.passed);
+      requirementElements.req4.textContent = resetPassed ? '✅' : '❌';
+      
+      // Req 5: UI integration
+      const uiTests = tests.filter(t => 
+        t.testName.includes('UI') || 
+        t.testName.includes('Integration')
+      );
+      const uiPassed = uiTests.some(t => t.passed);
+      requirementElements.req5.textContent = uiPassed ? '✅' : '❌';
+      
+      // Req 6: Role-based navigation
+      const roleTests = tests.filter(t => 
+        t.testName.includes('Role') || 
+        t.testName.includes('Navigation')
+      );
+      const rolePassed = roleTests.some(t => t.passed);
+      requirementElements.req6.textContent = rolePassed ? '✅' : '❌';
+      
+      // Req 7: Loading states and error handling
+      const errorTests = tests.filter(t => 
+        t.testName.includes('Loading') || 
+        t.testName.includes('Error') ||
+        t.testName.includes('Message')
+      );
+      const errorPassed = errorTests.some(t => t.passed);
+      requirementElements.req7.textContent = errorPassed ? '✅' : '❌';
+      
+      // Req 8: Session persistence (auth state sync)
+      const sessionTests = tests.filter(t => 
+        t.testName.includes('State Sync') || 
+        t.testName.includes('Session')
+      );
+      const sessionPassed = sessionTests.some(t => t.passed);
+      requirementElements.req8.textContent = sessionPassed ? '✅' : '❌';
+    }
+
+    /**
+     * Update test summary display
+     */
+    function updateTestSummary(results) {
+      if (!results) return;
+      
+      const { totalTests, passedTests, failedTests, successRate } = results;
+      
+      let summaryHTML = `
+        <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1rem;">
+          <div><strong>Total Tests:</strong> ${totalTests}</div>
+          <div><strong>Passed:</strong> <span style="color: #2e7d32;">${passedTests} ✅</span></div>
+          <div><strong>Failed:</strong> <span style="color: #c62828;">${failedTests} ❌</span></div>
+          <div><strong>Success Rate:</strong> <span style="font-size: 1.2em; font-weight: bold; color: ${successRate >= 90 ? '#2e7d32' : successRate >= 75 ? '#f57f17' : '#c62828'};">${successRate}%</span></div>
+        </div>
+      `;
+      
+      // Overall assessment
+      if (successRate >= 90) {
+        summaryHTML += `<div style="padding: 1rem; background: #e8f5e8; color: #2e7d32; border-radius: 6px; text-align: center; font-weight: 600;">🎉 EXCELLENT: Authentication system is working very well!</div>`;
+      } else if (successRate >= 75) {
+        summaryHTML += `<div style="padding: 1rem; background: #fff3e0; color: #f57f17; border-radius: 6px; text-align: center; font-weight: 600;">👍 GOOD: Authentication system is mostly working, minor issues detected.</div>`;
+      } else if (successRate >= 50) {
+        summaryHTML += `<div style="padding: 1rem; background: #fff3e0; color: #f57f17; border-radius: 6px; text-align: center; font-weight: 600;">⚠️ NEEDS ATTENTION: Several authentication issues detected.</div>`;
+      } else {
+        summaryHTML += `<div style="padding: 1rem; background: #ffebee; color: #c62828; border-radius: 6px; text-align: center; font-weight: 600;">🚨 CRITICAL: Major authentication issues detected.</div>`;
+      }
+      
+      testSummary.innerHTML = summaryHTML;
+    }
+
+    /**
+     * Clear test results
+     */
+    function clearResults() {
+      testResults.textContent = 'Test results cleared. Click "Run Authentication Tests" to test again.';
+      testSummary.innerHTML = '';
+      currentTestResults = null;
+      
+      // Reset requirements
+      Object.values(requirementElements).forEach(el => {
+        el.textContent = '⏳';
+      });
+    }
+
+    /**
+     * Export test results
+     */
+    function exportResults() {
+      if (!currentTestResults) {
+        alert('No test results to export. Please run tests first.');
+        return;
+      }
+      
+      const exportData = {
+        timestamp: new Date().toISOString(),
+        checkpoint: 'Authentication System Verification',
+        results: currentTestResults,
+        systemInfo: {
+          userAgent: navigator.userAgent,
+          url: window.location.href
+        }
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `auth-checkpoint-results-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo matching the Pinterest reference - two figures reaching up in orange crescent -->
+  
+  <defs>
+    <!-- Navy gradient for larger mentor figure -->
+    <linearGradient id="navyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0B1F3A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E3A5F;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Orange gradient for smaller mentee figure and crescent -->
+    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA580C;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Orange crescent shape (like in the Pinterest image) -->
+  <path d="M30 75 C30 45 45 20 60 20 C85 20 100 45 100 75 C100 95 85 110 60 110 C40 110 30 90 30 75" 
+        fill="none" stroke="url(#orangeGradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Larger mentor figure (dark blue/navy) - reaching upward -->
+  <g transform="translate(48, 35)">
+    <!-- Head -->
+    <circle cx="0" cy="0" r="11" fill="url(#navyGradient)"/>
+    <!-- Body -->
+    <path d="M-14 38 Q-14 20 0 20 Q14 20 14 38" fill="url(#navyGradient)"/>
+    <!-- Arms reaching upward -->
+    <path d="M-14 28 Q-20 20 -18 10" stroke="url(#navyGradient)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M14 28 Q20 20 18 10" stroke="url(#navyGradient)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+  
+  <!-- Smaller mentee figure (orange) - reaching upward -->
+  <g transform="translate(48, 65)">
+    <!-- Head -->
+    <circle cx="0" cy="0" r="7" fill="url(#orangeGradient)"/>
+    <!-- Body -->
+    <path d="M-10 30 Q-10 16 0 16 Q10 16 10 30" fill="url(#orangeGradient)"/>
+    <!-- Arms reaching upward -->
+    <path d="M-10 22 Q-15 15 -13 8" stroke="url(#orangeGradient)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M10 22 Q15 15 13 8" stroke="url(#orangeGradient)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  </g>
+  
+  <!-- Small growth arrow pointing up -->
+  <path d="M85 30 L85 15" stroke="url(#orangeGradient)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M80 20 L85 15 L90 20" stroke="url(#orangeGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

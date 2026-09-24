@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2980b9; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Firebase Authentication Debug</h1>
+    
+    <div class="debug-section">
+        <h2>🔥 Firebase SDK Status</h2>
+        <div id="sdk-status" class="status info">Checking Firebase SDK...</div>
+        <pre id="sdk-details"></pre>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔐 Authentication State</h2>
+        <div id="auth-status" class="status info">Checking authentication...</div>
+        <pre id="auth-details"></pre>
+        <button onclick="refreshAuthState()">Refresh Auth State</button>
+        <button onclick="clearLocalStorage()">Clear Local Storage</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔑 Quick Login Test</h2>
+        <input type="email" id="test-email" placeholder="Enter test email" value="test@mentorbridge.com">
+        <input type="password" id="test-password" placeholder="Enter password" value="test123456">
+        <br>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testSignOut()">Sign Out</button>
+        <div id="login-status" class="status info">Ready for login test</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🏪 Local Storage Data</h2>
+        <pre id="storage-details"></pre>
+        <button onclick="checkLocalStorage()">Check Local Storage</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>🌐 Network Status</h2>
+        <div id="network-status" class="status info">Checking network...</div>
+        <pre id="network-details"></pre>
+        <button onclick="testConnectivity()">Test Connectivity</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- MentorBridge Firebase Files -->
+    <script src="public/js/firebase-config.js"></script>
+    <script src="public/js/firebase-service.js"></script>
+    <script src="public/js/firebase-auth.js"></script>
+
+    <script>
+        let debugLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function updateStatus(elementId, className, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status ${className}`;
+                element.textContent = message;
+            }
+        }
+
+        function updateDetails(elementId, content) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+            }
+        }
+
+        // Check Firebase SDK
+        function checkFirebaseSDK() {
+            log('Checking Firebase SDK availability');
+            
+            const sdkStatus = {
+                firebaseLoaded: typeof firebase !== 'undefined',
+                authLoaded: typeof firebase !== 'undefined' && !!firebase.auth,
+                firestoreLoaded: typeof firebase !== 'undefined' && !!firebase.firestore,
+                configModule: typeof initializeFirebaseConfig === 'function',
+                serviceModule: typeof window.firebaseService !== 'undefined',
+                authModule: typeof window.mentorBridgeAuth !== 'undefined'
+            };
+
+            const allLoaded = Object.values(sdkStatus).every(status => status);
+            
+            if (allLoaded) {
+                updateStatus('sdk-status', 'success', 'All Firebase modules loaded successfully');
+                log('Firebase SDK check passed');
+            } else {
+                updateStatus('sdk-status', 'error', 'Some Firebase modules failed to load');
+                log('Firebase SDK check failed', 'error');
+            }
+
+            updateDetails('sdk-details', sdkStatus);
+        }
+
+        // Check Authentication State
+        async function checkAuthState() {
+            log('Checking authentication state');
+            
+            try {
+                const authState = {
+                    initialized: false,
+                    currentUser: null,
+                    profile: null,
+                    error: null
+                };
+
+                // Initialize Firebase if needed
+                if (typeof initializeFirebaseConfig === 'function') {
+                    await initializeFirebaseConfig();
+                    log('Firebase config initialized');
+                }
+
+                // Initialize MentorBridge Auth
+                if (window.mentorBridgeAuth) {
+                    await window.mentorBridgeAuth.initialize();
+                    authState.initialized = true;
+                    authState.currentUser = window.mentorBridgeAuth.getCurrentUser();
+                    authState.profile = window.mentorBridgeAuth.getUserProfile();
+                    log('MentorBridge Auth initialized');
+                }
+
+                if (authState.currentUser) {
+                    updateStatus('auth-status', 'success', `Authenticated as: ${authState.currentUser.email}`);
+                    log(`User authenticated: ${authState.currentUser.email}`);
+                } else {
+                    updateStatus('auth-status', 'warning', 'No authenticated user');
+                    log('No authenticated user found');
+                }
+
+                updateDetails('auth-details', authState);
+
+            } catch (error) {
+                updateStatus('auth-status', 'error', `Auth check failed: ${error.message}`);
+                log(`Auth check error: ${error.message}`, 'error');
+                updateDetails('auth-details', { error: error.message, stack: error.stack });
+            }
+        }
+
+        // Refresh authentication state
+        function refreshAuthState() {
+            log('Refreshing authentication state');
+            checkAuthState();
+        }
+
+        // Clear local storage
+        function clearLocalStorage() {
+            log('Clearing local storage');
+            
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                keys.push(localStorage.key(i));
+            }
+            
+            keys.forEach(key => {
+                if (key.includes('firebase') || key.includes('mentorbridge')) {
+                    localStorage.removeItem(key);
+                    log(`Removed: ${key}`);
+                }
+            });
+            
+            updateStatus('auth-status', 'info', 'Local storage cleared - please refresh page');
+            checkLocalStorage();
+        }
+
+        // Test login
+        async function testLogin() {
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+
+            if (!email || !password) {
+                updateStatus('login-status', 'error', 'Please enter email and password');
+                return;
+            }
+
+            updateStatus('login-status', 'info', 'Testing login...');
+            log(`Attempting login for: ${email}`);
+
+            try {
+                if (!window.mentorBridgeAuth) {
+                    throw new Error('MentorBridge Auth not available');
+                }
+
+                const result = await window.mentorBridgeAuth.signInUser(email, password);
+                
+                if (result.success) {
+                    updateStatus('login-status', 'success', 'Login successful!');
+                    log(`Login successful for: ${email}`);
+                    checkAuthState(); // Refresh auth state display
+                } else {
+                    updateStatus('login-status', 'warning', result.message);
+                    log(`Login failed: ${result.message}`, 'warning');
+                }
+
+            } catch (error) {
+                updateStatus('login-status', 'error', `Login error: ${error.message}`);
+                log(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test sign out
+        async function testSignOut() {
+            log('Testing sign out');
+            updateStatus('login-status', 'info', 'Signing out...');
+
+            try {
+                if (window.mentorBridgeAuth) {
+                    await window.mentorBridgeAuth.signOut();
+                    updateStatus('login-status', 'success', 'Signed out successfully');
+                    log('Sign out successful');
+                    checkAuthState(); // Refresh auth state display
+                } else {
+                    throw new Error('MentorBridge Auth not available');
+                }
+
+            } catch (error) {
+                updateStatus('login-status', 'error', `Sign out error: ${error.message}`);
+                log(`Sign out error: ${error.message}`, 'error');
+            }
+        }
+
+        // Check local storage
+        function checkLocalStorage() {
+            log('Checking local storage');
+            
+            const storageData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.includes('firebase') || key.includes('mentorbridge') || key.includes('auth')) {
+                    try {
+                        storageData[key] = JSON.parse(localStorage.getItem(key));
+                    } catch {
+                        storageData[key] = localStorage.getItem(key);
+                    }
+                }
+            }
+
+            updateDetails('storage-details', Object.keys(storageData).length > 0 ? storageData : 'No Firebase-related data in localStorage');
+        }
+
+        // Test connectivity
+        async function testConnectivity() {
+            log('Testing network connectivity');
+            updateStatus('network-status', 'info', 'Testing connectivity...');
+
+            try {
+                // Test backend connectivity
+                const backendResponse = await fetch('/api/health');
+                const backendData = await backendResponse.json();
+                
+                // Test Firebase config endpoint
+                const configResponse = await fetch('/api/config/firebase');
+                const configData = await configResponse.json();
+
+                const networkInfo = {
+                    backend: {
+                        status: backendResponse.ok ? 'connected' : 'error',
+                        data: backendData
+                    },
+                    firebaseConfig: {
+                        status: configResponse.ok ? 'connected' : 'error',
+                        data: configData
+                    },
+                    online: navigator.onLine
+                };
+
+                updateStatus('network-status', 'success', 'Network connectivity test passed');
+                updateDetails('network-details', networkInfo);
+                log('Network connectivity test passed');
+
+            } catch (error) {
+                updateStatus('network-status', 'error', `Network test failed: ${error.message}`);
+                updateDetails('network-details', { error: error.message });
+                log(`Network test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize debug page
+        async function initDebug() {
+            log('Initializing debug page');
+            
+            checkFirebaseSDK();
+            await checkAuthState();
+            checkLocalStorage();
+            
+            // Setup auth state listener
+            if (window.mentorBridgeAuth) {
+                window.mentorBridgeAuth.onAuthStateChanged((authEvent) => {
+                    log(`Auth state changed: ${authEvent.user ? authEvent.user.email : 'signed out'}`);
+                    checkAuthState();
+                });
+            }
+
+            log('Debug page initialized');
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initDebug);
+    </script>
+</body>
+</html>

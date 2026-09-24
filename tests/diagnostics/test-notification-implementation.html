@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notification Implementation</title>
+  <link rel="stylesheet" href="public/css/variables.css">
+  <link rel="stylesheet" href="public/css/base.css">
+  <link rel="stylesheet" href="public/css/components.css">
+  <style>
+    body { margin: 2rem; font-family: 'Poppins', Arial, sans-serif; }
+    .test-section { margin: 2rem 0; padding: 2rem; border: 1px solid #ddd; border-radius: 8px; }
+    .test-button { margin: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Test Notification Implementation - Task 2.2</h1>
+  
+  <div class="test-section">
+    <h2>Email Verification Notification Test</h2>
+    <div id="authMessage" class="auth-message" aria-live="polite"></div>
+    <div id="authNotificationsContainer" class="auth-notifications-container" aria-live="polite"></div>
+    
+    <button id="testEmailVerification" class="btn btn-primary test-button">
+      Test Email Verification Notification
+    </button>
+    <button id="testEmailWarning" class="btn btn-warning test-button">
+      Test Email Verification Warning
+    </button>
+    <button id="testClearMessages" class="btn btn-outline test-button">
+      Clear Messages
+    </button>
+  </div>
+
+  <div class="test-section">
+    <h2>Event Handler Test Results</h2>
+    <div id="testResults"></div>
+  </div>
+
+  <script src="public/js/auth-ui-integration.js"></script>
+  <script>
+    // Initialize a simple instance for testing
+    const authUI = new AuthUIIntegrationService();
+    
+    // Test email verification notification
+    document.getElementById('testEmailVerification').addEventListener('click', () => {
+      const email = 'test@example.com';
+      const role = 'student';
+      
+      console.log('Testing email verification notification display...');
+      authUI.showEmailVerificationMessage(email, role);
+      
+      // Test button event handlers
+      setTimeout(() => {
+        const resendBtn = document.getElementById('resendVerificationBtn');
+        const goToSignInBtn = document.getElementById('goToSignInBtn');
+        
+        const results = document.getElementById('testResults');
+        results.innerHTML = `
+          <h3>Test Results:</h3>
+          <p>Resend Button Found: ${resendBtn ? '✅' : '❌'}</p>
+          <p>Go To Sign In Button Found: ${goToSignInBtn ? '✅' : '❌'}</p>
+          <p>Notification Container Has Content: ${document.getElementById('authNotificationsContainer').innerHTML.trim() ? '✅' : '❌'}</p>
+        `;
+        
+        // Test event handler attachment
+        if (resendBtn) {
+          resendBtn.addEventListener('click', () => {
+            console.log('✅ Resend button click handler working');
+            results.innerHTML += '<p>Resend Button Click Handler: ✅</p>';
+          });
+        }
+        
+        if (goToSignInBtn) {
+          goToSignInBtn.addEventListener('click', () => {
+            console.log('✅ Go to Sign In button click handler working');
+            results.innerHTML += '<p>Go To Sign In Button Click Handler: ✅</p>';
+          });
+        }
+      }, 100);
+    });
+    
+    // Test email verification warning
+    document.getElementById('testEmailWarning').addEventListener('click', () => {
+      const email = 'test@example.com';
+      
+      console.log('Testing email verification warning display...');
+      authUI.showEmailNotVerifiedMessage(email, true);
+      
+      // Test button event handlers
+      setTimeout(() => {
+        const resendBtn = document.getElementById('resendVerificationLoginBtn');
+        
+        const results = document.getElementById('testResults');
+        results.innerHTML += `
+          <h3>Warning Test Results:</h3>
+          <p>Warning Resend Button Found: ${resendBtn ? '✅' : '❌'}</p>
+        `;
+        
+        if (resendBtn) {
+          resendBtn.addEventListener('click', () => {
+            console.log('✅ Warning resend button click handler working');
+            results.innerHTML += '<p>Warning Resend Button Click Handler: ✅</p>';
+          });
+        }
+      }, 100);
+    });
+    
+    // Test clear messages
+    document.getElementById('testClearMessages').addEventListener('click', () => {
+      console.log('Testing clear messages...');
+      authUI.clearPreviousMessages();
+      
+      const results = document.getElementById('testResults');
+      results.innerHTML += `
+        <h3>Clear Test Results:</h3>
+        <p>Notifications Container Cleared: ${!document.getElementById('authNotificationsContainer').innerHTML.trim() ? '✅' : '❌'}</p>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Profile | MentorBridge</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body data-page="student-profile">
+  <header class="site-header">
+    <div class="container navbar">
+      <a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a>
+      <div class="nav-actions"><a class="btn btn-outline" href="student-dashboard.html">Dashboard</a></div>
+    </div>
+  </header>
+  <main class="container" style="padding: 4rem 0;">
+    <section class="profile-card">
+      <div class="page-title"><div><span class="section-label">Student profile</span><h1>Update your profile</h1></div></div>
+      <form class="setting-form">
+        <div class="form-group"><label class="form-label" for="profilePhoto">Profile picture</label><input class="form-input" id="profilePhoto" type="file"></div>
+        <div class="form-group"><label class="form-label" for="programme">Programme</label><input class="form-input" id="programme" type="text" value="Computer Science"></div>
+        <div class="form-group"><label class="form-label" for="academicLevel">Academic level</label><select class="form-select" id="academicLevel"><option>Level 300</option><option>Level 400</option></select></div>
+        <div class="form-group"><label class="form-label" for="skills">Skills</label><input class="form-input" id="skills" type="text" value="JavaScript, Python, React"></div>
+        <div class="form-group"><label class="form-label" for="interests">Interests</label><input class="form-input" id="interests" type="text" value="Software Engineering, AI"></div>
+        <div class="form-group"><label class="form-label" for="careerGoals">Career goals</label><input class="form-input" id="careerGoals" type="text" value="Full-stack Developer, Product Designer"></div>
+        <div class="form-group"><label class="form-label" for="resume">Resume upload</label><input class="form-input" id="resume" type="file"></div>
+        <div class="form-group"><label class="form-label" for="linkedin">LinkedIn</label><input class="form-input" id="linkedin" type="url" value="https://www.linkedin.com/in/amina"></div>
+        <button class="btn btn-primary" type="button">Save profile</button>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="container footer-grid"><div><a class="brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge"><span>mentor<span class="brand-accent">bridge</span></span></a></div></div></footer>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/chat.js"></script>
+</body>
+</html>

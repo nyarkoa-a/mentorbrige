@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Authentication UI Integration</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .auth-status {
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      border: 1px solid #ddd;
+    }
+    .authenticated { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+    .unauthenticated { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    .loading { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+    .test-section {
+      margin: 2rem 0;
+      padding: 1rem;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+    button {
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-primary { background: #007bff; color: white; border-color: #007bff; }
+    .btn-danger { background: #dc3545; color: white; border-color: #dc3545; }
+  </style>
+</head>
+<body>
+  <h1>Authentication UI Integration Test</h1>
+  
+  <div id="authStatus" class="auth-status loading">
+    <h3>Authentication Status: <span id="statusText">Loading...</span></h3>
+    <div id="userInfo"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test Authentication Operations</h3>
+    
+    <div>
+      <h4>Login Test</h4>
+      <input type="email" id="loginEmail" placeholder="Email" value="test@mentorbridge.com">
+      <input type="password" id="loginPassword" placeholder="Password" value="password123">
+      <button id="loginBtn" class="btn-primary">Login</button>
+    </div>
+
+    <div>
+      <h4>Registration Test</h4>
+      <input type="email" id="regEmail" placeholder="Email" value="newuser@test.com">
+      <input type="password" id="regPassword" placeholder="Password" value="password123">
+      <input type="text" id="regName" placeholder="Name" value="Test User">
+      <select id="regRole">
+        <option value="student">Student</option>
+        <option value="mentor">Mentor</option>
+      </select>
+      <button id="registerBtn" class="btn-primary">Register</button>
+    </div>
+
+    <div>
+      <button id="logoutBtn" class="btn-danger">Logout</button>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>UI State Test</h3>
+    <div id="uiStateInfo">
+      <p>Navigation items visible: <span id="navItemsCount">-</span></p>
+      <p>User display name: <span id="displayName">-</span></p>
+      <p>User role: <span id="userRole">-</span></p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>Event Log</h3>
+    <div id="eventLog" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; max-height: 200px; overflow-y: auto;"></div>
+  </div>
+
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- MentorBridge Scripts -->
+  <script src="public/js/firebase-config.js"></script>
+  <script src="public/js/firebase-service.js"></script>
+  <script src="public/js/firebase-auth.js"></script>
+  <script src="public/js/auth-ui-integration.js"></script>
+
+  <script>
+    // Test page functionality
+    let eventLog = [];
+
+    function logEvent(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      eventLog.unshift(`${timestamp}: ${message}`);
+      document.getElementById('eventLog').innerHTML = eventLog.slice(0, 10).map(e => `<div>${e}</div>`).join('');
+    }
+
+    function updateAuthStatus(authEvent) {
+      const statusDiv = document.getElementById('authStatus');
+      const statusText = document.getElementById('statusText');
+      const userInfo = document.getElementById('userInfo');
+
+      logEvent(`Auth state changed: ${authEvent.detail?.authState}`);
+
+      if (authEvent.detail?.user) {
+        statusDiv.className = 'auth-status authenticated';
+        statusText.textContent = 'Authenticated';
+        userInfo.innerHTML = `
+          <p>Email: ${authEvent.detail.user.email}</p>
+          <p>UID: ${authEvent.detail.user.uid}</p>
+          <p>Email Verified: ${authEvent.detail.user.emailVerified}</p>
+          ${authEvent.detail.profile ? `<p>Role: ${authEvent.detail.profile.role}</p>` : ''}
+        `;
+      } else {
+        statusDiv.className = 'auth-status unauthenticated';
+        statusText.textContent = 'Not Authenticated';
+        userInfo.innerHTML = '<p>No user signed in</p>';
+      }
+
+      // Update UI state info
+      document.getElementById('displayName').textContent = authEvent.detail?.profile?.name || '-';
+      document.getElementById('userRole').textContent = authEvent.detail?.profile?.role || '-';
+    }
+
+    // Set up event listeners
+    document.addEventListener('mentorbridge-user-signed-in', updateAuthStatus);
+    document.addEventListener('mentorbridge-user-signed-out', updateAuthStatus);
+
+    // Set up test buttons
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        logEvent(`Attempting login for ${email}`);
+        await window.authOperations.login(email, password, 'student');
+        logEvent('Login successful');
+      } catch (error) {
+        logEvent(`Login failed: ${error.message}`);
+      }
+    });
+
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const name = document.getElementById('regName').value;
+      const role = document.getElementById('regRole').value;
+      
+      try {
+        logEvent(`Attempting registration for ${email}`);
+        await window.authOperations.register(email, password, { name, role });
+        logEvent('Registration successful');
+      } catch (error) {
+        logEvent(`Registration failed: ${error.message}`);
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        logEvent('Attempting logout');
+        await window.authOperations.logout();
+        logEvent('Logout successful');
+      } catch (error) {
+        logEvent(`Logout failed: ${error.message}`);
+      }
+    });
+
+    // Initialize and monitor auth state
+    document.addEventListener('DOMContentLoaded', () => {
+      logEvent('DOM loaded, initializing auth UI integration');
+      
+      // Monitor auth UI integration state
+      const checkAuthState = () => {
+        if (window.authUIIntegration && window.authUIIntegration.initialized) {
+          const authState = window.authUIIntegration.getAuthState();
+          const currentUser = window.authUIIntegration.getCurrentUser();
+          const userProfile = window.authUIIntegration.getCurrentUserProfile();
+          
+          updateAuthStatus({
+            detail: {
+              authState,
+              user: currentUser,
+              profile: userProfile
+            }
+          });
+          
+          logEvent(`Auth UI Integration initialized, state: ${authState}`);
+        } else {
+          setTimeout(checkAuthState, 500);
+        }
+      };
+      
+      checkAuthState();
+    });
+  </script>
+</body>
+</html>

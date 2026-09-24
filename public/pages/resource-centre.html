@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resources | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6fb; font-family: 'Inter', sans-serif; }
+    .db-shell { display: flex; min-height: 100vh; }
+    .db-sidebar { width: 260px; flex-shrink: 0; background: #1E202F; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform 0.3s ease; }
+    .db-sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-decoration: none; }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
+    .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
+    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #fff; }
+    .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .db-sidebar-overlay.open { display: block; }
+    .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .db-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0 2rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .db-header-left { display: flex; align-items: center; gap: 1rem; }
+    .db-menu-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #1E202F; padding: 0.3rem; }
+    .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
+    .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .db-icon-btn { position: relative; background: #f4f6fb; border: 1px solid #e8eaf0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.15s; text-decoration: none; color: inherit; }
+    .db-icon-btn:hover { background: #e8eaf0; }
+    .db-notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+    .rc-content { padding: 2rem; flex: 1; }
+
+    /* ── Resource search + filter toolbar ── */
+    .rc-toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+    .rc-search { display: flex; align-items: center; gap: 0.5rem; background: #fff; border: 1.5px solid #e8eaf0; border-radius: 10px; padding: 0.55rem 0.85rem; flex: 1; max-width: 380px; }
+    .rc-search input { border: none; background: transparent; outline: none; font-size: 0.82rem; font-family: inherit; color: #1E202F; width: 100%; }
+    .rc-search input::placeholder { color: #9ca3af; }
+    .rc-search span { color: #9ca3af; flex-shrink: 0; }
+    .rc-filter { padding: 0.55rem 0.85rem; border: 1.5px solid #e8eaf0; border-radius: 10px; background: #fff; font-size: 0.8rem; font-family: inherit; color: #1E202F; outline: none; }
+    .rc-filter:focus { border-color: #2B2D42; }
+    .rc-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .rc-tab { padding: 0.4rem 1rem; border: 1.5px solid #e8eaf0; border-radius: 20px; background: #f8f9fc; font-size: 0.78rem; font-weight: 600; color: #6b7280; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .rc-tab.active { background: rgba(43, 45, 66,0.12); border-color: #2B2D42; color: #1E202F; }
+    .rc-tab:hover { border-color: #2B2D42; color: #1E202F; }
+
+    /* Save button overlay on resource cards */
+    .resource-card { position: relative; }
+    .rc-save-btn { position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; cursor: pointer; font-size: 1rem; color: #9ca3af; transition: color 0.15s; padding: 0.1rem; }
+    .rc-save-btn.saved { color: #2B2D42; }
+    .rc-save-btn:hover { color: #2B2D42; }
+    .rc-card-hidden { display: none; }
+
+    /* Empty state */
+    .rc-empty { text-align: center; padding: 3rem 1rem; background: #fff; border-radius: 14px; border: 1px solid #e8eaf0; }
+    .rc-empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.85rem; }
+    .rc-empty h3 { font-size: 1rem; font-weight: 700; color: #1E202F; margin: 0 0 0.35rem; }
+    .rc-empty p { font-size: 0.82rem; color: #6b7280; margin: 0 0 1.25rem; }
+
+    @media (max-width: 900px) { .db-sidebar{transform:translateX(-100%);} .db-sidebar.open{transform:translateX(0);} .db-main{margin-left:0;} .db-menu-btn{display:flex;} }
+    @media (max-width: 640px) { .rc-content{padding:1rem;} .rc-search{max-width:100%;} }
+  </style>
+</head>
+<body data-page="resource-centre">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay"></div>
+<div class="db-shell">
+
+  <aside class="db-sidebar" id="dbSidebar">
+    <a class="db-sidebar-brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge" /><span>mentor<span class="brand-accent">bridge</span></span></a>
+    <nav class="db-nav" id="sidebarNav"></nav>
+    <div class="db-sidebar-footer">
+      <div class="db-user-row">
+        <div class="db-user-avatar-initials" id="sidebarInitials">AB</div>
+        <div class="db-user-info"><strong id="sidebarName">Loading…</strong><span id="sidebarRole">Mentee</span></div>
+      </div>
+      <button class="db-logout-btn" id="logoutBtn" type="button"><span>🚪</span> Log out</button>
+    </div>
+  </aside>
+
+  <div class="db-main">
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="menuBtn" type="button">☰</button>
+        <div class="db-welcome"><h1>Resources</h1><p>Explore guides, learning materials, and resources to support your growth.</p></div>
+      </div>
+      <div class="db-header-right">
+        <a href="notifications.html" class="db-icon-btn">🔔<span class="db-notif-dot"></span></a>
+        <div class="db-header-avatar" id="headerAvatar">AB</div>
+      </div>
+    </header>
+
+    <main class="rc-content">
+
+      <!-- Toolbar: search + filter + tabs -->
+      <div class="rc-toolbar">
+        <div class="rc-search"><span>🔍</span><input type="search" id="rcSearch" placeholder="Search resources…" /></div>
+        <select class="rc-filter" id="rcCategory">
+          <option value="">All categories</option>
+          <option value="Resume">Resume</option>
+          <option value="Interview">Interview</option>
+          <option value="Career Roadmap">Career Roadmap</option>
+          <option value="Networking">Networking</option>
+          <option value="Internship">Internship</option>
+          <option value="Goal Setting">Goal Setting</option>
+        </select>
+        <div class="rc-tabs">
+          <button class="rc-tab active" data-rctab="all" type="button">All Resources</button>
+          <button class="rc-tab" data-rctab="saved" type="button">Saved <span id="rcSavedCount" style="font-size:.65rem;background:rgba(43, 45, 66,.15);color:#1E202F;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;">0</span></button>
+        </div>
+      </div>
+      <div id="rcEmptyState" class="rc-empty" style="display:none;">
+        <div class="rc-empty-icon">📚</div>
+        <h3>No saved resources yet.</h3>
+        <p>Save resources you want to come back to later.</p>
+        <button class="btn btn-secondary" onclick="switchRcTab('all')" type="button">Explore Resources</button>
+      </div>
+
+      <!-- Static resource cards — all "View" buttons open unique modals -->
+      <div class="resource-grid" id="rcGrid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+
+        <article class="resource-card" data-rc-title="Professional Resume Writing Guide" data-rc-cat="Resume">
+          <button class="rc-save-btn" data-rc-id="r1" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Resume</span>
+          <h3>Professional Resume Writing Guide</h3>
+          <p>Structure your CV for Ghanaian employers, avoid common mistakes, and write bullet points that get noticed.</p>
+          <div class="resource-meta">
+            <span class="text-sm">15 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-resume">View →</button>
+          </div>
+        </article>
+
+        <article class="resource-card" data-rc-title="Ace Your Technical Interview" data-rc-cat="Interview">
+          <button class="rc-save-btn" data-rc-id="r2" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Interview</span>
+          <h3>Ace Your Technical Interview</h3>
+          <p>From coding challenges to behavioural questions — everything you need to walk into your next interview with confidence.</p>
+          <div class="resource-meta">
+            <span class="text-sm">25 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-interview">View →</button>
+          </div>
+        </article>
+
+        <article class="resource-card" data-rc-title="Career Roadmap: Campus to Corporate" data-rc-cat="Career Roadmap">
+          <button class="rc-save-btn" data-rc-id="r3" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Career Roadmap</span>
+          <h3>Career Roadmap: Campus to Corporate</h3>
+          <p>A level-by-level guide from Level 100 through Level 400 — skills to build and when to start applying.</p>
+          <div class="resource-meta">
+            <span class="text-sm">20 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-roadmap">View →</button>
+          </div>
+        </article>
+
+        <article class="resource-card" data-rc-title="Networking in the Professional Scene" data-rc-cat="Networking">
+          <button class="rc-save-btn" data-rc-id="r4" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Networking</span>
+          <h3>Networking in the Professional Scene</h3>
+          <p>How to build genuine professional relationships — on LinkedIn, at career fairs, and through MentorBridge.</p>
+          <div class="resource-meta">
+            <span class="text-sm">12 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-networking">View →</button>
+          </div>
+        </article>
+
+        <article class="resource-card" data-rc-title="Internship Success Guide" data-rc-cat="Internship">
+          <button class="rc-save-btn" data-rc-id="r5" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Internship</span>
+          <h3>Internship Success Guide</h3>
+          <p>Find internships, write compelling applications, and make the most of every opportunity once you're in.</p>
+          <div class="resource-meta">
+            <span class="text-sm">18 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-internship">View →</button>
+          </div>
+        </article>
+
+        <article class="resource-card" data-rc-title="SMART Goal Planner" data-rc-cat="Goal Setting">
+          <button class="rc-save-btn" data-rc-id="r6" type="button" title="Save">🏷️</button>
+          <span class="badge badge-accent">Goal Setting</span>
+          <h3>SMART Goal Planner</h3>
+          <p>Set clear, achievable career goals using the SMART framework and track your progress with your mentor.</p>
+          <div class="resource-meta">
+            <span class="text-sm">10 min read</span>
+            <button class="btn btn-outline btn-sm open-modal" data-modal="modal-goals">View →</button>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 1 — Resume Writing Guide
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-resume" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mr-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Resume</span>
+      <h2 id="mr-title">Professional Resume Writing Guide</h2>
+
+      <div class="resource-detail-body">
+        <h3>Structure &amp; Formatting</h3>
+        <p>Keep your resume to one page for entry-level roles and two pages maximum once you have substantial experience. Use a clean layout — a single or two-column format with clear section headers. Stick to one professional font (Inter, Calibri, or Arial), 10–12pt body text, and consistent spacing. Leave breathing room — a cluttered page is harder to scan than a sparse one. Save and send as a PDF unless the employer specifically requests Word.</p>
+
+        <h3>What to Include for Ghanaian Employers</h3>
+        <ul>
+          <li><strong>Contact details:</strong> Full name, professional email, phone number, LinkedIn URL, and city/country. No full address, no photo unless explicitly requested.</li>
+          <li><strong>Professional summary:</strong> 2–3 lines describing your background, key skills, and what you're seeking. Tailor this for every application — a generic summary is the first thing recruiters skip.</li>
+          <li><strong>Work &amp; internship experience:</strong> Job title, company name, dates, and 2–4 bullet points per role starting with strong action verbs (Led, Built, Reduced, Increased, Designed).</li>
+          <li><strong>Education:</strong> Degree, institution, graduation year. Include relevant coursework, GPA (if strong), and academic awards.</li>
+          <li><strong>Skills:</strong> Separate technical skills (Python, Excel, AutoCAD, etc.) from soft skills. List only what you can genuinely discuss in an interview.</li>
+          <li><strong>Projects &amp; certifications:</strong> Include personal projects, freelance work, academic projects, or online certifications that demonstrate real skills.</li>
+          <li><strong>Languages:</strong> If you speak Twi, Ga, Ewe, French, or other languages relevant to the role, include them — it signals cultural versatility to Ghanaian employers.</li>
+        </ul>
+
+        <h3>Common Mistakes to Avoid</h3>
+        <ul>
+          <li>Writing an objective statement ("I am seeking a role where I can grow…") instead of a targeted summary.</li>
+          <li>Listing job duties instead of achievements — "Responsible for social media" says nothing. "Grew Instagram following by 3,200 in 4 months" says everything.</li>
+          <li>Using tables or text boxes that break Applicant Tracking Systems (ATS) used by larger employers.</li>
+          <li>Inconsistent tense — use past tense for previous roles, present tense for your current position.</li>
+          <li>Submitting without a second pair of eyes — grammar and spelling errors cost you interviews.</li>
+          <li>Including irrelevant personal information (marital status, date of birth, religion) unless specifically required.</li>
+        </ul>
+
+        <h3>Sample Bullet Points</h3>
+        <ul>
+          <li>Developed a React.js dashboard that reduced internal report generation time by 40%, serving 12 daily users.</li>
+          <li>Led a team of 4 interns to deliver a mobile app prototype within a 6-week sprint, presented to senior management.</li>
+          <li>Conducted financial modelling for 8 SME clients, identifying cost-saving opportunities averaging 15% per client.</li>
+          <li>Organised 3 campus career events with 200+ attendees, coordinating with 15 corporate sponsors.</li>
+          <li>Published a peer-reviewed paper on machine learning applications in healthcare diagnostics (co-author, 2025).</li>
+        </ul>
+
+        <div style="margin-top:2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <button class="btn btn-secondary" disabled title="Template download coming soon" aria-disabled="true">
+            ⬇ Download Template
+          </button>
+          <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);">Template download coming soon — check back shortly.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 2 — Technical Interview
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-interview" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mi-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Interview Prep</span>
+      <h2 id="mi-title">Ace Your Technical Interview</h2>
+
+      <div class="resource-detail-body">
+        <h3>Coding Challenge Prep</h3>
+        <p>The vast majority of technical interviews test a core set of data structures and algorithms: arrays, strings, hash maps, stacks, queues, linked lists, trees, graphs, and sorting. Master these before moving to advanced topics. Platforms like LeetCode, HackerRank, and Codewars are excellent. Start with Easy problems, graduate to Medium, and only tackle Hard problems once you're consistently solving Mediums under 25 minutes. Practice explaining your approach out loud — interviewers value communication as much as correctness.</p>
+
+        <h3>System Design Basics</h3>
+        <p>For junior and mid-level roles, system design questions test fundamental thinking, not encyclopaedic knowledge. Understand: how HTTP requests work end to end, what a REST API is and when to use it, the difference between SQL and NoSQL databases, what a cache is and why it matters, and basic concepts like load balancing and CDNs. When answering a system design question, always clarify requirements first, then estimate scale, then sketch your architecture from front to back — don't jump straight to solutions.</p>
+
+        <h3>Behavioural Questions — The STAR Method</h3>
+        <p>Structure every behavioural answer as: <strong>Situation</strong> (the context), <strong>Task</strong> (your specific responsibility), <strong>Action</strong> (what you personally did — not the team), <strong>Result</strong> (the outcome, quantified wherever possible). Prepare 6–8 flexible stories that can answer questions about leadership, conflict, failure, innovation, and teamwork. The best stories are specific, honest, and show genuine reflection.</p>
+
+        <h3>Interview Etiquette in Ghana and Abroad</h3>
+        <ul>
+          <li>Arrive 10–15 minutes early for in-person interviews. For video calls, join 2 minutes early with camera on, background neutral, and audio tested.</li>
+          <li>Dress one level above the company's typical dress code unless told otherwise.</li>
+          <li>Research the company thoroughly — know their products, recent news, competitors, and culture. Reference this in your answers.</li>
+          <li>Listen to the full question before answering. It's acceptable — and professional — to pause briefly and think before speaking.</li>
+          <li>Ask 2–3 thoughtful questions at the end. Avoid asking about salary in first-round interviews.</li>
+          <li>Send a concise thank-you email within 24 hours, referencing something specific from the conversation.</li>
+        </ul>
+
+        <h3>5 Practice Questions</h3>
+        <ol>
+          <li><strong>Coding:</strong> Given an array of integers, find two numbers that sum to a target value. What is the optimal time complexity, and how would you implement it?</li>
+          <li><strong>Data structures:</strong> Explain the difference between a stack and a queue. Give a real-world use case for each, and describe how you would implement both.</li>
+          <li><strong>System design:</strong> How would you design a URL shortener like bit.ly? Walk through the components, data model, and how you'd handle millions of requests per day.</li>
+          <li><strong>Behavioural:</strong> Tell me about a time you had a disagreement with a team member. How did you handle it, and what was the outcome?</li>
+          <li><strong>Reflection:</strong> Walk me through a project you're proud of. What decisions did you make, what would you do differently today, and what did it teach you?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 3 — Career Roadmap
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-roadmap" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mro-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Career Planning</span>
+      <h2 id="mro-title">Career Roadmap: From Campus to Corporate</h2>
+
+      <div class="resource-detail-body">
+        <div class="roadmap-stage">
+          <span class="roadmap-level">Level 100 — Explore &amp; Orient</span>
+          <h3>Your first year is for exploration</h3>
+          <p>Don't rush to specialise. Attend every career fair, departmental talk, alumni event, and student society you can find. Your goal is to build a radar — to understand what professionals in your field actually do day-to-day, not just what the job titles sound like. Create your LinkedIn profile now (education, a professional photo, a short summary) and connect with every professional you meet. Request informational interviews through MentorBridge — a 20-minute conversation with someone doing the job you're curious about is worth more than any textbook. Focus on your grades, but don't neglect building human capital alongside academic capital.</p>
+        </div>
+
+        <div class="roadmap-stage">
+          <span class="roadmap-level">Level 200 — Build Skills &amp; Credibility</span>
+          <h3>Go deep on one thing</h3>
+          <p>Pick one skill and develop genuine, demonstrable competence in it — a programming language, financial modelling, UX design, public speaking, data analysis, legal research. Take a structured online course (Coursera, Google Career Certificates, LinkedIn Learning — many are free for students). Start your first real project: a portfolio piece, a small freelance job, a research paper, or a student society leadership role. Apply for your first internship or voluntary work placement. Secure your first MentorBridge mentor and commit to monthly sessions. At this stage, a mentor who works in your target field is more valuable than a senior mentor in a different industry.</p>
+        </div>
+
+        <div class="roadmap-stage">
+          <span class="roadmap-level">Level 300 — Apply, Fail, Learn</span>
+          <h3>Your most important year for internship applications</h3>
+          <p>Apply broadly — aim for 20–30 applications and budget for 5–10 first-round interviews. Competition is real, rejection is part of the process, and every interview teaches you something. Your MentorBridge mentor can review your CV, do mock interviews with you, and introduce you to their professional network. If your first choice doesn't come through, accept the best offer available and extract maximum value from it. Document every achievement — a numbered bullet point on your CV is worth ten vague responsibilities. Get a written reference or LinkedIn recommendation before you leave every placement. Start the habit of networking on LinkedIn: comment thoughtfully, post once a week, and connect with everyone who crosses your professional path.</p>
+        </div>
+
+        <div class="roadmap-stage">
+          <span class="roadmap-level">Level 400 &amp; Beyond — Convert &amp; Negotiate</span>
+          <h3>Turn experience into employment</h3>
+          <p>Your final year is about converting. If you had a good internship, push for a graduate offer — ask directly, professionally, and early. If you're applying externally, start in October or November for roles beginning after graduation. Polish your LinkedIn until it reflects exactly where you want to go, not just where you've been. Research market salary ranges for your target role and location; your MentorBridge mentor can help you calibrate this. When an offer comes, don't accept the first number without at least one respectful counter-offer — you will rarely be penalised for negotiating professionally, and you will almost always leave money on the table if you don't. Your degree is the foundation. Your skills, network, and experience are the ceiling.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 4 — Networking
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-networking" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mn-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Networking</span>
+      <h2 id="mn-title">Networking in the Professional Scene</h2>
+
+      <div class="resource-detail-body">
+        <h3>Why Networking Matters More Than You Think</h3>
+        <p>Research consistently shows that 70–80% of positions are filled through referrals and professional connections — many are never publicly advertised at all. Networking is not about collecting contacts or attending events for their own sake. It is about building genuine relationships with people who respect your work and want to see you succeed. The best networkers are genuinely curious about other people, generous with introductions, and patient — they invest in relationships before they need anything from them.</p>
+
+        <h3>Where to Network</h3>
+        <ul>
+          <li><strong>LinkedIn:</strong> Connect with every professional you meet. Post thoughtful, original content in your field — insights from a lecture, a reflection on a project, a reaction to industry news. Engage genuinely with others' posts. Recruiters actively use LinkedIn to find candidates who weren't even applying.</li>
+          <li><strong>MentorBridge:</strong> Request sessions with mentors outside your immediate field. Some of the most valuable opportunities come from unexpected connections. Treat every mentor relationship as a long-term professional relationship, not a transaction.</li>
+          <li><strong>Career fairs and university events:</strong> Come prepared with a clear 30-second introduction and genuine questions about the companies you're approaching. Follow up with every recruiter and professional you meet within 24 hours.</li>
+          <li><strong>Industry events in Accra:</strong> Many tech meetups, finance forums, and professional conferences are free or heavily discounted for students. Search for events specific to your industry — GhanaTech, accounting association events, legal society gatherings, etc.</li>
+        </ul>
+
+        <h3>How to Follow Up Effectively</h3>
+        <p>Send a personalised LinkedIn connection request within 24 hours of meeting someone. Reference something specific from your conversation — this proves you were paying attention and makes you memorable. Keep the first message brief: express appreciation for the conversation, mention something specific that resonated, and signal you'd like to stay in touch. Do not ask for a job, a referral, or a favour in the first message. Build the relationship over multiple interactions before making any requests.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 5 — Internship Guide
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-internship" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mint-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Internships</span>
+      <h2 id="mint-title">Internship Success Guide</h2>
+
+      <div class="resource-detail-body">
+        <h3>Finding the Right Internship</h3>
+        <p>Start searching 3–4 months before your desired start date. Check company career pages directly — many organisations in Ghana don't post on general job boards, and the best opportunities are found through direct outreach or referrals. Use your university's career centre, LinkedIn, and MentorBridge connections to surface unadvertised roles. Don't limit yourself to your target industry — cross-industry internships often teach skills that make you stand out in your primary field.</p>
+
+        <h3>Writing a Winning Application</h3>
+        <p>Tailor every CV and cover letter — a generic application is instantly recognisable and easily rejected. In your cover letter, explain specifically why you want to work at that organisation (not just the industry) and give one concrete example of what you'd contribute. One paragraph on your skills, one on why this company specifically, one on what you want to learn. Keep it to one page. Proofread twice — then ask someone else to proofread it.</p>
+
+        <h3>Excelling Once You're In</h3>
+        <ul>
+          <li>Arrive early, stay as late as the work requires, and show genuine curiosity about every part of the business — not just your assigned tasks.</li>
+          <li>Ask for feedback proactively at the midpoint of your internship. Don't wait for a formal review — ask your manager "What's one thing I could be doing differently?" and act on the answer.</li>
+          <li>Identify one problem you can solve or one process you can improve, and propose it humbly. Even a small, completed initiative makes you memorable.</li>
+          <li>Build relationships across teams, not just within your immediate group. Attend every optional event, lunch, and company gathering you can.</li>
+          <li>Keep a weekly achievement log. At the end of each week, write 2–3 specific things you accomplished. This becomes the basis for your CV bullet points and your performance conversations.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MODAL 6 — SMART Goal Planner
+  ══════════════════════════════════════════════════ -->
+  <div id="modal-goals" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="mg-title">
+    <div class="modal-card modal-card--wide">
+      <button class="modal-close" type="button" aria-label="Close modal">✕</button>
+      <span class="section-label">Goal Setting</span>
+      <h2 id="mg-title">SMART Goal Planner for Career Development</h2>
+
+      <div class="resource-detail-body">
+        <h3>What Makes a Goal SMART?</h3>
+        <p>SMART stands for <strong>Specific</strong>, <strong>Measurable</strong>, <strong>Achievable</strong>, <strong>Relevant</strong>, and <strong>Time-bound</strong>. Vague goals like "improve my career" produce vague results. SMART goals create a clear target, a deadline, and a way to know whether you've succeeded.</p>
+
+        <h3>Breaking Down the Framework</h3>
+        <ul>
+          <li><strong>Specific:</strong> "I will secure a software engineering internship at a technology company in Accra" — not "I want to do an internship."</li>
+          <li><strong>Measurable:</strong> "I will apply to 20 companies and track my applications and responses in a spreadsheet."</li>
+          <li><strong>Achievable:</strong> Is this realistic given your current academic level, skills, and available time? If not, what would make it achievable?</li>
+          <li><strong>Relevant:</strong> Does this goal directly support your longer-term career direction? If you can't articulate the connection, reconsider the goal.</li>
+          <li><strong>Time-bound:</strong> "By the end of the first semester of Level 300" — not "sometime this year."</li>
+        </ul>
+
+        <h3>Your 90-Day Career Goal System</h3>
+        <p>Set one significant 90-day career goal, then break it into three monthly milestones — one for each month. Review your progress every two weeks with your MentorBridge mentor. The rule: adjust the plan, never the goal. If a milestone slips, analyse why and adapt your approach. Only change the goal itself if new information has genuinely made it irrelevant — not because it became difficult. Difficulty is part of the process.</p>
+
+        <h3>Example 90-Day Goal</h3>
+        <p><strong>Goal:</strong> Secure a summer internship offer in the banking or finance sector by the end of Month 3.</p>
+        <ul>
+          <li><strong>Month 1:</strong> Update CV, complete LinkedIn profile, identify 30 target companies, request a CV review from MentorBridge mentor.</li>
+          <li><strong>Month 2:</strong> Send 20 applications, follow up on all unanswered applications after two weeks, do 2 mock interviews with mentor.</li>
+          <li><strong>Month 3:</strong> Complete all scheduled interviews, evaluate offers received, make a decision with mentor's guidance.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+    </main><!-- /.rc-content -->
+  </div><!-- /.db-main -->
+</div><!-- /.db-shell -->
+
+  <script src="../js/theme.js"></script>
+  <script>
+    var rcSaved = {};
+    var rcActiveTab = 'all';
+
+    function switchRcTab(tab) {
+      rcActiveTab = tab;
+      document.querySelectorAll('.rc-tab').forEach(function(b){ b.classList.toggle('active', b.dataset.rctab === tab); });
+      applyRcFilters();
+    }
+
+    function applyRcFilters() {
+      var q = document.getElementById('rcSearch') ? document.getElementById('rcSearch').value.trim().toLowerCase() : '';
+      var cat = document.getElementById('rcCategory') ? document.getElementById('rcCategory').value : '';
+      var cards = document.querySelectorAll('#rcGrid .resource-card');
+      var visible = 0;
+      cards.forEach(function(card) {
+        var title = (card.dataset.rcTitle || '').toLowerCase();
+        var cardCat = card.dataset.rcCat || '';
+        var btn = card.querySelector('.rc-save-btn');
+        var id = btn ? btn.dataset.rcId : '';
+        var show = (!q || title.includes(q)) && (!cat || cardCat === cat) && (rcActiveTab === 'all' || rcSaved[id]);
+        card.classList.toggle('rc-card-hidden', !show);
+        if (show) visible++;
+      });
+      var empty = document.getElementById('rcEmptyState');
+      if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+      var cnt = document.getElementById('rcSavedCount');
+      if (cnt) cnt.textContent = Object.keys(rcSaved).length;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Auth + sidebar
+      var session = {};
+      try { session = JSON.parse(sessionStorage.getItem('mb_session') || '{}'); } catch(e) {}
+      var role = session.role || 'student';
+      var name = session.name || (role === 'mentor' ? 'Grace Akoto' : 'Amina Boateng');
+      var inits = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      if (!session.role) { window.location.replace('auth.html'); return; }
+      document.getElementById('sidebarInitials').textContent = inits;
+      document.getElementById('sidebarName').textContent = name;
+      document.getElementById('sidebarRole').textContent = role === 'mentor' ? 'Mentor' : role === 'admin' ? 'Admin' : 'Mentee';
+      document.getElementById('headerAvatar').textContent = inits;
+      var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+      var links = [
+        {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
+        {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities'},
+        {href:'messages.html',icon:'💬',label:'Messages'},{href:'resource-centre.html',icon:'📚',label:'Resources',active:true},
+        {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
+      ];
+      document.getElementById('sidebarNav').innerHTML = links.map(function(l){
+        return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';
+      }).join('');
+      var menuBtn=document.getElementById('menuBtn'), sidebar=document.getElementById('dbSidebar'), overlay=document.getElementById('sidebarOverlay');
+      if(menuBtn) menuBtn.addEventListener('click',function(){sidebar.classList.toggle('open');overlay.classList.toggle('open');});
+      if(overlay) overlay.addEventListener('click',function(){sidebar.classList.remove('open');overlay.classList.remove('open');});
+      (function(){
+        var lBtn = document.getElementById('logoutBtn');
+        var lModal = document.getElementById('logoutConfirmModal');
+        var lConfirm = document.getElementById('logoutConfirmBtn');
+        var lCancel = document.getElementById('logoutCancelBtn');
+        if(lBtn && lModal){
+          lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+          if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+          if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+          lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+        }
+      })();
+
+      // Search / filters
+      var deb;
+      if(document.getElementById('rcSearch')) document.getElementById('rcSearch').addEventListener('input',function(){clearTimeout(deb);deb=setTimeout(applyRcFilters,200);});
+      if(document.getElementById('rcCategory')) document.getElementById('rcCategory').addEventListener('change',applyRcFilters);
+      document.querySelectorAll('.rc-tab').forEach(function(btn){btn.addEventListener('click',function(){switchRcTab(btn.dataset.rctab);});});
+
+      // Save buttons
+      document.querySelectorAll('.rc-save-btn').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          var id=btn.dataset.rcId;
+          rcSaved[id]=!rcSaved[id];
+          btn.textContent=rcSaved[id]?'🔖':'🏷️';
+          btn.classList.toggle('saved',!!rcSaved[id]);
+          btn.title=rcSaved[id]?'Unsave':'Save';
+          applyRcFilters();
+        });
+      });
+
+      // Modal open/close (preserving original functionality)
+      function openModal(id) { var m=document.getElementById(id); if(m){m.classList.remove('hidden');document.body.style.overflow='hidden';} }
+      function closeModal(m) { if(m){m.classList.add('hidden');document.body.style.overflow='';} }
+      document.querySelectorAll('.open-modal').forEach(function(btn){btn.addEventListener('click',function(){openModal(btn.getAttribute('data-modal'));});});
+      document.querySelectorAll('.modal-close').forEach(function(btn){btn.addEventListener('click',function(){closeModal(btn.closest('.modal-backdrop'));});});
+      document.querySelectorAll('.modal-backdrop').forEach(function(backdrop){backdrop.addEventListener('click',function(e){if(e.target===backdrop)closeModal(backdrop);});});
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(closeModal);}});
+
+      if(new URLSearchParams(window.location.search).get('saved')==='1') switchRcTab('saved');
+    });
+  </script>
+
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

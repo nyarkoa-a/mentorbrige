@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications | MentorBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  
+  <!-- Firebase CDN Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Firebase Configuration and Services (load order is critical) -->
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase-service.js"></script>
+  <script src="../js/firebase-auth.js"></script>
+  <script src="../js/firebase-notifications.js"></script>
+  <script src="../js/firebase-profiles.js"></script>
+  <script src="../js/firebase-data.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: #f4f6fb; font-family: 'Inter', sans-serif; }
+    .db-shell { display: flex; min-height: 100vh; }
+    .db-sidebar { width: 260px; flex-shrink: 0; background: #1E202F; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 200; transition: transform 0.3s ease; }
+    .db-sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-decoration: none; }
+    .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
+    .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
+    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #fff; }
+    .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .db-sidebar-overlay.open { display: block; }
+    .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .db-header { background: #fff; border-bottom: 1px solid #e8eaf0; padding: 0 2rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(26,0,26,0.06); }
+    .db-header-left { display: flex; align-items: center; gap: 1rem; }
+    .db-menu-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #1E202F; padding: 0.3rem; }
+    .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
+    .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
+    .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+    .db-content { padding: 2rem; flex: 1; max-width: 780px; }
+
+    /* ── Notification styles ── */
+    .notif-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .notif-tabs { display: flex; gap: 0.4rem; }
+    .notif-tab { padding: 0.4rem 1rem; border: 1.5px solid #e8eaf0; border-radius: 20px; background: #f8f9fc; font-size: 0.78rem; font-weight: 600; color: #6b7280; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .notif-tab.active { background: rgba(43, 45, 66,0.12); border-color: #2B2D42; color: #1E202F; }
+    .notif-tab:hover { border-color: #2B2D42; }
+    .notif-actions { display: flex; gap: 0.5rem; }
+
+    .notif-group { margin-bottom: 1.5rem; }
+    .notif-group-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 0.75rem; }
+    .notif-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .notif-item { background: #fff; border: 1px solid #e8eaf0; border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; position: relative; }
+    .notif-item:hover { box-shadow: 0 4px 14px rgba(26,0,26,0.08); border-color: rgba(43, 45, 66,0.2); }
+    .notif-item.unread { border-left: 3px solid #2B2D42; background: rgba(43, 45, 66,0.03); }
+    .notif-item.unread .notif-title { color: #1E202F; }
+    .notif-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .icon-message { background: rgba(74,144,226,0.12); }
+    .icon-session { background: rgba(43, 45, 66,0.15); }
+    .icon-goal { background: rgba(35,138,83,0.12); }
+    .icon-mentor { background: rgba(26,0,26,0.08); }
+    .icon-announcement { background: rgba(156,39,176,0.1); }
+    .icon-opportunity { background: rgba(239,68,68,0.08); }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 0.875rem; font-weight: 600; color: #1E202F; margin: 0 0 0.2rem; }
+    .notif-item:not(.unread) .notif-title { color: #6b7280; font-weight: 500; }
+    .notif-desc { font-size: 0.78rem; color: #6b7280; line-height: 1.55; margin: 0 0 0.35rem; }
+    .notif-time { font-size: 0.68rem; color: #9ca3af; }
+    .notif-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #2B2D42; flex-shrink: 0; margin-top: 0.3rem; }
+    .notif-item:not(.unread) .notif-unread-dot { visibility: hidden; }
+
+    .notif-empty { text-align: center; padding: 4rem 1rem; background: #fff; border-radius: 16px; border: 1px solid #e8eaf0; }
+    .notif-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .notif-empty h3 { font-size: 1rem; font-weight: 700; color: #1E202F; margin: 0 0 0.35rem; }
+    .notif-empty p { font-size: 0.82rem; color: #6b7280; margin: 0; }
+
+    .notif-skel { height: 72px; border-radius: 14px; background: linear-gradient(90deg,#f0f2f7 25%,#e8eaf0 50%,#f0f2f7 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; margin-bottom: 0.5rem; }
+    @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+
+    @media (max-width:900px) { .db-sidebar{transform:translateX(-100%);} .db-sidebar.open{transform:translateX(0);} .db-main{margin-left:0;} .db-menu-btn{display:flex;} }
+    @media (max-width:640px) { .db-content{padding:1rem;} }
+  </style>
+</head>
+<body data-page="notifications">
+
+<div class="db-sidebar-overlay" id="sidebarOverlay"></div>
+<div class="db-shell">
+
+  <aside class="db-sidebar" id="dbSidebar">
+    <a class="db-sidebar-brand" href="../index.html"><img src="../assets/logo-new.jpg" alt="MentorBridge" /><span>mentor<span class="brand-accent">bridge</span></span></a>
+    <nav class="db-nav" id="sidebarNav"></nav>
+    <div class="db-sidebar-footer">
+      <div class="db-user-row">
+        <div class="db-user-avatar-initials" id="sidebarInitials">AB</div>
+        <div class="db-user-info"><strong id="sidebarName">Loading…</strong><span id="sidebarRole">Mentee</span></div>
+      </div>
+      <button class="db-logout-btn" id="logoutBtn" type="button"><span>🚪</span> Log out</button>
+    </div>
+  </aside>
+
+  <div class="db-main">
+    <header class="db-header">
+      <div class="db-header-left">
+        <button class="db-menu-btn" id="menuBtn" type="button">☰</button>
+        <div class="db-welcome"><h1>Notifications</h1><p>Stay up to date with your MentorBridge activity.</p></div>
+      </div>
+      <div class="db-header-right">
+        <div class="db-header-avatar" id="headerAvatar">AB</div>
+      </div>
+    </header>
+
+    <main class="db-content">
+
+      <div class="notif-toolbar">
+        <div class="notif-tabs">
+          <button class="notif-tab active" data-ntab="all" type="button">All</button>
+          <button class="notif-tab" data-ntab="unread" type="button">Unread <span id="unreadCount" style="font-size:.65rem;background:rgba(43, 45, 66,.15);color:#1E202F;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;">0</span></button>
+        </div>
+        <div class="notif-actions">
+          <button class="btn btn-ghost btn-sm" id="markAllRead" type="button">Mark all as read</button>
+        </div>
+      </div>
+
+      <div id="notificationsList">
+        <div class="notif-skel"></div>
+        <div class="notif-skel" style="height:60px;"></div>
+        <div class="notif-skel" style="height:60px;"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script src="../js/app.js"></script>
+<script>
+/* ── Enhanced Notification Management with Firebase ── */
+var NOTIFS = []; // Will be populated by Firebase
+var activeTab = 'all';
+var notificationsService = null;
+
+var $ = function(id){ return document.getElementById(id); };
+
+function fmtTs(ts){
+  var now=Date.now(), diff=now-ts, today=new Date(), yest=new Date(today); yest.setDate(today.getDate()-1);
+  var d=new Date(ts);
+  if(diff<60000) return 'Just now';
+  if(diff<3600000) return Math.floor(diff/60000)+' min ago';
+  if(d.toDateString()===today.toDateString()) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(d.toDateString()===yest.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+function groupLabel(ts){
+  var today=new Date(), yest=new Date(today), d=new Date(ts);
+  yest.setDate(today.getDate()-1);
+  if(d.toDateString()===today.toDateString()) return 'Today';
+  if(d.toDateString()===yest.toDateString()) return 'Yesterday';
+  return 'Earlier';
+}
+
+function getFiltered(){
+  return NOTIFS.filter(function(n){ return activeTab==='all'||!n.read; });
+}
+
+function renderNotifs(){
+  var list=$('notificationsList');
+  var notifs=getFiltered();
+  var unread=NOTIFS.filter(function(n){return !n.read;}).length;
+  $('unreadCount').textContent=unread;
+
+  if(!notifs.length){
+    var emptyMsg = activeTab === 'unread' && NOTIFS.length > 0 
+      ? 'All caught up! 🎉<h3>No unread notifications</h3><p>All your notifications have been read.</p>'
+      : '🎉<h3>You\'re all caught up!</h3><p>New notifications will appear here when there is activity on your account.</p>';
+    
+    list.innerHTML='<div class="notif-empty"><div class="notif-empty-icon">' + emptyMsg + '</div></div>';
+    return;
+  }
+
+  // Group by date
+  var groups={}, order=[];
+  notifs.forEach(function(n){
+    var g=groupLabel(n.ts);
+    if(!groups[g]){ groups[g]=[]; order.push(g); }
+    groups[g].push(n);
+  });
+
+  var html='';
+  order.forEach(function(g){
+    html+='<div class="notif-group"><div class="notif-group-label">'+g+'</div><div class="notif-list">';
+    groups[g].forEach(function(n){
+      html+='<div class="notif-item'+(n.read?'':' unread')+'" data-notif-id="'+n.id+'" data-href="'+n.href+'">'
+        +'<div class="notif-icon '+n.iconCls+'">'+n.icon+'</div>'
+        +'<div class="notif-body">'
+        +'<p class="notif-title">'+n.title+'</p>'
+        +'<p class="notif-desc">'+n.desc+'</p>'
+        +'<span class="notif-time">'+fmtTs(n.ts)+'</span>'
+        +'</div>'
+        +'<div class="notif-unread-dot"></div>'
+        +'</div>';
+    });
+    html+='</div></div>';
+  });
+  list.innerHTML=html;
+
+  // Bind clicks
+  list.querySelectorAll('.notif-item').forEach(function(el){
+    el.addEventListener('click', async function(){
+      var id=el.dataset.notifId, href=el.dataset.href;
+      var n=NOTIFS.find(function(x){return x.id===id;});
+      
+      if(n && !n.read) {
+        // Mark as read in Firebase
+        if(notificationsService) {
+          try {
+            await notificationsService.markAsRead(id);
+            n.read = true;
+            renderNotifs(); // Re-render to update UI
+          } catch(error) {
+            console.error('Failed to mark notification as read:', error);
+          }
+        }
+      }
+      
+      if(href) window.location.href=href;
+    });
+  });
+}
+
+async function initializeNotifications() {
+  try {
+    // Initialize Firebase services
+    await initializeFirebaseConfig();
+    
+    // Initialize notifications service
+    notificationsService = window.mentorBridgeNotifications;
+    await notificationsService.initialize();
+
+    // Set up real-time listener
+    notificationsService.setEventCallbacks({
+      onNotificationReceived: function(notifications) {
+        NOTIFS = notificationsService.convertToLegacyFormat ? 
+                 notificationsService.convertToLegacyFormat(notifications) : 
+                 convertFirebaseNotifications(notifications);
+        renderNotifs();
+      },
+      onUnreadCountChange: function(count) {
+        $('unreadCount').textContent = count;
+      }
+    });
+
+    // Load initial notifications
+    try {
+      const result = await notificationsService.getNotifications(50);
+      const notifications = result.notifications || result;
+      NOTIFS = convertFirebaseNotifications(notifications);
+      renderNotifs();
+    } catch(error) {
+      console.warn('Could not load notifications, using fallback data:', error);
+      loadFallbackNotifications();
+    }
+
+  } catch(error) {
+    console.error('Failed to initialize Firebase notifications:', error);
+    loadFallbackNotifications();
+  }
+}
+
+function convertFirebaseNotifications(firebaseNotifications) {
+  return firebaseNotifications.map(function(notification) {
+    return {
+      id: notification.id,
+      type: notification.type || 'info',
+      icon: getNotificationIcon(notification.type),
+      iconCls: getNotificationIconClass(notification.type),
+      title: notification.title,
+      desc: notification.message,
+      ts: notification.createdAt ? notification.createdAt.getTime() : Date.now(),
+      read: notification.read || false,
+      href: getNotificationHref(notification)
+    };
+  });
+}
+
+function getNotificationIcon(type) {
+  const iconMap = {
+    message: '💬',
+    session: '📅', 
+    goal: '🎯',
+    mentor: '👤',
+    announcement: '📢',
+    opportunity: '💼',
+    success: '🎉',
+    warning: '⚠️',
+    error: '❌'
+  };
+  return iconMap[type] || '📋';
+}
+
+function getNotificationIconClass(type) {
+  const classMap = {
+    message: 'icon-message',
+    session: 'icon-session',
+    goal: 'icon-goal', 
+    mentor: 'icon-mentor',
+    announcement: 'icon-announcement',
+    opportunity: 'icon-opportunity'
+  };
+  return classMap[type] || 'icon-mentor';
+}
+
+function getNotificationHref(notification) {
+  if (notification.data) {
+    if (notification.data.sessionId) return 'sessions.html';
+    if (notification.data.conversationId) return 'messages.html';
+    if (notification.data.goalId) return 'goals.html';
+  }
+  return '#';
+}
+
+function loadFallbackNotifications() {
+  // Fallback to demo data if Firebase fails
+  NOTIFS = [
+    { id:'n1', type:'message', icon:'💬', iconCls:'icon-message', title:'New message from Grace Akoto', desc:'Let\'s review your CV during our next session. Have it ready!', ts: Date.now()-7200000, read:false, href:'messages.html?conv=c1' },
+    { id:'n2', type:'session', icon:'📅', iconCls:'icon-session', title:'Upcoming session tomorrow', desc:'Your mentorship session with Grace Akoto is tomorrow at 2:00 PM.', ts: Date.now()-3600000, read:false, href:'sessions.html' },
+    { id:'n3', type:'goal', icon:'🎯', iconCls:'icon-goal', title:'Mentor feedback on your goal', desc:'Grace Akoto provided feedback on your "Improve My CV" goal.', ts: Date.now()-86400000, read:false, href:'goals.html' }
+  ];
+  renderNotifs();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var session={};
+  try{session=JSON.parse(sessionStorage.getItem('mb_session')||'{}');}catch(e){}
+  var role=session.role||'student';
+  var name=session.name||(role==='mentor'?'Grace Akoto':'Amina Boateng');
+  var inits=name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  if(!session.role){window.location.replace('auth.html');return;}
+  $('sidebarInitials').textContent=inits; $('sidebarName').textContent=name;
+  $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
+  $('headerAvatar').textContent=inits;
+
+  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var links=[
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
+    {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities'},
+    {href:'messages.html',icon:'💬',label:'Messages'},{href:'resource-centre.html',icon:'📚',label:'Resources'},
+    {href:'notifications.html',icon:'🔔',label:'Notifications',active:true},{href:'settings.html',icon:'⚙️',label:'Settings'}
+  ];
+  $('sidebarNav').innerHTML=links.map(function(l){
+    return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';
+  }).join('');
+
+  var menuBtn=$('menuBtn'),sidebar=$('dbSidebar'),overlay=$('sidebarOverlay');
+  if(menuBtn) menuBtn.addEventListener('click',function(){sidebar.classList.toggle('open');overlay.classList.toggle('open');});
+  if(overlay) overlay.addEventListener('click',function(){sidebar.classList.remove('open');overlay.classList.remove('open');});
+  (function(){
+    var lBtn = document.getElementById('logoutBtn');
+    var lModal = document.getElementById('logoutConfirmModal');
+    var lConfirm = document.getElementById('logoutConfirmBtn');
+    var lCancel = document.getElementById('logoutCancelBtn');
+    if(lBtn && lModal){
+      lBtn.addEventListener('click', function(){ lModal.style.display='flex'; document.body.style.overflow='hidden'; });
+      if(lCancel) lCancel.addEventListener('click', function(){ lModal.style.display='none'; document.body.style.overflow=''; });
+      if(lConfirm) lConfirm.addEventListener('click', function(){ sessionStorage.removeItem('mb_session'); window.location.href='auth.html'; });
+      lModal.addEventListener('click', function(e){ if(e.target===lModal){ lModal.style.display='none'; document.body.style.overflow=''; } });
+    }
+  })();
+
+  // Tabs
+  document.querySelectorAll('.notif-tab').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      activeTab=btn.dataset.ntab;
+      document.querySelectorAll('.notif-tab').forEach(function(b){b.classList.toggle('active',b.dataset.ntab===activeTab);});
+      renderNotifs();
+    });
+  });
+
+  // Mark all read
+  $('markAllRead').addEventListener('click', async function(){
+    if(notificationsService) {
+      try {
+        await notificationsService.markAllAsRead();
+        // NOTIFS will be updated via real-time listener
+      } catch(error) {
+        console.error('Failed to mark all notifications as read:', error);
+        // Fallback to local update
+        NOTIFS.forEach(function(n){n.read=true;});
+        renderNotifs();
+      }
+    } else {
+      // Fallback for demo mode
+      NOTIFS.forEach(function(n){n.read=true;});
+      renderNotifs();
+    }
+  });
+
+  // Initialize notifications system
+  setTimeout(initializeNotifications, 400);
+
+  // Merge any mentor approval/decline notifications from localStorage (legacy support)
+  if (session.email) {
+    try {
+      var mentorNotifs = JSON.parse(localStorage.getItem('mb_notifications_' + session.email) || '[]');
+      mentorNotifs.forEach(function(mn) {
+        if (!NOTIFS.find(function(n){ return n.id === mn.id; })) {
+          NOTIFS.unshift({
+            id: mn.id,
+            type: mn.type,
+            icon: mn.type === 'mentor_approved' ? '🎉' : '📋',
+            iconCls: 'icon-mentor',
+            title: mn.title,
+            desc: mn.message,
+            ts: mn.ts || Date.now(),
+            read: mn.read || false,
+            href: mn.type === 'mentor_approved' ? 'auth.html?mode=signin' : '../index.html'
+          });
+        }
+      });
+    } catch(e) {}
+  }
+});
+</script>
+
+<!-- LOGOUT CONFIRMATION MODAL -->
+<div id="logoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(30,0,27,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1.5rem;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+  <div style="background:#fff;border-radius:20px;padding:2rem 2.25rem;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(43, 45, 66,0.2);text-align:center;animation:scaleIn .2s ease;">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">🚪</div>
+    <h3 id="logoutModalTitle" style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;color:#2B2D42;margin:0 0 .5rem;">Sign out of MentorBridge?</h3>
+    <p style="font-size:.875rem;color:#6B6570;margin:0 0 1.75rem;line-height:1.6;">You will be returned to the login page. Your data will be saved.</p>
+    <div style="display:flex;gap:.75rem;">
+      <button id="logoutCancelBtn" type="button" style="flex:1;padding:.8rem;border:2px solid #D5D8DC;border-radius:12px;background:#fff;color:#6B6570;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">No, stay</button>
+      <button id="logoutConfirmBtn" type="button" style="flex:1;padding:.8rem;border:none;border-radius:12px;background:#2B2D42;color:#fff;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;">Yes, sign out</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
