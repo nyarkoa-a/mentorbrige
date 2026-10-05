@@ -6,7 +6,14 @@
 <title>MentorBridge — Mentee Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/firebase-service.js"></script>
+<script src="../js/firebase-auth.js"></script>
+
 <style>
   :root{
     --navy:#0B1F3A;
@@ -136,6 +143,8 @@
 
   /* mentor card */
   .mentor-head{ display:flex; gap:14px; margin-bottom:14px; }
+  .empty-state{ padding:20px 8px; text-align:center; }
+  .empty-state-title{ font-size:13.5px; color:#6B7280; line-height:1.5; }
   .mentor-photo{ width:56px; height:56px; border-radius:50%; background:var(--blue-light); color:var(--blue-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; flex-shrink:0; }
   .mentor-name{ font-family:'Poppins',sans-serif; font-size:15.5px; font-weight:700; color:var(--navy); }
   .mentor-role{ font-size:12.5px; color:var(--muted); margin-top:2px; }
@@ -255,15 +264,15 @@
 
     <div class="section-label">Mentee</div>
     <nav class="nav">
-      <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>Dashboard</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg>My Mentor</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>My Sessions</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>My Goals</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>My Tasks</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg>Resources</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8"/></svg>Messages<span class="badge">3</span></a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a5 5 0 100-10 5 5 0 000 10z" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>My Certificate</a>
-      <a class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5"/></svg>Settings</a>
+      <a class="nav-item active" href="./student-dashboard.html"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>Dashboard</a>
+      <a class="nav-item" href="./mentor-profile.html"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg>My Mentor</a>
+      <a class="nav-item" href="./sessions.html"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>My Sessions</a>
+      <a class="nav-item" href="./goals.html"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>My Goals</a>
+      <a class="nav-item" href="./coming-soon.html"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>My Tasks</a>
+      <a class="nav-item" href="./resource-centre.html"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg>Resources</a>
+      <a class="nav-item" href="./messages.html"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8"/></svg>Messages<span class="badge">3</span></a>
+      <a class="nav-item" href="./coming-soon.html"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a5 5 0 100-10 5 5 0 000 10z" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>My Certificate</a>
+      <a class="nav-item" href="./settings.html"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5"/></svg>Settings</a>
     </nav>
 
     <div class="nav-divider"></div>
@@ -271,8 +280,8 @@
 
     <div class="sidebar-footer">
       <div class="user-chip">
-        <div class="avatar-sm">EA</div>
-        <div><div class="name">Emelia Ampofo</div><div class="email">emelia@mentorbridge.com</div></div>
+        <div class="avatar-sm" id="sidebarAvatar">EA</div>
+        <div><div class="name" id="sidebarName">Loading...</div><div class="email" id="sidebarEmail"></div></div>
       </div>
       <div class="logout" id="logoutBtn">
         <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -285,8 +294,8 @@
   <main class="main">
     <div class="topbar">
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <div class="page-sub">Welcome back, Emelia! Here's your mentorship journey at a glance.</div>
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <div class="page-sub" id="pageSub">Welcome back! Here's your mentorship journey at a glance.</div>
       </div>
       <div class="top-actions">
         <div class="search">
@@ -297,7 +306,7 @@
           <svg viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="1.8"/></svg>
           <span class="dot">3</span>
         </div>
-        <div class="avatar">EA</div>
+        <div class="avatar" id="headerAvatar">EA</div>
       </div>
     </div>
 
@@ -306,25 +315,23 @@
       <div class="card kpi">
         <div class="kpi-top">
           <div class="kpi-top-left">
-            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-            <div class="kpi-title">Program Progress</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg></div>
+            <div class="kpi-title">Sessions Booked</div>
           </div>
         </div>
-        <div class="kpi-value">60%</div>
-        <div class="progress-track"><div class="progress-fill" style="width:60%;"></div></div>
-        <div class="kpi-sub">You're making great progress!</div>
+        <div class="kpi-value" id="kpiSessionsBooked">--</div>
+        <div class="kpi-sub">Total sessions requested</div>
       </div>
 
       <div class="card kpi">
         <div class="kpi-top">
           <div class="kpi-top-left">
-            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 21V9M16 21V13" stroke="currentColor" stroke-width="1.8"/></svg></div>
-            <div class="kpi-title">Current Stage</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="kpi-title">Sessions Completed</div>
           </div>
-          <svg class="kpi-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <div class="kpi-value">Stage 3 of 5</div>
-        <div class="kpi-sub" style="margin-top:0;">Career Development</div>
+        <div class="kpi-value" id="kpiSessionsCompleted">--</div>
+        <div class="kpi-sub" id="kpiSessionsCompletedSub" style="margin-top:0;"></div>
       </div>
 
       <div class="card kpi">
@@ -333,170 +340,86 @@
             <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg></div>
             <div class="kpi-title">Next Session</div>
           </div>
-          <svg class="kpi-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <div class="kpi-value" style="font-size:18px;">Tomorrow, 2:00 PM</div>
-        <div class="kpi-sub" style="margin-top:0;">Career Development Check-in</div>
+        <div class="kpi-value" id="kpiNextSession" style="font-size:18px;">--</div>
+        <div class="kpi-sub" id="kpiNextSessionSub" style="margin-top:0;"></div>
       </div>
 
       <div class="card kpi">
         <div class="kpi-top">
           <div class="kpi-top-left">
-            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="kpi-title">Tasks Completed</div>
+            <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg></div>
+            <div class="kpi-title">Mentor Status</div>
           </div>
         </div>
-        <div class="kpi-value">12 / 18</div>
-        <div class="progress-track"><div class="progress-fill green" style="width:67%;"></div></div>
-        <div class="kpi-sub">6 remaining</div>
+        <div class="kpi-value" id="kpiMentorStatus" style="font-size:18px;">--</div>
+        <div class="kpi-sub" style="margin-top:0;">Based on your session history</div>
       </div>
     </div>
 
     <!-- MAIN GRID -->
     <div class="grid-3">
       <div class="card panel">
-        <div class="panel-head"><h3>Your Mentorship Journey</h3><a class="view-all">View details →</a></div>
-        <div class="journey">
-          <div class="journey-progress" style="width:42%;"></div>
-          <div class="j-step"><div class="j-dot done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="j-label">Stage 1</div><div class="j-sub">CV &amp; Profile</div></div>
-          <div class="j-step"><div class="j-dot done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="j-label">Stage 2</div><div class="j-sub">Personal Dev.</div></div>
-          <div class="j-step current"><div class="j-dot current">3</div><div class="j-label">Stage 3</div><div class="j-sub">Career Dev.</div></div>
-          <div class="j-step"><div class="j-dot">4</div><div class="j-label">Stage 4</div><div class="j-sub">Industry Exposure</div></div>
-          <div class="j-step"><div class="j-dot">5</div><div class="j-label">Stage 5</div><div class="j-sub">Certification</div></div>
-        </div>
-        <div class="here-tag"><span class="here-pill">You are here</span></div>
-
-        <div class="panel-head" style="margin-top:22px;"><h3>My Mentorship Progress</h3></div>
-        <canvas id="progressChart" height="150"></canvas>
-
-        <div class="panel-head" style="margin-top:22px;"><h3>Recent Activity</h3><a class="view-all">View all →</a></div>
-        <div class="activity-item">
-          <div class="act-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8"/></svg></div>
-          <div><div class="act-title">Your mentor, Dr. Sarah Mensah, accepted your session request</div><div class="act-time">2 hours ago</div></div>
-        </div>
-        <div class="activity-item">
-          <div class="act-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div><div class="act-title">You completed the CV &amp; Profile stage</div><div class="act-time">1 day ago</div></div>
-        </div>
-        <div class="activity-item">
-          <div class="act-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg></div>
-          <div><div class="act-title">New resource available: Career Development Guide</div><div class="act-time">2 days ago</div></div>
-        </div>
-        <div class="activity-item">
-          <div class="act-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8"/></svg></div>
-          <div><div class="act-title">You received a message from your mentor</div><div class="act-time">3 days ago</div></div>
+        <div class="panel-head"><h3>Recent Activity</h3></div>
+        <div id="recentActivityContent">
+          <div class="empty-state"><div class="empty-state-title">Loading...</div></div>
         </div>
       </div>
 
       <div class="card panel">
-        <div class="panel-head"><h3>My Mentor</h3><a class="view-all">View profile →</a></div>
-        <div class="mentor-head">
-          <div class="mentor-photo">SM</div>
-          <div>
-            <div class="mentor-name">Dr. Sarah Mensah</div>
-            <div class="mentor-role">Software Engineer • 8 years experience</div>
-            <div class="mentor-meta">
-              <span class="rating">★ 4.9</span>
-              <span class="verified-badge"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified Mentor</span>
+        <div class="panel-head"><h3>My Mentor</h3><a class="view-all" href="./mentor-profile.html">View profile →</a></div>
+        <div id="mentorCardContent">
+          <div class="mentor-head">
+            <div class="mentor-photo">--</div>
+            <div>
+              <div class="mentor-name">Loading...</div>
             </div>
           </div>
         </div>
-        <div class="next-session-row">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>
-          <div><div class="t">Next session</div><div class="d">Thursday, September 10 • 2:00 PM – 3:00 PM</div></div>
-        </div>
-        <div class="mentor-actions">
-          <button class="btn-primary"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#fff" stroke-width="1.8"/></svg>Message Mentor</button>
-          <button class="btn-outline">View Profile</button>
-        </div>
-
-        <div class="panel-head" style="margin-top:22px;"><h3>My Tasks</h3><a class="view-all">View all</a></div>
-        <div class="task-row">
-          <div class="task-check done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="task-title done">Update your CV</div><span class="task-tag">Completed</span><span class="task-date">Sep 5</span>
-        </div>
-        <div class="task-row">
-          <div class="task-check done"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="task-title done">Complete career assessment</div><span class="task-tag">Completed</span><span class="task-date">Sep 6</span>
-        </div>
-        <div class="task-row">
-          <div class="task-check"></div>
-          <div class="task-title">Research 3 companies</div><span class="task-tag due">Due Sep 10</span>
-        </div>
-        <div class="task-row">
-          <div class="task-check"></div>
-          <div class="task-title">Prepare questions for mentor</div><span class="task-tag due">Due Sep 10</span>
-        </div>
-        <div class="task-row">
-          <div class="task-check"></div>
-          <div class="task-title">Complete LinkedIn profile</div><span class="task-tag due">Due Sep 12</span>
-        </div>
       </div>
 
       <div class="card panel">
-        <div class="panel-head"><h3>Upcoming Session</h3><a class="view-all">View all →</a></div>
-        <div class="session-item">
-          <div class="date-chip"><div class="mon">SEP</div><div class="day">10</div></div>
-          <div>
-            <div class="session-title">Career Development Check-in</div>
-            <div class="session-meta">2:00 PM – 3:00 PM</div>
-            <div class="session-meta">With Dr. Sarah Mensah</div>
+        <div class="panel-head"><h3>Upcoming Session</h3><a class="view-all" href="./sessions.html">View all →</a></div>
+        <div id="upcomingSessionContent">
+          <div class="empty-state">
+            <div class="empty-state-title">Loading...</div>
           </div>
         </div>
-        <button class="btn-join-full"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="14" height="12" rx="2" stroke="#fff" stroke-width="1.8"/><path d="M16 10l6-3v10l-6-3" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>Join Session</button>
 
         <div class="panel-head" style="margin-top:22px;"><h3>Pathfinder Certificate</h3></div>
-        <div class="cert-row">
-          <div class="cert-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a5 5 0 100-10 5 5 0 000 10z" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
-          <div style="flex:1;">
-            <div class="cert-pct">60% complete</div>
-            <div class="progress-track" style="margin-top:8px;"><div class="progress-fill" style="width:60%;"></div></div>
-          </div>
-        </div>
-        <div class="cert-desc" style="margin-top:12px;">Complete all 5 stages to unlock your digitally verified Pathfinder Certificate.</div>
-        <button class="btn-req">View Requirements →</button>
+        <div class="cert-desc">Track your progress and requirements toward the Pathfinder Certificate.</div>
+        <button class="btn-req" onclick="window.location.href='./coming-soon.html'">View Requirements →</button>
 
         <div class="panel-head" style="margin-top:22px;"><h3>Quick Access</h3></div>
         <div class="qa-grid">
-          <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg>View Resources</div>
-          <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>Schedule Session</div>
-          <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Update Goals</div>
-          <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Contact Support</div>
+          <div class="qa-btn" onclick="window.location.href='./resource-centre.html'"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8"/></svg>View Resources</div>
+          <div class="qa-btn" onclick="window.location.href='./sessions.html'"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>Schedule Session</div>
+          <div class="qa-btn" onclick="window.location.href='./coming-soon.html'"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>Update Goals</div>
+          <div class="qa-btn" onclick="window.location.href='./coming-soon.html'"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Contact Support</div>
         </div>
 
-        <div class="panel-head" style="margin-top:22px;"><h3>System Overview</h3><div class="live-dot"><span class="dot"></span>Live</div></div>
-        <div class="sys-row"><span class="sys-stat">Active Mentees</span><span class="sys-value">248</span></div>
-        <div class="sys-row"><span class="sys-stat">Active Mentors</span><span class="sys-value">42</span></div>
-        <div class="sys-row"><span class="sys-stat">Total Sessions</span><span class="sys-value">1,204</span></div>
-        <div class="sys-row"><span class="sys-stat">Program Completion</span><span class="sys-value">68%</span></div>
+        <div class="panel-head" style="margin-top:22px;"><h3>Platform Overview</h3><div class="live-dot"><span class="dot"></span>Live</div></div>
+        <div class="sys-row"><span class="sys-stat">Registered Mentees</span><span class="sys-value" id="statMentees">--</span></div>
+        <div class="sys-row"><span class="sys-stat">Registered Mentors</span><span class="sys-value" id="statMentors">--</span></div>
+        <div class="sys-row"><span class="sys-stat">Total Sessions</span><span class="sys-value" id="statSessions">--</span></div>
       </div>
     </div>
 
     <!-- ACTIVITY / MESSAGES -->
     <div class="grid-2">
       <div class="card panel">
-        <div class="panel-head"><h3>Recent Messages</h3><a class="view-all">View all →</a></div>
-        <div class="msg-item">
-          <div class="msg-avatar">SM</div>
-          <div class="msg-body"><div class="msg-name">Dr. Sarah Mensah</div><div class="msg-preview">Looking forward to our session tomorrow. Please...</div></div>
-          <div class="msg-time">2h ago</div>
-        </div>
-        <div class="msg-item">
-          <div class="msg-avatar" style="background:#4C7BE8;">MS</div>
-          <div class="msg-body"><div class="msg-name">MentorBridge Support</div><div class="msg-preview">Your certificate is now available!</div></div>
-          <div class="msg-time">1d ago</div>
-        </div>
-        <div class="msg-item">
-          <div class="msg-avatar" style="background:#0D4BC2;">SM</div>
-          <div class="msg-body"><div class="msg-name">Samuel Mensah (Mentor)</div><div class="msg-preview">Here are some resources to help you prepare...</div></div>
-          <div class="msg-time">2d ago</div>
+        <div class="panel-head"><h3>Recent Messages</h3><a class="view-all" href="./messages.html">View all →</a></div>
+        <div id="recentMessagesContent">
+          <div class="empty-state">
+            <div class="empty-state-title">Loading...</div>
+          </div>
         </div>
       </div>
 
       <div class="card panel">
         <div class="panel-head"><h3>Need Help?</h3></div>
         <div class="cert-desc" style="margin:0 0 12px;">Our support team is here for anything about your mentorship journey, sessions, or certificate.</div>
-        <button class="btn-outline" style="width:100%;">Contact Help &amp; Support</button>
+        <button class="btn-outline" style="width:100%;" onclick="window.location.href='./coming-soon.html'">Contact Help &amp; Support</button>
       </div>
     </div>
   </main>
@@ -552,35 +475,229 @@
     }
   });
 
-  // Chart.js Progress Chart
-  const ctx = document.getElementById('progressChart');
-  if (ctx) {
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Stage 1\nCV & Profile','Stage 2\nPersonal Dev.','Stage 3\nCareer Dev.','Stage 4\nIndustry Exposure','Stage 5\nCertification'],
-        datasets: [{
-          data: [10, 35, 60, 78, 92],
-          borderColor: '#1B62DE',
-          backgroundColor: 'rgba(27,98,222,0.08)',
-          fill: true,
-          tension: 0.35,
-          pointRadius: [4,4,6,4,4],
-          pointBackgroundColor: ['#1B62DE','#1B62DE','#0D4BC2','#1B62DE','#1B62DE'],
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { min:0, max:100, ticks: { callback: v => v + '%', color:'#6B7280', font:{size:11} }, grid: { color:'#EEF0F5' } },
-          x: { grid: { display:false }, ticks: { color:'#6B7280', font:{size:10.5}, maxRotation:0, autoSkip:false } }
-        }
-      }
-    });
+  // ============================================
+  // REAL DATA LOADING (Firebase)
+  // ============================================
+  let db = null;
+  let currentSession = null;
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
   }
+
+  function initials(name) {
+    if (!name) return '--';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function formatSessionDate(date) {
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' • ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  async function initDashboard() {
+    try {
+      currentSession = JSON.parse(sessionStorage.getItem('mb_session') || '{}');
+      if (!currentSession.uid) {
+        window.location.href = './auth.html';
+        return;
+      }
+
+      // Fill identity immediately from the local session (no need to wait on network)
+      const name = currentSession.name || 'Student';
+      document.getElementById('sidebarName').textContent = name;
+      document.getElementById('sidebarEmail').textContent = currentSession.email || '';
+      document.getElementById('sidebarAvatar').textContent = initials(name);
+      document.getElementById('headerAvatar').textContent = initials(name);
+      document.getElementById('pageSub').textContent = `Welcome back, ${name.split(' ')[0]}! Here's your mentorship journey at a glance.`;
+
+      if (typeof firebase === 'undefined') throw new Error('Firebase SDK not loaded');
+      await initializeFirebaseConfig();
+      db = getFirestore();
+
+      await Promise.all([
+        loadMentorAndSessions(),
+        loadPlatformStats(),
+        loadRecentMessages()
+      ]);
+
+    } catch (error) {
+      console.error('❌ Failed to load dashboard data:', error);
+      const mentorEl = document.getElementById('mentorCardContent');
+      if (mentorEl) mentorEl.innerHTML = '<div class="empty-state"><div class="empty-state-title">Could not load data. Check your connection and refresh.</div></div>';
+    }
+  }
+
+  async function loadMentorAndSessions() {
+    const mentorCardEl = document.getElementById('mentorCardContent');
+    const upcomingEl = document.getElementById('upcomingSessionContent');
+
+    const snapshot = await db.collection('sessions')
+      .where('studentId', '==', currentSession.uid)
+      .orderBy('requestedAt', 'desc')
+      .get();
+
+    if (snapshot.empty) {
+      mentorCardEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">You haven't been matched with a mentor yet.</div>
+          <button class="btn-primary" style="margin-top:12px;" onclick="window.location.href='./mentor-directory.html'">Find a Mentor</button>
+        </div>`;
+      upcomingEl.innerHTML = '<div class="empty-state"><div class="empty-state-title">No upcoming sessions.</div></div>';
+      document.getElementById('kpiSessionsBooked').textContent = '0';
+      document.getElementById('kpiSessionsCompleted').textContent = '0';
+      document.getElementById('kpiSessionsCompletedSub').textContent = 'No sessions yet';
+      document.getElementById('kpiNextSession').textContent = 'None';
+      document.getElementById('kpiNextSessionSub').textContent = 'No session scheduled';
+      document.getElementById('kpiMentorStatus').textContent = 'Not matched';
+      document.getElementById('recentActivityContent').innerHTML =
+        '<div class="empty-state"><div class="empty-state-title">No activity yet. Book a session to get started.</div></div>';
+      return;
+    }
+
+    const sessions = snapshot.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        ...d,
+        requestedAt: d.requestedAt?.toDate() || null,
+        scheduledAt: d.scheduledAt?.toDate() || null
+      };
+    });
+
+    // Most recent session tells us the current/most relevant mentor
+    const latest = sessions[0];
+    mentorCardEl.innerHTML = `
+      <div class="mentor-head">
+        <div class="mentor-photo">${initials(latest.mentorName)}</div>
+        <div>
+          <div class="mentor-name">${escapeHtml(latest.mentorName || 'Mentor')}</div>
+          <div class="mentor-role">${escapeHtml(latest.topic || '')}</div>
+        </div>
+      </div>
+      <div class="mentor-actions">
+        <button class="btn-primary" onclick="window.location.href='./messages.html?to=${encodeURIComponent(latest.mentorId)}'"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#fff" stroke-width="1.8"/></svg>Message Mentor</button>
+        <button class="btn-outline" onclick="window.location.href='./mentor-profile.html?id=${encodeURIComponent(latest.mentorId)}'">View Profile</button>
+      </div>`;
+
+    // Nearest upcoming, accepted, future session
+    const now = new Date();
+    const upcoming = sessions
+      .filter(s => s.status === 'accepted' && s.scheduledAt && s.scheduledAt > now)
+      .sort((a, b) => a.scheduledAt - b.scheduledAt)[0];
+
+    if (upcoming) {
+      upcomingEl.innerHTML = `
+        <div class="session-item">
+          <div class="date-chip"><div class="mon">${upcoming.scheduledAt.toLocaleDateString('en-US',{month:'short'}).toUpperCase()}</div><div class="day">${upcoming.scheduledAt.getDate()}</div></div>
+          <div>
+            <div class="session-title">${escapeHtml(upcoming.topic || 'Mentorship Session')}</div>
+            <div class="session-meta">${formatSessionDate(upcoming.scheduledAt)}</div>
+            <div class="session-meta">With ${escapeHtml(upcoming.mentorName || 'your mentor')}</div>
+          </div>
+        </div>
+        <button class="btn-join-full" onclick="window.location.href='./sessions.html'"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="14" height="12" rx="2" stroke="#fff" stroke-width="1.8"/><path d="M16 10l6-3v10l-6-3" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>Join Session</button>`;
+    } else {
+      const pending = sessions.find(s => s.status === 'pending');
+      upcomingEl.innerHTML = pending
+        ? '<div class="empty-state"><div class="empty-state-title">Session request pending mentor approval.</div></div>'
+        : '<div class="empty-state"><div class="empty-state-title">No upcoming sessions.</div></div>';
+    }
+
+    // KPI cards — all computed from real session data
+    const completed = sessions.filter(s => s.status === 'completed');
+    document.getElementById('kpiSessionsBooked').textContent = sessions.length;
+    document.getElementById('kpiSessionsCompleted').textContent = completed.length;
+    document.getElementById('kpiSessionsCompletedSub').textContent = `${sessions.length - completed.length} remaining`;
+
+    if (upcoming) {
+      document.getElementById('kpiNextSession').textContent = formatSessionDate(upcoming.scheduledAt);
+      document.getElementById('kpiNextSessionSub').textContent = escapeHtml(upcoming.topic || '');
+    } else {
+      document.getElementById('kpiNextSession').textContent = 'None scheduled';
+      document.getElementById('kpiNextSessionSub').textContent = '';
+    }
+    document.getElementById('kpiMentorStatus').textContent = 'Matched';
+
+    // Recent Activity — built from real session status history (most recent 4)
+    const activityIcons = {
+      pending: '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.8"/>',
+      accepted: '<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+      completed: '<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+      declined: '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.8"/>',
+      cancelled: '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.8"/>'
+    };
+    const activityText = {
+      pending: `Session request sent to ${escapeHtml(latest.mentorName || 'mentor')}`,
+      accepted: `${escapeHtml(latest.mentorName || 'Your mentor')} accepted your session request`,
+      completed: `Session with ${escapeHtml(latest.mentorName || 'your mentor')} completed`,
+      declined: `Session request was declined`,
+      cancelled: `Session was cancelled`
+    };
+
+    document.getElementById('recentActivityContent').innerHTML = sessions.slice(0, 4).map(s => {
+      const icon = activityIcons[s.status] || activityIcons.pending;
+      const text = activityText[s.status] || `Session with ${escapeHtml(s.mentorName || 'mentor')} — ${escapeHtml(s.status)}`;
+      const when = s.requestedAt ? s.requestedAt.toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
+      return `
+        <div class="activity-item">
+          <div class="act-icon"><svg viewBox="0 0 24 24" fill="none">${icon}</svg></div>
+          <div><div class="act-title">${text}</div><div class="act-time">${when}</div></div>
+        </div>`;
+    }).join('');
+  }
+
+  async function loadPlatformStats() {
+    try {
+      const [menteesSnap, mentorsSnap, sessionsSnap] = await Promise.all([
+        db.collection('users').where('role', '==', 'student').get(),
+        db.collection('users').where('role', '==', 'mentor').get(),
+        db.collection('sessions').get()
+      ]);
+      document.getElementById('statMentees').textContent = menteesSnap.size;
+      document.getElementById('statMentors').textContent = mentorsSnap.size;
+      document.getElementById('statSessions').textContent = sessionsSnap.size;
+    } catch (error) {
+      console.error('Failed to load platform stats:', error);
+      ['statMentees','statMentors','statSessions'].forEach(id => {
+        document.getElementById(id).textContent = 'N/A';
+      });
+    }
+  }
+
+  async function loadRecentMessages() {
+    const el = document.getElementById('recentMessagesContent');
+    try {
+      const snapshot = await db.collection('conversations')
+        .where('participants', 'array-contains', currentSession.uid)
+        .orderBy('lastMessageAt', 'desc')
+        .limit(3)
+        .get();
+
+      if (snapshot.empty) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-state-title">No messages yet.</div></div>';
+        return;
+      }
+
+      el.innerHTML = snapshot.docs.map(doc => {
+        const c = doc.data();
+        const otherName = (c.participantNames || []).find(n => n !== currentSession.name) || 'Conversation';
+        return `
+          <div class="msg-item" style="cursor:pointer;" onclick="window.location.href='./messages.html'">
+            <div class="msg-avatar">${initials(otherName)}</div>
+            <div class="msg-body"><div class="msg-name">${escapeHtml(otherName)}</div><div class="msg-preview">${escapeHtml(c.lastMessage || '')}</div></div>
+          </div>`;
+      }).join('');
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-title">Open Messages to view your conversations.</div></div>';
+    }
+  }
+
+  initDashboard();
 </script>
 
 </body>

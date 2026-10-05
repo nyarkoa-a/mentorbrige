@@ -1192,6 +1192,7 @@
 
 <script src="../js/firebase-config.js"></script>
 <script src="../js/firebase-auth.js"></script>
+<script src="../js/firebase-sessions.js"></script>
 <script src="../js/theme.js"></script>
 <script src="../js/matching.js"></script>
 <script>
@@ -1726,9 +1727,43 @@ function renderProfile(m) {
   return heroHtml + bodyHtml;
 }
 
-function loadProfile() {
+// Loads a real mentor's profile from Firestore (users/{id}, role must be 'mentor').
+// Maps the real, limited field set onto the shape this page's rendering code expects,
+// with honest blanks for fields that have no real data model (rating, hourly rate).
+async function getRealMentorData(id) {
+  try {
+    await initializeFirebaseConfig();
+    var db = getFirestore();
+    var doc = await db.collection('users').doc(id).get();
+    if (!doc.exists) return null;
+    var d = doc.data();
+    if (d.role !== 'mentor') return null;
+    return {
+      id: doc.id,
+      name: d.name || 'Mentor',
+      photo: d.photo || null,
+      company: d.company || d.title || '',
+      position: d.title || 'Mentor',
+      biography: d.bio || '',
+      yearsExperience: typeof d.experience === 'number' ? d.experience : 0,
+      skills: Array.isArray(d.expertise) ? d.expertise : [],
+      industries: d.industry ? [d.industry] : [],
+      availability: d.availability || 'Contact for availability',
+      rating: null,
+      careerField: d.industry || d.title || '',
+      quote: d.quote || '',
+      socialLinks: d.socialLinks || (d.linkedinUrl ? { linkedin: d.linkedinUrl } : {}),
+      hourlyRate: d.hourlyRate || ''
+    };
+  } catch (error) {
+    console.error('Failed to load real mentor profile:', error);
+    return null;
+  }
+}
+
+async function loadProfile() {
   var params = new URLSearchParams(window.location.search);
-  var id = params.get('id') || 'm5';
+  var id = params.get('id');
   var loading = document.getElementById('profileLoading');
   var error = document.getElementById('profileError');
   var content = document.getElementById('profileContent');
@@ -1736,12 +1771,17 @@ function loadProfile() {
   // Check user session
   var session = {};
   try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
-  if (session.role === 'mentor' || session.id === id || session.name === 'Grace Akoto') {
+  if (session.role === 'mentor' && session.uid === id) {
     isOwnerOrMentor = true;
   }
 
-  // Load mentor data with local custom overrides
-  var mentor = getMentorData(id);
+  if (!id) {
+    loading.classList.add('hidden');
+    error.classList.remove('hidden');
+    return;
+  }
+
+  var mentor = await getRealMentorData(id);
   if (mentor) {
     showProfile(mentor);
   } else {
@@ -1800,10 +1840,18 @@ function bindActions(m) {
   if (sendBtn) {
     var newBtn = sendBtn.cloneNode(true);
     sendBtn.parentNode.replaceChild(newBtn, sendBtn);
-    newBtn.addEventListener('click', function(){
+    newBtn.addEventListener('click', async function(){
       newBtn.textContent = 'Sending Request…'; newBtn.disabled = true;
-      connectionState = 'pending';
-      setTimeout(function(){
+      try {
+        if (!window.mentorBridgeSessions) throw new Error('Sessions service not loaded');
+        await window.mentorBridgeSessions.initialize();
+        await window.mentorBridgeSessions.requestSession({
+          mentorId: m.id,
+          topic: 'Introduction',
+          description: 'Connection request sent from ' + m.name + '\u2019s profile page.'
+        });
+
+        connectionState = 'pending';
         document.getElementById('connectModal').classList.add('hidden');
         document.body.style.overflow = '';
         newBtn.textContent = 'Send Connection Request'; newBtn.disabled = false;
@@ -1811,10 +1859,16 @@ function bindActions(m) {
         var stDesc = document.getElementById('successDesc');
         if (stDesc) stDesc.textContent = 'Your mentorship request has been submitted to ' + m.name + '. You will receive an alert once they accept.';
         if (st) { st.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-        
+
         var content = document.getElementById('profileContent');
         if (content) { content.innerHTML = renderProfile(m); bindActions(m); }
-      }, 750);
+      } catch (error) {
+        console.error('Failed to send connection request:', error);
+        newBtn.textContent = 'Send Connection Request'; newBtn.disabled = false;
+        var fb = document.getElementById('connectFeedback');
+        if (fb) { fb.textContent = 'Could not send your request. Please check your connection and try again.'; fb.style.color = '#DC2626'; }
+        else alert('Could not send your request. Please try again.');
+      }
     });
   }
 }
@@ -1938,7 +1992,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if (session.role) {
     var navActions = document.getElementById('navActions');
     if (navActions) {
-      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? '../admin/dashboard.html' : 'student-dashboard.html');
       navActions.innerHTML = '<a class="btn btn-outline" href="mentor-directory.html">← Directory</a>'
         + '<a class="btn btn-primary" href="'+dashUrl+'">Dashboard</a>';
     }
@@ -2022,33 +2076,51 @@ document.addEventListener('DOMContentLoaded', function(){
         }
       });
 
-      // Save locally to localStorage
-      try {
-        var storedProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
-        storedProfiles[currentMentor.id] = updatedMentor;
-        localStorage.setItem('mb_mentor_profiles', JSON.stringify(storedProfiles));
-        
-        // Also update session if this is the active user
-        if (session.name === currentMentor.name || session.role === 'mentor') {
-          session.photo = updatedPhoto;
-          session.bio = updatedBio;
-          session.hourlyRate = updatedRate;
-          session.socialLinks = updatedMentor.socialLinks;
-          sessionStorage.setItem('mb_session', JSON.stringify(session));
-        }
-      } catch(e){}
-
       saveBtn.textContent = 'Saving…';
       saveBtn.disabled = true;
 
-      setTimeout(function(){
-        saveBtn.textContent = 'Save Profile Updates';
-        saveBtn.disabled = false;
-        document.getElementById('editProfileModal').classList.add('hidden');
-        document.body.style.overflow = '';
-        showProfile(updatedMentor);
-        showToast('Profile, Socials & Bio successfully updated!');
-      }, 600);
+      // Save for real to Firestore (the mentor's own users/{uid} document).
+      // Firestore itself is schemaless and security rules allow a signed-in
+      // owner to update their own document with any fields, so this persists
+      // properly even though some of these (photo, company, hourlyRate,
+      // extra socials) go beyond the narrower set the signup form collects.
+      (async function(){
+        try {
+          await initializeFirebaseConfig();
+          var db = getFirestore();
+          await db.collection('users').doc(currentMentor.id).update({
+            bio: updatedBio,
+            title: updatedPos,
+            company: updatedComp,
+            availability: updatedAvail,
+            expertise: updatedSkills.length ? updatedSkills : currentMentor.skills,
+            photo: updatedPhoto,
+            quote: updatedQuote,
+            hourlyRate: updatedRate,
+            linkedinUrl: updatedLinkedin,
+            socialLinks: { linkedin: updatedLinkedin, github: updatedGithub, twitter: updatedTwitter, website: updatedWebsite },
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Keep the session's own display name/photo in sync if editing own profile
+          if (session.uid === currentMentor.id) {
+            session.photo = updatedPhoto;
+            sessionStorage.setItem('mb_session', JSON.stringify(session));
+          }
+
+          saveBtn.textContent = 'Save Profile Updates';
+          saveBtn.disabled = false;
+          document.getElementById('editProfileModal').classList.add('hidden');
+          document.body.style.overflow = '';
+          showProfile(updatedMentor);
+          showToast('Profile, Socials & Bio successfully updated!');
+        } catch (error) {
+          console.error('Failed to save profile:', error);
+          saveBtn.textContent = 'Save Profile Updates';
+          saveBtn.disabled = false;
+          showToast('Could not save your changes. Please check your connection and try again.');
+        }
+      })();
     });
   }
 

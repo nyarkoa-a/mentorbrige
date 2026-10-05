@@ -431,10 +431,86 @@
   </div><!-- /.db-main -->
 </div><!-- /.db-shell -->
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
   <script src="../js/theme.js"></script>
   <script>
     var rcSaved = {};
     var rcActiveTab = 'all';
+    var rcDb = null;
+    var rcUid = null;
+
+    // Loads the real resources collection (added by an admin, if any exist yet)
+    // and appends each as an extra card alongside the built-in guides above.
+    // There is no pre-written modal for these, so "View" just opens the real URL.
+    async function loadDynamicResources() {
+      if (!rcDb) return;
+      try {
+        var snapshot = await rcDb.collection('resources').orderBy('createdAt', 'desc').get();
+        if (snapshot.empty) return;
+        var grid = document.getElementById('rcGrid');
+        snapshot.forEach(function(doc) {
+          var r = doc.data();
+          var id = 'fs_' + doc.id;
+          var article = document.createElement('article');
+          article.className = 'resource-card';
+          article.dataset.rcTitle = r.title || 'Resource';
+          article.dataset.rcCat = r.category || 'General';
+          article.innerHTML =
+            '<button class="rc-save-btn" data-rc-id="' + id + '" type="button" title="Save">🏷️</button>' +
+            '<span class="badge badge-accent">' + (r.category || 'General') + '</span>' +
+            '<h3>' + (r.title || 'Resource') + '</h3>' +
+            '<p>' + (r.description || '') + '</p>' +
+            '<div class="resource-meta"><span class="text-sm">' + (r.readTime || 'Added by mentor') + '</span>' +
+            (r.url ? '<a class="btn btn-outline btn-sm" href="' + r.url + '" target="_blank" rel="noopener">View →</a>' : '') +
+            '</div>';
+          grid.appendChild(article);
+          var btn = article.querySelector('.rc-save-btn');
+          if (btn) btn.addEventListener('click', function(){ toggleSave(btn); });
+        });
+      } catch (error) {
+        console.error('Failed to load dynamic resources:', error);
+      }
+    }
+
+    async function loadSavedResources() {
+      if (!rcDb || !rcUid) return;
+      try {
+        var doc = await rcDb.collection('users').doc(rcUid).get();
+        var saved = (doc.exists && Array.isArray(doc.data().savedResources)) ? doc.data().savedResources : [];
+        rcSaved = {};
+        saved.forEach(function(id){ rcSaved[id] = true; });
+        document.querySelectorAll('.rc-save-btn').forEach(function(btn){
+          var id = btn.dataset.rcId;
+          if (rcSaved[id]) { btn.textContent='🔖'; btn.classList.add('saved'); btn.title='Unsave'; }
+        });
+        applyRcFilters();
+      } catch (error) {
+        console.error('Failed to load saved resources:', error);
+      }
+    }
+
+    async function persistSavedResources() {
+      if (!rcDb || !rcUid) return;
+      try {
+        var ids = Object.keys(rcSaved).filter(function(id){ return rcSaved[id]; });
+        await rcDb.collection('users').doc(rcUid).update({ savedResources: ids });
+      } catch (error) {
+        console.error('Failed to save your bookmark — please check your connection:', error);
+      }
+    }
+
+    function toggleSave(btn) {
+      var id = btn.dataset.rcId;
+      rcSaved[id] = !rcSaved[id];
+      btn.textContent = rcSaved[id] ? '🔖' : '🏷️';
+      btn.classList.toggle('saved', !!rcSaved[id]);
+      btn.title = rcSaved[id] ? 'Unsave' : 'Save';
+      applyRcFilters();
+      persistSavedResources();
+    }
 
     function switchRcTab(tab) {
       rcActiveTab = tab;
@@ -462,19 +538,20 @@
       if (cnt) cnt.textContent = Object.keys(rcSaved).length;
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       // Auth + sidebar
       var session = {};
       try { session = JSON.parse(sessionStorage.getItem('mb_session') || '{}'); } catch(e) {}
       var role = session.role || 'student';
-      var name = session.name || (role === 'mentor' ? 'Grace Akoto' : 'Amina Boateng');
+      var name = session.name || 'User';
+      rcUid = session.uid || null;
       var inits = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
       if (!session.role) { window.location.replace('auth.html'); return; }
       document.getElementById('sidebarInitials').textContent = inits;
       document.getElementById('sidebarName').textContent = name;
       document.getElementById('sidebarRole').textContent = role === 'mentor' ? 'Mentor' : role === 'admin' ? 'Admin' : 'Mentee';
       document.getElementById('headerAvatar').textContent = inits;
-      var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+      var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? '../admin/dashboard.html' : 'student-dashboard.html';
       var links = [
         {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
         {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities'},
@@ -508,15 +585,18 @@
 
       // Save buttons
       document.querySelectorAll('.rc-save-btn').forEach(function(btn){
-        btn.addEventListener('click',function(){
-          var id=btn.dataset.rcId;
-          rcSaved[id]=!rcSaved[id];
-          btn.textContent=rcSaved[id]?'🔖':'🏷️';
-          btn.classList.toggle('saved',!!rcSaved[id]);
-          btn.title=rcSaved[id]?'Unsave':'Save';
-          applyRcFilters();
-        });
+        btn.addEventListener('click', function(){ toggleSave(btn); });
       });
+
+      // Real Firebase: load any saved bookmarks and any admin-added resources
+      try {
+        await initializeFirebaseConfig();
+        rcDb = getFirestore();
+        await loadSavedResources();
+        await loadDynamicResources();
+      } catch (error) {
+        console.error('Failed to initialize Firebase in resource-centre.html:', error);
+      }
 
       // Modal open/close (preserving original functionality)
       function openModal(id) { var m=document.getElementById(id); if(m){m.classList.remove('hidden');document.body.style.overflow='hidden';} }

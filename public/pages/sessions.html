@@ -498,41 +498,58 @@ function openModal(id) { $(id).classList.remove('hidden'); document.body.style.o
 function participantFor(sess, role) { return role === 'mentor' ? sess.studentName || sess.menteeName : sess.mentorName; }
 function participantPhoto(sess, role) { return role === 'mentor' ? sess.studentPhoto || sess.menteePhoto : sess.mentorPhoto; }
 
+// Converts a real Firestore session document (mentorId/studentId/topic/status/
+// scheduledAt/requestedAt) into the legacy shape this page's rendering code expects
+// (menteeName/mentorName/date string/time string/duration/status).
+function toLegacyDate(ts) {
+  const d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : new Date());
+  const pad = n => String(n).padStart(2, '0');
+  return {
+    date: `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  };
+}
+function legacyStatus(status) {
+  if (status === 'completed') return 'completed';
+  if (status === 'declined' || status === 'cancelled') return 'cancelled';
+  return 'upcoming'; // pending, accepted, in_progress all show in the Upcoming tab
+}
+function convertToLegacyFormat(sessions) {
+  return sessions.map(function(s) {
+    const when = toLegacyDate(s.scheduledAt || s.requestedAt);
+    return {
+      id: s.id,
+      menteeId: s.studentId, menteeName: s.studentName || 'Student', menteePhoto: '',
+      mentorId: s.mentorId, mentorName: s.mentorName || 'Mentor', mentorPhoto: '', mentorTitle: '',
+      title: s.topic || 'Mentorship Session', topic: s.topic || '',
+      date: when.date, time: when.time, duration: s.duration || 60,
+      status: legacyStatus(s.status), rawStatus: s.status,
+      description: s.description || '', notes: s.notes || ''
+    };
+  });
+}
+
 async function initializeSessions() {
   try {
-    // Initialize Firebase services
     await initializeFirebaseConfig();
-    
-    // Initialize sessions service
-    sessionsService = window.firebaseSessionsService;
+    sessionsService = window.mentorBridgeSessions;
     await sessionsService.initialize();
 
-    // Set up real-time listener
-    sessionsService.setupSessionsListener(function(sessions, role) {
-      // Convert sessions to legacy format
-      const legacySessions = sessionsService.convertToLegacyFormat(sessions);
-      SESSION_STORE = [...SESSION_STORE.filter(s => s.userRole !== role), ...legacySessions];
-      renderSessions(currentUserRole);
-    });
-
-    // Load initial sessions
-    try {
-      const sessions = await sessionsService.getSessions();
-      SESSION_STORE = sessionsService.convertToLegacyFormat(sessions);
-      renderSessions(currentUserRole);
-    } catch(error) {
-      console.warn('Could not load sessions, using fallback data:', error);
-      loadFallbackSessions();
-    }
+    const sessions = await sessionsService.getSessions();
+    SESSION_STORE = convertToLegacyFormat(sessions);
+    renderSessions(currentUserRole);
 
   } catch(error) {
-    console.error('Failed to initialize Firebase sessions:', error);
-    loadFallbackSessions();
+    console.error('Failed to load real sessions, showing empty state:', error);
+    SESSION_STORE = [];
+    renderSessions(currentUserRole);
   }
 }
 
 function loadFallbackSessions() {
-  SESSION_STORE = FALLBACK_SESSIONS;
+  // Intentionally empty on failure rather than fabricated — an empty "no sessions"
+  // state is honest; showing invented names/dates is not.
+  SESSION_STORE = [];
   renderSessions(currentUserRole);
 }
 
@@ -830,10 +847,10 @@ document.addEventListener('DOMContentLoaded', function() {
   if (role === 'mentor' && $('bookSessionPageBtn')) $('bookSessionPageBtn').style.display = 'none';
 
   // Sidebar nav
-  var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+  var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? '../admin/dashboard.html' : 'student-dashboard.html';
   var menteeLinks = [
     { href: dashUrl, icon: '🏠', label: 'Dashboard' },
-    { href: '#my-mentor', icon: '👤', label: 'My Mentor' },
+    { href: 'mentor-profile.html', icon: '👤', label: 'My Mentor' },
     { href: 'sessions.html', icon: '📅', label: 'Sessions', active: true },
     { href: 'goals.html', icon: '🎯', label: 'Goals & Progress' },
     { href: 'opportunities.html', icon: '💼', label: 'Opportunities' },
@@ -844,7 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
   ];
   var mentorLinks = [
     { href: dashUrl, icon: '🏠', label: 'Dashboard' },
-    { href: '#my-mentees', icon: '👥', label: 'My Mentees' },
+    { href: 'coming-soon.html', icon: '👥', label: 'My Mentees' },
     { href: 'sessions.html', icon: '📅', label: 'Sessions', active: true },
     { href: 'goals.html', icon: '🎯', label: 'Goals & Progress' },
     { href: 'messages.html', icon: '💬', label: 'Messages' },
@@ -886,14 +903,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Load sessions from API, fall back to local store
-  fetch('/api/sessions')
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if (data.sessions && data.sessions.length) SESSION_STORE = data.sessions;
-      renderSessions(role);
-    })
-    .catch(function(){ renderSessions(role); });
+  // Load real sessions from Firebase
+  currentUserRole = role;
+  initializeSessions();
   // Book session button
   if ($('bookSessionPageBtn')) $('bookSessionPageBtn').addEventListener('click', openBookModal);
 

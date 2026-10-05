@@ -426,24 +426,20 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
 <script src="../js/theme.js"></script>
 <script>
-/* ── Goal store ── */
-var GOALS = [
-  { id:'g1', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Improve My CV', description:'Create a professional CV suitable for internship and graduate role applications.', category:'Career', status:'in_progress', progress:75, targetDate:'2026-08-30', createdDate:'2026-06-01', completedDate:null, feedback:[{author:'Grace Akoto',role:'Mentor',date:'Aug 12',text:"You're making great progress. Focus on quantifying your experience with numbers and outcomes before our next session."}], milestones:[{text:'Review existing CV',done:true},{text:'Rewrite professional summary',done:true},{text:'Improve experience section',done:true},{text:'Mentor review',done:false},{text:'Finalise CV',done:false}] },
-  { id:'g2', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Prepare for Technical Interviews', description:'Practice coding challenges and behavioural questions for software engineering roles.', category:'Skills', status:'needs_attention', progress:40, targetDate:'2026-08-30', createdDate:'2026-06-10', completedDate:null, feedback:[{author:'Grace Akoto',role:'Mentor',date:'Aug 5',text:'You need to spend more time on system design. I suggest doing 2 LeetCode problems per day. This needs attention before your target date.'}], milestones:[{text:'Complete 20 LeetCode problems',done:true},{text:'Study system design basics',done:false},{text:'Complete 2 mock interviews',done:false},{text:'Review data structures',done:false}] },
-  { id:'g3', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Build My Professional Network', description:'Connect with 20 professionals in tech via LinkedIn and attend two networking events.', category:'Networking', status:'in_progress', progress:40, targetDate:'2026-09-15', createdDate:'2026-06-15', completedDate:null, feedback:[], milestones:[{text:'Optimise LinkedIn profile',done:true},{text:'Send 10 connection requests',done:true},{text:'Attend a networking event',done:false},{text:'Get 3 informational interviews',done:false}] },
-  { id:'g4', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Secure a Software Engineering Internship', description:'Apply to 10+ internship positions and secure at least one offer by October.', category:'Career', status:'not_started', progress:10, targetDate:'2026-10-01', createdDate:'2026-07-01', completedDate:null, feedback:[], milestones:[{text:'Shortlist target companies',done:true},{text:'Prepare application materials',done:false},{text:'Submit 10 applications',done:false},{text:'Prepare for interviews',done:false}] },
-  { id:'g5', menteeId:'s1', menteeName:'Amina Boateng', menteePhoto:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face', title:'Complete Online Certification', description:'Complete the Google Data Analytics Certificate on Coursera.', category:'Education', status:'completed', progress:100, targetDate:'2026-07-20', createdDate:'2026-05-01', completedDate:'Jul 20, 2026', feedback:[{author:'Grace Akoto',role:'Mentor',date:'Jul 21',text:'Excellent work! This certification will add great value to your CV.'}], milestones:[{text:'Enrol in course',done:true},{text:'Complete modules 1–3',done:true},{text:'Complete modules 4–6',done:true},{text:'Pass final assessment',done:true}] },
-  // Mentor's other mentees
-  { id:'g6', menteeId:'s2', menteeName:'Daniel Mensah', menteePhoto:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', title:'Build Portfolio Website', description:'Create a professional portfolio showcasing 3 projects.', category:'Skills', status:'in_progress', progress:65, targetDate:'2026-09-01', createdDate:'2026-06-20', completedDate:null, feedback:[], milestones:[{text:'Choose tech stack',done:true},{text:'Design layout',done:true},{text:'Add 3 projects',done:false},{text:'Deploy online',done:false}] },
-  { id:'g7', menteeId:'s2', menteeName:'Daniel Mensah', menteePhoto:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', title:'Prepare for Interviews', description:'Practice algorithms and system design for technical interviews.', category:'Skills', status:'needs_attention', progress:40, targetDate:'2026-08-15', createdDate:'2026-07-01', completedDate:null, feedback:[], milestones:[] },
-  { id:'g8', menteeId:'s3', menteeName:'Ama Boateng', menteePhoto:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', title:'Research Grad School Options', description:'Identify and research 5 suitable graduate programmes.', category:'Education', status:'in_progress', progress:55, targetDate:'2026-10-01', createdDate:'2026-07-10', completedDate:null, feedback:[], milestones:[] }
-];
-
+/* ── Real Firestore Goal Store ── */
+var GOALS = [];
 var activeFilter = 'all';
 var pendingGoalId = null;
 var currentRole = 'student';
+var currentUid = null;
+var currentUserName = '';
+var db = null;
 
 var $ = function(id){ return document.getElementById(id); };
 function statusLabel(s){ return s==='in_progress'?'In Progress':s==='completed'?'Completed':s==='needs_attention'?'Needs Attention':'Not Started'; }
@@ -451,13 +447,66 @@ function fmtDate(d){ if(!d) return '—'; var p=d.split('-'); if(p.length<3) ret
 function closeModal(id){ $(id).classList.add('hidden'); document.body.style.overflow=''; }
 function openModal(id){ $(id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
 
-function getMenteeGoals(filter){ return GOALS.filter(function(g){ return g.menteeId==='s1' && (filter==='all'||g.status===filter); }); }
-function getAllGoals(filter){ return GOALS.filter(function(g){ return filter==='all'||g.status===filter; }); }
+function getMenteeGoals(filter){
+  return GOALS.filter(function(g){
+    return (g.uid === currentUid || g.menteeId === currentUid) && (filter==='all'||g.status===filter);
+  });
+}
 
-function computeOverallProgress(goals){ if(!goals.length) return 0; return Math.round(goals.reduce(function(sum,g){return sum+g.progress;},0)/goals.length); }
+function getAllGoals(filter){
+  return GOALS.filter(function(g){ return filter==='all'||g.status===filter; });
+}
+
+function computeOverallProgress(goals){
+  if(!goals.length) return 0;
+  return Math.round(goals.reduce(function(sum,g){return sum+(g.progress||0);},0)/goals.length);
+}
+
+async function loadGoalsFromFirestore() {
+  if (!db) return;
+  try {
+    let snapshot;
+    if (currentRole === 'student') {
+      try {
+        snapshot = await db.collection('goals').where('uid', '==', currentUid).get();
+      } catch (e) {
+        snapshot = await db.collection('goals').where('menteeId', '==', currentUid).get();
+      }
+    } else {
+      snapshot = await db.collection('goals').get();
+    }
+
+    var loaded = [];
+    snapshot.forEach(function(doc) {
+      var data = doc.data();
+      loaded.push({
+        id: doc.id,
+        uid: data.uid || data.menteeId || currentUid,
+        menteeId: data.menteeId || data.uid || currentUid,
+        menteeName: data.menteeName || 'Student',
+        menteePhoto: data.menteePhoto || '',
+        title: data.title || '',
+        description: data.description || '',
+        category: data.category || 'Career',
+        status: data.status || 'not_started',
+        progress: typeof data.progress === 'number' ? data.progress : 0,
+        targetDate: data.targetDate || null,
+        createdDate: data.createdDate || null,
+        completedDate: data.completedDate || null,
+        feedback: data.feedback || [],
+        milestones: data.milestones || []
+      });
+    });
+
+    GOALS = loaded;
+  } catch (error) {
+    console.error('Failed to load goals from Firestore:', error);
+    GOALS = [];
+  }
+}
 
 function updateOverview(role){
-  var goals = role==='mentor' ? GOALS : GOALS.filter(function(g){return g.menteeId==='s1';});
+  var goals = role==='mentor' ? GOALS : getMenteeGoals('all');
   var active = goals.filter(function(g){return g.status!=='completed';}).length;
   var done = goals.filter(function(g){return g.status==='completed';}).length;
   var inProg = goals.filter(function(g){return g.status==='in_progress';}).length;
@@ -471,7 +520,6 @@ function updateOverview(role){
   if(role==='mentor'){
     $('ovRate').textContent = (goals.length ? Math.round(done/goals.length*100) : 0)+'%';
     $('ovRateLabel').textContent = 'Completion rate';
-    // change 4th card icon
     var cards = document.querySelectorAll('.g-ov-card');
     if(cards[3]){ cards[3].querySelector('.g-ov-icon').textContent='⚠️'; cards[3].querySelector('.g-ov-icon').className='g-ov-icon g-ov-icon--red'; cards[3].querySelector('span').textContent='Needs attention'; $('ovRate').textContent=needsAttn; }
   } else {
@@ -479,7 +527,6 @@ function updateOverview(role){
     $('ovRateLabel').textContent = 'Overall progress';
   }
 
-  // Ring
   var pct = role==='mentor' ? (goals.length?Math.round(done/goals.length*100):0) : overall;
   var circ = 263.9;
   var offset = circ - (pct/100)*circ;
@@ -498,7 +545,7 @@ function renderGoalCard(g, role){
       + '<button class="btn btn-secondary btn-sm feedback-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-mentee-name="'+g.menteeName+'" type="button">Add Feedback</button>'
     : '<button class="btn btn-outline btn-sm view-goal-btn" data-goal-id="'+g.id+'" type="button">View Goal</button>'
       + '<button class="btn btn-ghost btn-sm update-progress-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-progress="'+g.progress+'" type="button">Update Progress</button>';
-  var completedBadge = g.status==='completed' ? '<span style="font-size:.75rem;color:#238a53;font-weight:700;">🎉 Completed '+g.completedDate+'</span>' : '<span class="goal-target-date">Target: '+fmtDate(g.targetDate)+'</span>';
+  var completedBadge = g.status==='completed' ? '<span style="font-size:.75rem;color:#238a53;font-weight:700;">🎉 Completed '+(g.completedDate||'')+'</span>' : '<span class="goal-target-date">Target: '+fmtDate(g.targetDate)+'</span>';
   return '<div class="goal-card status-'+g.status+'">'
     +'<div class="goal-card-top">'
     +'<h3 class="goal-card-title">'+g.title+'</h3>'
@@ -523,7 +570,7 @@ function renderMenteeGoals(filter){
   if(!goals.length){
     container.innerHTML = '<div class="goals-empty">'
       +'<div class="goals-empty-icon">🎯</div>'
-      +'<h3>'+(filter==='all'?'No goals yet':'No '+statusLabel(filter).toLowerCase()+' goals')+'</h3>'
+      +'<h3>'+(filter==='all'?'No goals yet — add one to get started': 'No '+statusLabel(filter).toLowerCase()+' goals')+'</h3>'
       +'<p>'+(filter==='all'?'Create your first goal and start working toward it with your mentor.':'Try a different filter.')+'</p>'
       +(filter==='all'?'<button class="btn btn-secondary" id="emptyCreateBtn" type="button">Create Goal</button>':'')
       +'</div>';
@@ -536,25 +583,41 @@ function renderMenteeGoals(filter){
 
 function renderMentorGoals(filter, search){
   var container = $('menteeGoalsContainer');
-  var menteeIds = ['s1','s2','s3'];
+  if (!GOALS.length) {
+    container.innerHTML = '<div class="goals-empty"><div class="goals-empty-icon">🎯</div><h3>No mentee goals found</h3><p>Mentees will appear here when they create goals.</p></div>';
+    return;
+  }
+
+  // Group by menteeName or menteeId
+  var menteeMap = {};
+  GOALS.forEach(function(g) {
+    if (filter !== 'all' && g.status !== filter) return;
+    if (search && !g.menteeName.toLowerCase().includes(search.toLowerCase())) return;
+    var key = g.menteeId || g.uid || g.menteeName;
+    if (!menteeMap[key]) menteeMap[key] = { name: g.menteeName, photo: g.menteePhoto, goals: [] };
+    menteeMap[key].goals.push(g);
+  });
+
+  var keys = Object.keys(menteeMap);
+  if (!keys.length) {
+    container.innerHTML = '<div class="goals-empty"><div class="goals-empty-icon">🎯</div><h3>No goals found</h3><p>Try adjusting your filters.</p></div>';
+    return;
+  }
+
   var html = '';
-  menteeIds.forEach(function(mid){
-    var goals = GOALS.filter(function(g){
-      return g.menteeId===mid && (filter==='all'||g.status===filter);
-    });
-    if(!goals.length) return;
-    var g0 = goals[0];
-    if(search && !g0.menteeName.toLowerCase().includes(search.toLowerCase())) return;
-    var initials = g0.menteeName.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-    var avatarHtml = g0.menteePhoto
-      ? '<img class="mentee-goals-avatar" src="'+g0.menteePhoto+'" alt="'+g0.menteeName+'" />'
+  keys.forEach(function(key) {
+    var group = menteeMap[key];
+    var initials = group.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var avatarHtml = group.photo
+      ? '<img class="mentee-goals-avatar" src="'+group.photo+'" alt="'+group.name+'" />'
       : '<div class="mentee-goals-avatar-initials">'+initials+'</div>';
     html += '<div class="mentee-goals-group">'
-      +'<div class="mentee-goals-header">'+avatarHtml+'<span class="mentee-goals-name">'+g0.menteeName+'</span><span style="font-size:.72rem;color:#9ca3af;margin-left:.5rem;">'+goals.length+' goal'+(goals.length!==1?'s':'')+'</span></div>'
-      + goals.map(function(g){ return renderGoalCard(g,'mentor'); }).join('')
+      +'<div class="mentee-goals-header">'+avatarHtml+'<span class="mentee-goals-name">'+group.name+'</span><span style="font-size:.72rem;color:#9ca3af;margin-left:.5rem;">'+group.goals.length+' goal'+(group.goals.length!==1?'s':'')+'</span></div>'
+      + group.goals.map(function(g){ return renderGoalCard(g,'mentor'); }).join('')
       +'</div>';
   });
-  container.innerHTML = html || '<div class="goals-empty"><div class="goals-empty-icon">🎯</div><h3>No goals found</h3><p>Try adjusting your filters.</p></div>';
+
+  container.innerHTML = html;
   bindGoalCardButtons('mentor');
 }
 
@@ -625,29 +688,57 @@ function openGoalDetail(goalId, role){
     + milestonesHtml + fbHtml;
 
   var actions = '';
-  if(role==='mentee' && g.status!=='completed'){
+  if(role==='student' || role==='mentee'){
     actions = '<button class="btn btn-primary update-progress-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-progress="'+g.progress+'" type="button">Update Progress</button>';
   }
   if(role==='mentor'){
     actions = '<button class="btn btn-secondary feedback-btn" data-goal-id="'+g.id+'" data-goal-title="'+g.title+'" data-mentee-name="'+g.menteeName+'" type="button">Add Feedback</button>';
   }
+  if (g.uid === currentUid || role === 'admin') {
+    actions += '<button class="btn btn-outline btn-sm delete-goal-btn" data-goal-id="'+g.id+'" style="color:#ef4444;border-color:#ef4444;margin-left:auto;" type="button">Delete Goal</button>';
+  }
   $('goalDetailActions').innerHTML = actions;
   bindGoalCardButtons(role);
 
-  // Milestone toggles (mentee only)
+  // Bind delete button
+  var delBtn = $('goalDetailActions').querySelector('.delete-goal-btn');
+  if (delBtn) {
+    delBtn.addEventListener('click', async function() {
+      if (!confirm('Are you sure you want to delete this goal?')) return;
+      try {
+        await db.collection('goals').doc(g.id).delete();
+        closeModal('goalDetailModal');
+        await refreshData();
+        showToast('Goal deleted');
+      } catch (error) {
+        console.error('Failed to delete goal:', error);
+        alert('Failed to delete goal: ' + error.message);
+      }
+    });
+  }
+
+  // Milestone toggles
   $('goalDetailBody').querySelectorAll('.milestone-check').forEach(function(el){
-    if(role!=='mentee') return;
-    el.addEventListener('click', function(){
+    if(role==='mentor') return;
+    el.addEventListener('click', async function(){
       var gObj = GOALS.find(function(x){return x.id===el.dataset.goalId;});
       var idx = parseInt(el.dataset.msIdx,10);
       if(!gObj||isNaN(idx)) return;
       gObj.milestones[idx].done = !gObj.milestones[idx].done;
-      // Recalculate progress from milestones
       var doneMil = gObj.milestones.filter(function(m){return m.done;}).length;
       gObj.progress = Math.round(doneMil/gObj.milestones.length*100);
-      openGoalDetail(gObj.id, role); // re-render
-      renderMenteeGoals(activeFilter);
-      updateOverview(role);
+
+      try {
+        await db.collection('goals').doc(gObj.id).update({
+          milestones: gObj.milestones,
+          progress: gObj.progress,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        openGoalDetail(gObj.id, role);
+        await refreshData();
+      } catch (e) {
+        console.error('Failed to update milestone:', e);
+      }
     });
   });
 
@@ -655,74 +746,88 @@ function openGoalDetail(goalId, role){
 }
 
 function renderAchievements(){
-  var completed = GOALS.filter(function(g){return g.menteeId==='s1'&&g.status==='completed';});
+  var completed = getMenteeGoals('all').filter(function(g){return g.status==='completed';});
   var html = '';
   completed.forEach(function(g){
     html += '<div class="achievement-item">'
       +'<div class="achievement-icon">✓</div>'
-      +'<div><p>Completed "'+g.title+'"</p><span>'+g.completedDate+'</span></div>'
+      +'<div><p>Completed "'+g.title+'"</p><span>'+(g.completedDate||'Recently')+'</span></div>'
       +'</div>';
   });
-  html += '<div class="achievement-item"><div class="achievement-icon">📅</div><div><p>Attended 3 mentorship sessions</p><span>This month</span></div></div>';
   $('achievementsList').innerHTML = html || '<p style="font-size:.82rem;color:#9ca3af;">No achievements yet. Keep working on your goals!</p>';
 }
 
 function renderNextSteps(){
-  var goals = GOALS.filter(function(g){return g.menteeId==='s1'&&g.status!=='completed';});
+  var goals = getMenteeGoals('all').filter(function(g){return g.status!=='completed';});
   var steps = [];
   goals.forEach(function(g){
     if(g.status==='needs_attention') steps.push('Address mentor feedback on "'+g.title+'"');
     else if(g.progress<50) steps.push('Make progress on "'+g.title+'"');
   });
-  steps.push('Schedule your next mentorship session');
-  steps.push('Review your mentor\'s latest feedback');
+  if (goals.length > 0) {
+    steps.push('Schedule your next mentorship session');
+    steps.push('Review your mentor\'s latest feedback');
+  }
   $('nextStepsList').innerHTML = steps.slice(0,4).map(function(s){
     return '<div class="next-step-item"><div class="next-step-icon">→</div><p>'+s+'</p></div>';
-  }).join('') || '<p style="font-size:.82rem;color:#9ca3af;">All caught up!</p>';
+  }).join('') || '<p style="font-size:.82rem;color:#9ca3af;">All caught up! Add a goal to track your next steps.</p>';
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+async function refreshData() {
+  await loadGoalsFromFirestore();
+  updateOverview(currentRole);
+  if(currentRole==='mentor'){
+    renderMentorGoals('all','');
+  } else {
+    renderMenteeGoals(activeFilter);
+    renderAchievements();
+    renderNextSteps();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function(){
   var session = {};
   try { session = JSON.parse(sessionStorage.getItem('mb_session')||'{}'); } catch(e){}
-  var role = session.role || 'student';
-  currentRole = role;
-  var name = session.name || (role==='mentor'?'Grace Akoto':'Amina Boateng');
-  var initials = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  if(!session.uid || !session.role){ window.location.replace('auth.html'); return; }
 
-  if(!session.role){ window.location.replace('auth.html'); return; }
+  currentRole = session.role;
+  currentUid = session.uid;
+  currentUserName = session.name || 'User';
+
+  var initials = currentUserName.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
 
   $('sidebarInitials').textContent = initials;
-  $('sidebarName').textContent = name;
-  $('sidebarRole').textContent = role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
+  $('sidebarName').textContent = currentUserName;
+  $('sidebarRole').textContent = currentRole==='mentor'?'Mentor':currentRole==='admin'?'Admin':'Mentee';
   $('headerAvatar').textContent = initials;
-  if($('headerSubtitle')) $('headerSubtitle').textContent = role==='mentor'
+  if($('headerSubtitle')) $('headerSubtitle').textContent = currentRole==='mentor'
     ? 'Monitor your mentees\u2019 goals and support their progress.'
     : 'Track your mentorship goals and see how far you\u2019ve come.';
 
   // Show/hide sections
-  if(role==='mentor'){
+  if(currentRole==='mentor'){
     if($('myGoalsSection')) $('myGoalsSection').classList.add('hidden');
     if($('menteeGoalsSection')) $('menteeGoalsSection').classList.remove('hidden');
     if($('achievementsSection')) $('achievementsSection').classList.add('hidden');
     if($('nextStepsSection')) $('nextStepsSection').classList.add('hidden');
   }
 
-  // Sidebar nav
-  var dashUrl = role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  // Navigation
+  var dashUrl = currentRole==='mentor'?'mentor-dashboard.html':currentRole==='admin'?'../admin/dashboard.html':'student-dashboard.html';
   var menteeLinks = [
-    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentor',icon:'👤',label:'My Mentor'},
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'mentor-profile.html',icon:'👤',label:'My Mentor'},
     {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress',active:true},
     {href:'opportunities.html',icon:'💼',label:'Opportunities'},{href:'messages.html',icon:'💬',label:'Messages'},
     {href:'resource-centre.html',icon:'📚',label:'Resources'},{href:'notifications.html',icon:'🔔',label:'Notifications'},
     {href:'settings.html',icon:'⚙️',label:'Settings'}
   ];
   var mentorLinks = [
-    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentees',icon:'👥',label:'My Mentees'},
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'coming-soon.html',icon:'👥',label:'My Mentees'},
     {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress',active:true},
     {href:'messages.html',icon:'💬',label:'Messages'},{href:'resource-centre.html',icon:'📚',label:'Resources'},
     {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
   ];
-  $('sidebarNav').innerHTML = (role==='mentor'?mentorLinks:menteeLinks).map(function(l){
+  $('sidebarNav').innerHTML = (currentRole==='mentor'?mentorLinks:menteeLinks).map(function(l){
     return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';
   }).join('');
 
@@ -743,9 +848,16 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   })();
 
-  // Render
-  updateOverview(role);
-  if(role==='mentor'){ renderMentorGoals('all',''); } else { renderMenteeGoals('all'); renderAchievements(); renderNextSteps(); }
+  // Initialize Firebase & Load Goals
+  try {
+    await initializeFirebaseConfig();
+    db = getFirestore();
+    await refreshData();
+  } catch(error) {
+    console.error('Failed to initialize Firebase for goals:', error);
+    GOALS = [];
+    refreshData();
+  }
 
   // Mentee filters
   document.querySelectorAll('#goalFilterBtns .goal-filter-btn').forEach(function(btn){
@@ -783,71 +895,128 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Save new goal
   if($('saveGoalBtn')){
-    $('saveGoalBtn').addEventListener('click', function(){
+    $('saveGoalBtn').addEventListener('click', async function(){
       var btn=$('saveGoalBtn'), fb=$('createGoalFeedback');
       var title=$('goalTitle').value.trim();
-      if(!title){ fb.textContent='Please enter a goal title.'; fb.style.color='var(--color-error)'; return; }
+      if(!title){ fb.textContent='Please enter a goal title.'; fb.style.color='#ef4444'; return; }
       btn.textContent='Creating…'; btn.disabled=true;
+      
       var newGoal = {
-        id:'g'+(GOALS.length+10), menteeId:'s1', menteeName:name, menteePhoto:'',
-        title:title, description:$('goalDesc').value.trim(),
-        category:$('goalCategory').value, status:'not_started', progress:0,
-        targetDate:$('goalTarget').value||null, createdDate:new Date().toISOString().split('T')[0],
-        completedDate:null, feedback:[], milestones:[]
+        uid: currentUid,
+        menteeId: currentUid,
+        menteeName: currentUserName,
+        menteePhoto: '',
+        title: title,
+        description: $('goalDesc').value.trim(),
+        category: $('goalCategory').value,
+        status: 'not_started',
+        progress: 0,
+        targetDate: $('goalTarget').value || null,
+        createdDate: new Date().toISOString().split('T')[0],
+        completedDate: null,
+        feedback: [],
+        milestones: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      GOALS.push(newGoal);
-      setTimeout(function(){
+
+      try {
+        await db.collection('goals').add(newGoal);
         closeModal('createGoalModal');
         btn.textContent='Create Goal'; btn.disabled=false;
         $('goalTitle').value=''; $('goalDesc').value=''; $('goalTarget').value='';
         fb.textContent='';
-        renderMenteeGoals(activeFilter);
-        updateOverview(role);
-      },600);
+        await refreshData();
+        showToast('Goal created successfully!');
+      } catch(error) {
+        console.error('Failed to create goal in Firestore:', error);
+        fb.textContent='Failed to create goal: ' + error.message;
+        fb.style.color='#ef4444';
+        btn.textContent='Create Goal'; btn.disabled=false;
+      }
     });
   }
 
   // Save progress update
   if($('saveProgressBtn')){
-    $('saveProgressBtn').addEventListener('click', function(){
+    $('saveProgressBtn').addEventListener('click', async function(){
       var btn=$('saveProgressBtn'), fb=$('updateProgressFeedback');
       var g = GOALS.find(function(x){return x.id===pendingGoalId;});
       if(!g) return;
       var pct=parseInt($('progressSlider').value,10);
       btn.textContent='Saving…'; btn.disabled=true;
-      g.progress=pct;
-      if(pct===100 && g.status!=='completed'){ g.status='in_progress'; } // mentee sets 100, mentor confirms
-      else if(pct>0 && g.status==='not_started') g.status='in_progress';
-      setTimeout(function(){
+
+      var newStatus = g.status;
+      var compDate = g.completedDate;
+      if(pct===100){
+        newStatus = 'completed';
+        compDate = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      } else if(pct>0 && g.status==='not_started'){
+        newStatus = 'in_progress';
+      }
+
+      var noteText = $('progressNote').value.trim();
+      var updates = {
+        progress: pct,
+        status: newStatus,
+        completedDate: compDate,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection('goals').doc(g.id).update(updates);
         closeModal('updateProgressModal');
         btn.textContent='Save Progress'; btn.disabled=false;
-        renderMenteeGoals(activeFilter);
-        updateOverview(role);
+        await refreshData();
         showToast('Progress updated to '+pct+'%');
-      },600);
+      } catch(error) {
+        console.error('Failed to update progress in Firestore:', error);
+        fb.textContent='Failed to save: ' + error.message;
+        fb.style.color='#ef4444';
+        btn.textContent='Save Progress'; btn.disabled=false;
+      }
     });
   }
 
   // Save mentor feedback
   if($('saveFeedbackBtn')){
-    $('saveFeedbackBtn').addEventListener('click', function(){
+    $('saveFeedbackBtn').addEventListener('click', async function(){
       var btn=$('saveFeedbackBtn'), fb=$('feedbackSaveFeedback');
       var text=$('feedbackText').value.trim();
-      if(!text){ fb.textContent='Please enter feedback.'; fb.style.color='var(--color-error)'; return; }
+      if(!text){ fb.textContent='Please enter feedback.'; fb.style.color='#ef4444'; return; }
       var g = GOALS.find(function(x){return x.id===pendingGoalId;});
       if(!g) return;
       btn.textContent='Saving…'; btn.disabled=true;
+
       var today=new Date(); var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      g.feedback.push({author:name,role:'Mentor',date:months[today.getMonth()]+' '+today.getDate(),text:text});
+      var fbList = g.feedback || [];
+      fbList.push({
+        author: currentUserName,
+        role: 'Mentor',
+        date: months[today.getMonth()]+' '+today.getDate(),
+        text: text,
+        mentorUid: currentUid
+      });
+
+      var updates = {
+        feedback: fbList,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
       var newStatus=$('feedbackStatus').value;
-      if(newStatus) g.status=newStatus;
-      setTimeout(function(){
+      if(newStatus) updates.status = newStatus;
+
+      try {
+        await db.collection('goals').doc(g.id).update(updates);
         closeModal('feedbackModal');
         btn.textContent='Save Feedback'; btn.disabled=false;
-        renderMentorGoals(mentorFilter,$('menteeSearch')?$('menteeSearch').value:'');
-        updateOverview(role);
+        await refreshData();
         showToast('Feedback saved successfully.');
-      },600);
+      } catch(error) {
+        console.error('Failed to save feedback in Firestore:', error);
+        fb.textContent='Failed to save feedback: ' + error.message;
+        fb.style.color='#ef4444';
+        btn.textContent='Save Feedback'; btn.disabled=false;
+      }
     });
   }
 
@@ -882,3 +1051,4 @@ function showToast(msg){
 </div>
 </body>
 </html>
+

@@ -253,7 +253,7 @@
               <p>Get notified before your upcoming mentoring sessions.</p>
             </div>
             <label class="toggle-switch" aria-label="Toggle session reminders">
-              <input type="checkbox" checked />
+              <input type="checkbox" checked id="prefSessionReminders" />
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
             </label>
           </div>
@@ -263,7 +263,7 @@
               <p>Notify me when a student requests mentorship.</p>
             </div>
             <label class="toggle-switch" aria-label="Toggle mentorship requests">
-              <input type="checkbox" checked />
+              <input type="checkbox" checked id="prefMentorshipRequests" />
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
             </label>
           </div>
@@ -273,7 +273,7 @@
               <p>News, new features, and platform updates.</p>
             </div>
             <label class="toggle-switch" aria-label="Toggle announcements">
-              <input type="checkbox" />
+              <input type="checkbox" id="prefAnnouncements" />
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
             </label>
           </div>
@@ -307,18 +307,18 @@
   <script src="../js/app.js"></script>
   <script src="../js/chat.js"></script>
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
     var session = {};
     try { session = JSON.parse(sessionStorage.getItem('mb_session') || '{}'); } catch(e) {}
     var role = session.role || 'student';
-    var name = session.name || (role === 'mentor' ? 'Grace Akoto' : 'Amina Boateng');
+    var name = session.name || 'User';
     var inits = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
     if (!session.role) { window.location.replace('auth.html'); return; }
     document.getElementById('sidebarInitials').textContent = inits;
     document.getElementById('sidebarName').textContent = name;
     document.getElementById('sidebarRole').textContent = role === 'mentor' ? 'Mentor' : role === 'admin' ? 'Admin' : 'Mentee';
     document.getElementById('headerAvatar').textContent = inits;
-    var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+    var dashUrl = role === 'mentor' ? 'mentor-dashboard.html' : role === 'admin' ? '../admin/dashboard.html' : 'student-dashboard.html';
     var links = [
       {href:dashUrl,icon:'🏠',label:'Dashboard'}, {href:'sessions.html',icon:'📅',label:'Sessions'},
       {href:'goals.html',icon:'🎯',label:'Goals & Progress'}, {href:'opportunities.html',icon:'💼',label:'Opportunities'},
@@ -338,24 +338,72 @@
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop&crop=face'
     ];
 
-    var mentorProfileId = session.id || 'm5';
-    var mentorData = {
-      id: mentorProfileId,
-      name: name,
-      photo: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=120&h=120&fit=crop&crop=face',
-      position: 'Engineering Manager',
-      company: 'Andela Ghana',
-      quote: 'Continuous learning, empathetic leadership, and clear problem solving create world-class engineers.',
-      biography: 'Full-stack engineer turned engineering leader. Focuses on helping CS and IT students develop technical skills, build production-grade portfolios, and prepare for high-impact remote work opportunities.',
-      skills: ['Software Engineering', 'Career Development', 'Tech Leadership']
-    };
+    var mentorProfileId = session.uid || null;
+    // Starts empty/honest rather than pre-filled with a fake person — real data
+    // (if the mentor has saved a profile before) is loaded from Firestore below.
+    var mentorData = { id: mentorProfileId, name: name, photo: null, position: '', company: '', quote: '', biography: '', skills: [] };
+    var settingsDb = null;
 
-    try {
-      var allProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
-      if (allProfiles[mentorProfileId]) {
-        mentorData = Object.assign({}, mentorData, allProfiles[mentorProfileId]);
+    if (mentorProfileId) {
+      try {
+        await initializeFirebaseConfig();
+        settingsDb = getFirestore();
+        var udoc = await settingsDb.collection('users').doc(mentorProfileId).get();
+        if (udoc.exists) {
+          var ud = udoc.data();
+          mentorData.photo = ud.photo || null;
+          mentorData.position = ud.title || '';
+          mentorData.company = ud.company || '';
+          mentorData.hourlyRate = ud.hourlyRate || '';
+          mentorData.quote = ud.quote || '';
+          mentorData.biography = ud.bio || '';
+          mentorData.skills = Array.isArray(ud.expertise) ? ud.expertise : [];
+          mentorData.socialLinks = ud.socialLinks || (ud.linkedinUrl ? { linkedin: ud.linkedinUrl } : {});
+        }
+        if (udoc.exists && udoc.data().preferences) {
+          var prefs = udoc.data().preferences;
+          var visEl = document.getElementById('profileVisibility');
+          var remEl = document.getElementById('prefSessionReminders');
+          var reqEl = document.getElementById('prefMentorshipRequests');
+          var annEl = document.getElementById('prefAnnouncements');
+          if (visEl && prefs.profileVisibility) visEl.value = prefs.profileVisibility;
+          if (remEl && typeof prefs.sessionReminders === 'boolean') remEl.checked = prefs.sessionReminders;
+          if (reqEl && typeof prefs.mentorshipRequests === 'boolean') reqEl.checked = prefs.mentorshipRequests;
+          if (annEl && typeof prefs.announcements === 'boolean') annEl.checked = prefs.announcements;
+        }
+      } catch (error) {
+        console.error('Failed to load real mentor profile in settings:', error);
       }
-    } catch(e){}
+    }
+
+    var savePrivacyBtn = document.getElementById('savePrivacyBtn');
+    var privacyFb = document.getElementById('privacy-feedback');
+    if (savePrivacyBtn) {
+      savePrivacyBtn.addEventListener('click', async function(){
+        savePrivacyBtn.textContent = 'Saving…'; savePrivacyBtn.disabled = true;
+        try {
+          if (!mentorProfileId || !settingsDb) throw new Error('Not signed in');
+          var visEl = document.getElementById('profileVisibility');
+          var remEl = document.getElementById('prefSessionReminders');
+          var reqEl = document.getElementById('prefMentorshipRequests');
+          var annEl = document.getElementById('prefAnnouncements');
+          await settingsDb.collection('users').doc(mentorProfileId).update({
+            preferences: {
+              profileVisibility: visEl ? visEl.value : 'public',
+              sessionReminders: remEl ? remEl.checked : true,
+              mentorshipRequests: reqEl ? reqEl.checked : true,
+              announcements: annEl ? annEl.checked : false
+            }
+          });
+          savePrivacyBtn.textContent = 'Save preferences'; savePrivacyBtn.disabled = false;
+          if (privacyFb) { privacyFb.textContent = '✓ Preferences saved.'; privacyFb.style.color = '#22A06B'; setTimeout(function(){ privacyFb.textContent=''; }, 3000); }
+        } catch (error) {
+          console.error('Failed to save preferences:', error);
+          savePrivacyBtn.textContent = 'Save preferences'; savePrivacyBtn.disabled = false;
+          if (privacyFb) { privacyFb.textContent = 'Could not save — please check your connection and try again.'; privacyFb.style.display='block'; }
+        }
+      });
+    }
 
     var sPhotoPrev = document.getElementById('settingsPhotoPreview');
     var sPhotoUrl = document.getElementById('settingsPhotoUrl');
@@ -450,22 +498,35 @@
         mentorData.biography = updatedBio;
         mentorData.skills = updatedSkills;
 
-        try {
-          var stored = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
-          stored[mentorProfileId] = mentorData;
-          localStorage.setItem('mb_mentor_profiles', JSON.stringify(stored));
-
-          session.photo = updatedPhoto;
-          session.bio = updatedBio;
-          session.hourlyRate = updatedRate;
-          session.socialLinks = mentorData.socialLinks;
-          sessionStorage.setItem('mb_session', JSON.stringify(session));
-        } catch(e){}
-
         saveProfileBtn.textContent = 'Saving…';
         saveProfileBtn.disabled = true;
 
-        setTimeout(function(){
+        (async function(){
+        try {
+          if (!mentorProfileId || !settingsDb) throw new Error('Not signed in');
+          await settingsDb.collection('users').doc(mentorProfileId).update({
+            photo: updatedPhoto,
+            title: updatedPos,
+            company: updatedComp,
+            hourlyRate: updatedRate,
+            quote: updatedQuote,
+            bio: updatedBio,
+            expertise: updatedSkills,
+            linkedinUrl: updatedLinkedin,
+            socialLinks: mentorData.socialLinks,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          session.photo = updatedPhoto;
+          sessionStorage.setItem('mb_session', JSON.stringify(session));
+        } catch(error) {
+          console.error('Failed to save profile settings:', error);
+          saveProfileBtn.textContent = 'Save Profile & Bio';
+          saveProfileBtn.disabled = false;
+          if (profileFb) { profileFb.textContent = 'Could not save — please check your connection and try again.'; profileFb.style.display='block'; }
+          return;
+        }
+
           saveProfileBtn.textContent = 'Save Profile & Bio';
           saveProfileBtn.disabled = false;
           if (profileFb) {
@@ -473,7 +534,7 @@
             profileFb.style.color = '#22A06B';
             setTimeout(function(){ profileFb.textContent = ''; }, 3500);
           }
-        }, 500);
+        })();
       });
     }
 

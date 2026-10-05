@@ -13,19 +13,11 @@
   <link rel="stylesheet" href="../css/main.css" />
   
   <!-- Firebase CDN Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   
-  <!-- Firebase Configuration and Services (load order is critical) -->
-  <script src="../js/firebase-config.js"></script>
-  <script src="../js/firebase-service.js"></script>
-  <script src="../js/firebase-auth.js"></script>
-  <script src="../js/firebase-messaging.js"></script>
-  <script src="../js/firebase-profiles.js"></script>
-  <script src="../js/firebase-notifications.js"></script>
-  
-  <!-- Firebase Configuration and Services (load order is critical) -->
+  <!-- Firebase Configuration and Services -->
   <script src="../js/firebase-config.js"></script>
   <script src="../js/firebase-service.js"></script>
   <script src="../js/firebase-auth.js"></script>
@@ -261,31 +253,7 @@
 </div>
 
 <script src="../js/theme.js"></script>
-<script src="../js/firebase-config.js"></script>
-<script src="../js/firebase-service.js"></script>
-<script src="../js/firebase-messaging.js"></script>
 <script>
-/* ── Initialize Firebase and Messaging Service when page loads ── */
-document.addEventListener('DOMContentLoaded', function(){
-  // Initialize Firebase configuration
-  initializeFirebaseConfig()
-    .then(function(config) {
-      console.log('Firebase initialized successfully in messages.html');
-      console.log('Project ID:', config.projectId);
-      
-      // Initialize Firebase messaging service
-      if (window.mentorBridgeMessaging) {
-        return window.mentorBridgeMessaging.initialize();
-      }
-    })
-    .then(function() {
-      console.log('Firebase messaging service initialized');
-    })
-    .catch(function(error) {
-      console.error('Failed to initialize Firebase in messages.html:', error);
-    });
-});
-
 /* ── Real-time Messaging with Firebase Integration ── */
 var activeConvId = null;
 var currentRole = 'student';
@@ -293,6 +261,7 @@ var currentUserId = null;
 var currentUserName = null;
 var searchQuery = '';
 var conversations = [];
+var activeMessageUnsubscribe = null;
 var activeListeners = new Map();
 
 /* ── Helpers ── */
@@ -324,64 +293,76 @@ function avatarHtml(photo, name, cls){
 }
 
 /* ── Firebase Messaging Integration ── */
+// Converts a real conversation document (participants[]/participantDetails{}/
+// unreadCounts{}) into the legacy per-other-participant shape this page's
+// existing render code expects.
+function toLegacyConversation(conv) {
+  var otherUid = (conv.participants || []).find(function(p){ return p !== currentUserId; }) || null;
+  var details = (conv.participantDetails && otherUid && conv.participantDetails[otherUid]) || {};
+  var roleLabel = details.role === 'mentor' ? 'Mentor' : details.role === 'admin' ? 'Admin' : 'Mentee';
+  var lastAt = conv.lastMessageAt instanceof Date ? conv.lastMessageAt.getTime() : Date.now();
+  // A single synthetic message so the conversation list can show a real preview
+  // and timestamp without needing every conversation opened first; openConv()
+  // replaces this with the real, full message history via the live listener.
+  var previewMessages = conv.lastMessage ? [{
+    id: 'preview', senderId: conv.lastMessage.senderId, text: conv.lastMessage.text, ts: lastAt, status: 'sent'
+  }] : [];
+  return {
+    id: conv.id,
+    participantId: otherUid,
+    participantName: details.name || 'User',
+    participantPhoto: details.profilePhoto || null,
+    participantRole: roleLabel,
+    unreadCount: (conv.unreadCounts && conv.unreadCounts[currentUserId]) || 0,
+    lastMessageAt: lastAt,
+    messages: previewMessages
+  };
+}
+
 async function loadConversations() {
   try {
     if (!window.mentorBridgeMessaging || !window.mentorBridgeMessaging.isInitialized()) {
-      console.warn('Messaging service not initialized, using fallback');
-      loadFallbackConversations();
+      console.warn('Messaging service not initialized');
+      conversations = [];
+      renderConvList();
       return;
     }
 
-    // Get conversations from Firebase
-    const userConversations = await window.mentorBridgeMessaging.getUserConversations();
-    conversations = userConversations;
+    const userConversations = await window.mentorBridgeMessaging.getConversations();
+    conversations = userConversations.map(toLegacyConversation);
     renderConvList();
-    
+
+    // If a specific mentor was passed in via ?to=, open (or start) that conversation now
+    maybeStartConversationFromUrl();
+
   } catch (error) {
     console.error('Error loading conversations:', error);
-    loadFallbackConversations();
+    conversations = [];
+    renderConvList();
   }
 }
 
-function loadFallbackConversations() {
-  // Fallback mock data if Firebase isn't working
-  if (currentRole === 'mentor') {
-    conversations = [
-      {
-        id: 'mc1',
-        participantId: 's1',
-        participantName: 'Amina Boateng',
-        participantPhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face',
-        participantRole: 'Mentee',
-        unreadCount: 1,
-        lastMessageAt: Date.now() - 600000,
-        messages: [
-          { id:'m1', senderId:'s1', text:"Hi Grace! Could you review my CV before our session?", ts: Date.now() - 600000, status:'sent', unread: true }
-        ]
-      }
-    ];
-  } else {
-    conversations = [
-      {
-        id: 'c1',
-        participantId: 'm5',
-        participantName: 'Grace Akoto',
-        participantPhoto: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=80&h=80&fit=crop&crop=face',
-        participantRole: 'Mentor',
-        unreadCount: 2,
-        lastMessageAt: Date.now() - 3600000,
-        messages: [
-          { id:'msg1', senderId:'m5', text:"Welcome to MentorBridge! I'm really looking forward to working with you.", ts: Date.now() - 3*24*3600000, status:'sent' },
-          { id:'msg2', senderId:'s1', text:"Thank you! I'm excited to get started. I've been working on my CV this week.", ts: Date.now() - 3*24*3600000 + 300000, status:'sent' },
-          { id:'msg3', senderId:'m5', text:"That's great to hear. Before our next session, could you send me a draft so I can review it beforehand?", ts: Date.now() - 2*24*3600000, status:'sent' },
-          { id:'msg4', senderId:'s1', text:"Of course! I'll have it ready by Thursday.", ts: Date.now() - 2*24*3600000 + 600000, status:'sent' },
-          { id:'msg5', senderId:'m5', text:"Let's review your CV during our next session. Have it ready!", ts: Date.now() - 7200000, status:'sent', unread: true },
-          { id:'msg6', senderId:'m5', text:"Also, I've shared some interview preparation resources in the Resource Centre — check them out when you get a chance.", ts: Date.now() - 3600000, status:'sent', unread: true }
-        ]
-      }
-    ];
+// Supports being linked here as messages.html?to=<userId> (e.g. from a mentor's
+// profile or a dashboard's "Message" button) by finding or creating a real
+// conversation with that person, rather than requiring one to already exist.
+async function maybeStartConversationFromUrl() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var toId = urlParams.get('to');
+  if (!toId) return;
+
+  var existing = conversations.find(function(c){ return c.participantId === toId; });
+  if (existing) { openConv(existing.id); return; }
+
+  try {
+    if (!window.mentorBridgeMessaging || !window.mentorBridgeMessaging.isInitialized()) return;
+    var conv = await window.mentorBridgeMessaging.createConversation([toId]);
+    var legacy = toLegacyConversation(conv);
+    conversations.unshift(legacy);
+    renderConvList();
+    openConv(legacy.id);
+  } catch (error) {
+    console.error('Could not start conversation with', toId, error);
   }
-  renderConvList();
 }
 
 /* ── Render conversation list ── */
@@ -450,11 +431,25 @@ async function openConv(convId){
   $('chatPlaceholder').style.display='none';
   var ac = $('activeConv'); ac.style.display='flex';
 
-  // Load messages from Firebase if available
+  // Load messages in real time from Firebase if available. listenToMessages keeps
+  // a live listener running; we stop any previous one before starting a new one.
+  if (activeMessageUnsubscribe) { activeMessageUnsubscribe(); activeMessageUnsubscribe = null; }
+
   if (window.mentorBridgeMessaging && window.mentorBridgeMessaging.isInitialized()) {
     try {
-      const messages = await window.mentorBridgeMessaging.getConversationMessages(convId);
-      conv.messages = messages;
+      activeMessageUnsubscribe = window.mentorBridgeMessaging.listenToMessages(convId, function(realMessages) {
+        conv.messages = realMessages.map(function(m) {
+          return {
+            id: m.id,
+            senderId: m.senderId,
+            text: m.text,
+            ts: m.sentAt instanceof Date ? m.sentAt.getTime() : Date.now(),
+            status: 'sent'
+          };
+        });
+        if (activeConvId === convId) { renderMessages(conv); renderConvList(); }
+      });
+      window.mentorBridgeMessaging.markMessagesAsRead(convId).catch(function(e){ console.error('Could not mark read:', e); });
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -520,10 +515,12 @@ async function sendMessage(){
   $('sendBtn').disabled=true;
   renderMessages(conv);
 
-  // Send via Firebase if available
+  // Send via Firebase
   if (window.mentorBridgeMessaging && window.mentorBridgeMessaging.isInitialized()) {
     try {
-      await window.mentorBridgeMessaging.sendMessage(convId, text);
+      await window.mentorBridgeMessaging.sendMessage(conv.id, text);
+      // The real-time listener set up in openConv() will replace this optimistic
+      // local copy with the real saved message within moments.
       msg.status='sent';
       renderMessages(conv);
       renderConvList();
@@ -535,20 +532,10 @@ async function sendMessage(){
       errorEl.classList.remove('hidden');
     }
   } else {
-    // Fallback: simulate API send
-    setTimeout(function(){
-      msg.status='sent';
-      renderMessages(conv);
-      renderConvList();
-      // Simulate reply for demo
-      if(conv.id==='c1' && Math.random()<0.4){
-        setTimeout(function(){
-          var replies=["Got it, thanks!","I'll take a look.","See you at our next session!","Great work, keep it up!","Let's discuss this further."];
-          conv.messages.push({id:'reply'+Date.now(), senderId:conv.participantId, text:replies[Math.floor(Math.random()*replies.length)], ts:Date.now(), status:'sent'});
-          renderMessages(conv); renderConvList();
-        }, 2000+Math.random()*3000);
-      }
-    }, 600+Math.random()*400);
+    msg.status='failed';
+    renderMessages(conv);
+    errorEl.textContent='Messaging service is unavailable right now. Please check your connection and try again.';
+    errorEl.classList.remove('hidden');
   }
 }
 
@@ -561,13 +548,13 @@ function retryMessage(conv, msgId){
 }
 
 /* ── Init ── */
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', async function(){
   var session={};
   try{ session=JSON.parse(sessionStorage.getItem('mb_session')||'{}'); }catch(e){}
   var role=session.role||'student';
   currentRole=role;
-  currentUserId=session.userId||(role==='mentor'?'m5':'s1');
-  currentUserName=session.name||(role==='mentor'?'Grace Akoto':'Amina Boateng');
+  currentUserId=session.uid;
+  currentUserName=session.name||'User';
   var inits=initials(currentUserName);
 
   if(!session.role){ window.location.replace('auth.html'); return; }
@@ -577,16 +564,16 @@ document.addEventListener('DOMContentLoaded', function(){
   $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
   $('headerAvatar').textContent=inits;
 
-  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'../admin/dashboard.html':'student-dashboard.html';
   var menteeLinks=[
-    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentor',icon:'👤',label:'My Mentor'},
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'mentor-profile.html',icon:'👤',label:'My Mentor'},
     {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress'},
-    {href:'#opportunities',icon:'💼',label:'Opportunities'},{href:'messages.html',icon:'💬',label:'Messages',active:true},
+    {href:'opportunities.html',icon:'💼',label:'Opportunities'},{href:'messages.html',icon:'💬',label:'Messages',active:true},
     {href:'resource-centre.html',icon:'📚',label:'Resources'},{href:'notifications.html',icon:'🔔',label:'Notifications'},
     {href:'settings.html',icon:'⚙️',label:'Settings'}
   ];
   var mentorLinks=[
-    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'#my-mentees',icon:'👥',label:'My Mentees'},
+    {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'coming-soon.html',icon:'👥',label:'My Mentees'},
     {href:'sessions.html',icon:'📅',label:'Sessions'},{href:'goals.html',icon:'🎯',label:'Goals & Progress'},
     {href:'messages.html',icon:'💬',label:'Messages',active:true},{href:'resource-centre.html',icon:'📚',label:'Resources'},
     {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
@@ -620,7 +607,14 @@ document.addEventListener('DOMContentLoaded', function(){
     $('activeConv').style.display='none';
   });
 
-  // Load conversations from Firebase or fallback
+  // Initialize Firebase + messaging service, then load real conversations.
+  // Awaited properly so loadConversations() never runs before the service is ready.
+  try {
+    await initializeFirebaseConfig();
+    if (window.mentorBridgeMessaging) await window.mentorBridgeMessaging.initialize();
+  } catch (error) {
+    console.error('Failed to initialize Firebase in messages.html:', error);
+  }
   loadConversations();
 
   // Search

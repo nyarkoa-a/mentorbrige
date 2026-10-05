@@ -371,6 +371,7 @@
 
 <script src="../js/firebase-config.js"></script>
 <script src="../js/firebase-auth.js"></script>
+<script src="../js/firebase-sessions.js"></script>
 <script src="../js/theme.js"></script>
 <script src="../js/matching.js"></script>
 <script>
@@ -388,6 +389,41 @@ var MENTORS = [
 
 var connections = {}; // mentorId -> 'pending' | 'connected' | 'declined'
 var pendingConnectId = null;
+var REAL_MENTORS = [];
+var realMentorsLoaded = false;
+
+// Loads real registered mentors from Firestore (users where role == 'mentor').
+// Maps the real, limited field set onto the shape this page's existing filter/
+// render code already expects, with honest fallbacks for fields that have no
+// real data yet (no rating system exists, no company field in the real schema).
+async function loadRealMentors() {
+  try {
+    await initializeFirebaseConfig();
+    var db = getFirestore();
+    var snapshot = await db.collection('users').where('role', '==', 'mentor').get();
+    REAL_MENTORS = snapshot.docs.map(function(doc) {
+      var d = doc.data();
+      return {
+        id: doc.id,
+        name: d.name || 'Mentor',
+        photo: d.photo || null,
+        company: d.company || d.title || '',
+        position: d.title || 'Mentor',
+        biography: d.bio || '',
+        yearsExperience: typeof d.experience === 'number' ? d.experience : 0,
+        skills: Array.isArray(d.expertise) ? d.expertise : [],
+        industries: d.industry ? [d.industry] : [],
+        availability: d.availability || 'Contact for availability',
+        rating: null,
+        careerField: d.industry || d.title || ''
+      };
+    });
+  } catch (error) {
+    console.error('Failed to load real mentors:', error);
+    REAL_MENTORS = [];
+  }
+  realMentorsLoaded = true;
+}
 
 function getAvailabilityLabel(avail) {
   if (!avail) return '';
@@ -529,23 +565,14 @@ function getFilters() {
 }
 
 function getSortFn(sort) {
-  if (sort === 'experience') return function(a,b){ return b.yearsExperience - a.yearsExperience; };
-  if (sort === 'rating') return function(a,b){ return b.rating - a.rating; };
-  return function(a,b){ return b.rating - a.rating; }; // recommended = highest rated
+  if (sort === 'experience') return function(a,b){ return (b.yearsExperience||0) - (a.yearsExperience||0); };
+  // No rating system exists yet in the real data, so "rating" and "recommended"
+  // both fall back to most experience first, which is the closest real signal available.
+  return function(a,b){ return (b.yearsExperience||0) - (a.yearsExperience||0); };
 }
 
 function getUpdatedMentors() {
-  var mentors = MENTORS.map(function(m){ return Object.assign({}, m); });
-  try {
-    var storedProfiles = JSON.parse(localStorage.getItem('mb_mentor_profiles') || '{}');
-    mentors = mentors.map(function(m){
-      if (storedProfiles[m.id]) {
-        return Object.assign({}, m, storedProfiles[m.id]);
-      }
-      return m;
-    });
-  } catch(e){}
-  return mentors;
+  return REAL_MENTORS.map(function(m){ return Object.assign({}, m); });
 }
 
 function applyAndRender() {
@@ -556,20 +583,7 @@ function applyAndRender() {
   var allList = getUpdatedMentors();
   var filtered = allList.filter(function(m){ return matchesFilters(m, filters); });
   filtered.sort(getSortFn(sort));
-  // Try API first, fall back to local data
-  var qs = [];
-  if (filters.search) qs.push('search='+encodeURIComponent(filters.search));
-  if (filters.industry) qs.push('industry='+encodeURIComponent(filters.industry));
-  if (filters.careerField) qs.push('careerField='+encodeURIComponent(filters.careerField));
-  if (filters.experience) qs.push('minExperience='+encodeURIComponent(filters.experience));
-  if (filters.skill) qs.push('skill='+encodeURIComponent(filters.skill));
-  fetch('/api/mentors'+(qs.length?'?'+qs.join('&'):''))
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if (data.mentors && data.mentors.length) { filtered = data.mentors; }
-      renderGrid(filtered, session);
-    })
-    .catch(function(){ renderGrid(filtered, session); });
+  renderGrid(filtered, session);
 }
 
 function clearFilters() {
@@ -587,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (session.role) {
     var navActions = document.getElementById('navActions');
     if (navActions) {
-      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+      var dashUrl = session.role === 'mentor' ? 'mentor-dashboard.html' : (session.role === 'admin' ? '../admin/dashboard.html' : 'student-dashboard.html');
       navActions.innerHTML = '<a class="btn btn-outline" href="'+dashUrl+'">Dashboard</a>';
     }
   }
@@ -640,8 +654,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (si) si.value = urlParams.get('search');
   }
 
-  // Initial render
-  applyAndRender();
+  // Initial render — wait for real mentors to load first
+  loadRealMentors().then(applyAndRender);
 
   // Connect modal
   var connectModal = document.getElementById('connectModal');
@@ -669,25 +683,36 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   if (sendConnectBtn) {
-    sendConnectBtn.addEventListener('click', function(){
+    sendConnectBtn.addEventListener('click', async function(){
       if (!pendingConnectId) return;
       var fb = document.getElementById('connectFeedback');
       sendConnectBtn.textContent = 'Sending…'; sendConnectBtn.disabled = true;
-      // Store connection state
-      connections[pendingConnectId] = 'pending';
-      setTimeout(function(){
+      var mentor = REAL_MENTORS.find(function(m){ return m.id === pendingConnectId; });
+
+      try {
+        if (!window.mentorBridgeSessions) throw new Error('Sessions service not loaded');
+        await window.mentorBridgeSessions.initialize();
+        await window.mentorBridgeSessions.requestSession({
+          mentorId: pendingConnectId,
+          topic: 'Introduction',
+          description: 'Connection request sent from the mentor directory.'
+        });
+
+        connections[pendingConnectId] = 'pending';
         closeConnectModal();
         sendConnectBtn.textContent = 'Send Connection Request'; sendConnectBtn.disabled = false;
-        var mentor = MENTORS.find(function(m){ return m.id === pendingConnectId; });
         var title = document.getElementById('successModalTitle');
         var desc = document.getElementById('successModalDesc');
         if (title) title.textContent = 'Connection Request Sent!';
         if (desc) desc.textContent = 'Your request has been sent to '+(mentor?mentor.name:'your mentor')+'. You\'ll be notified once they respond. Check your dashboard for updates.';
         successModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        // Re-render cards to show pending state
         applyAndRender();
-      }, 900);
+      } catch (error) {
+        console.error('Failed to send connection request:', error);
+        sendConnectBtn.textContent = 'Send Connection Request'; sendConnectBtn.disabled = false;
+        if (fb) { fb.textContent = 'Could not send your request. Please check your connection and try again.'; fb.style.color = 'var(--color-error, #DC2626)'; }
+      }
     });
   }
 });

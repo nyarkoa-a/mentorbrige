@@ -185,10 +185,13 @@
         </div>
       </div>
 
-      <!-- Tabs: All / Saved -->
-      <div class="opp-tabs" id="oppTabs">
-        <button class="opp-tab active" data-tab="all" type="button">All Opportunities</button>
-        <button class="opp-tab" data-tab="saved" type="button">Saved <span id="savedCount" style="font-size:.65rem;background:rgba(43, 45, 66,.15);color:#1E202F;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;">0</span></button>
+      <!-- Tabs & Post Opportunity Button -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <div class="opp-tabs" id="oppTabs" style="margin-bottom:0;">
+          <button class="opp-tab active" data-tab="all" type="button">All Opportunities</button>
+          <button class="opp-tab" data-tab="saved" type="button">Saved <span id="savedCount" style="font-size:.65rem;background:rgba(43, 45, 66,.15);color:#1E202F;padding:.1rem .45rem;border-radius:20px;margin-left:.3rem;">0</span></button>
+        </div>
+        <button class="btn btn-secondary btn-sm hidden" id="postOppBtn" type="button">+ Post Opportunity</button>
       </div>
 
       <!-- Mobile filter toggle -->
@@ -264,28 +267,90 @@
   </div>
 </div>
 
+<!-- CREATE OPPORTUNITY MODAL (Mentors & Admins) -->
+<div id="createOppModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="createOppTitle">
+  <div class="modal-card" style="max-width:580px;">
+    <button class="modal-close" id="createOppClose" type="button" aria-label="Close">✕</button>
+    <span class="section-label">New Opportunity</span>
+    <h2 id="createOppTitle" style="margin:.3rem 0 1.25rem;font-family:'Poppins',sans-serif;font-size:1.15rem;">Post an Opportunity</h2>
+    <div class="form-group">
+      <label class="form-label" for="oppTitleInput">Title <span style="color:#ef4444;">*</span></label>
+      <input class="form-input" id="oppTitleInput" type="text" placeholder="e.g. Software Engineering Internship" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label" for="oppOrgInput">Organization / Company <span style="color:#ef4444;">*</span></label>
+        <input class="form-input" id="oppOrgInput" type="text" placeholder="e.g. Nova Tech Solutions" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="oppCatInput">Category</label>
+        <select class="form-select" id="oppCatInput">
+          <option value="Internship">Internship</option>
+          <option value="Job">Job</option>
+          <option value="Scholarship">Scholarship</option>
+          <option value="Certification">Certification</option>
+          <option value="Competition">Competition</option>
+          <option value="Workshop">Workshop</option>
+          <option value="Event">Event</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label" for="oppLocInput">Location</label>
+        <select class="form-select" id="oppLocInput">
+          <option value="Remote">Remote</option>
+          <option value="On-site">On-site</option>
+          <option value="Hybrid">Hybrid</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="oppDeadlineInput">Deadline</label>
+        <input class="form-input" id="oppDeadlineInput" type="date" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="oppDescInput">Description <span style="color:#ef4444;">*</span></label>
+      <textarea class="form-textarea" id="oppDescInput" rows="3" placeholder="Detailed description of the opportunity…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="oppReqInput">Requirements <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+      <textarea class="form-textarea" id="oppReqInput" rows="2" placeholder="Eligibility or skills required…"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="form-group">
+        <label class="form-label" for="oppUrlInput">Application URL</label>
+        <input class="form-input" id="oppUrlInput" type="url" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="oppTagsInput">Tags <span style="color:#9ca3af;font-weight:400;">(comma-separated)</span></label>
+        <input class="form-input" id="oppTagsInput" type="text" placeholder="e.g. Technology, Software" />
+      </div>
+    </div>
+    <div id="createOppFeedback" style="font-size:.85rem;min-height:1.2rem;padding:.25rem 0;"></div>
+    <button class="btn btn-primary" style="width:100%;" id="saveOppBtn" type="button">Publish Opportunity</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
 <script src="../js/theme.js"></script>
 <script>
-var OPPORTUNITIES = [
-  { id:'o1', title:'Software Engineering Internship', org:'Nova Tech Solutions', category:'Internship', location:'Remote', description:'Join Nova Tech\'s engineering team for a 12-week paid internship. Work on real product features alongside senior engineers. Open to Level 300 and above.', requirements:'Level 300+, some programming experience (Python, JavaScript or similar), available June–August.', deadline:'2026-08-30', posted:'2026-07-01', externalUrl:'#', featured:true, tags:['Technology','Software'] },
-  { id:'o2', title:'Alta Future Leaders Scholarship', org:'Alta Financial Group', category:'Scholarship', location:'On-site', description:'Full scholarship for outstanding final-year students in Business, Finance or Economics. Covers tuition and includes a paid internship at Alta.', requirements:'Final-year student, minimum GPA 3.5/4.0, essay submission required.', deadline:'2026-09-15', posted:'2026-07-05', externalUrl:'#', featured:true, tags:['Finance','Business'] },
-  { id:'o3', title:'Google Career Certificates', org:'Google via Coursera', category:'Certification', location:'Remote', description:'Free professional certificates in Data Analytics, UX Design, IT Support, and Project Management. Self-paced and recognised by employers.', requirements:'No prior experience needed. Available to anyone with internet access.', deadline:null, posted:'2026-06-01', externalUrl:'https://grow.google/certificates/', featured:false, tags:['Technology','Career'] },
-  { id:'o4', title:'Career Readiness Workshop', org:'MentorBridge & Meridian Partners', category:'Workshop', location:'On-site', description:'Full-day workshop covering CV writing, interview preparation, and professional networking. Limited seats available.', requirements:'Open to all mentees. Register by September 10.', deadline:'2026-10-10', posted:'2026-08-01', externalUrl:'#', featured:false, tags:['Career','Professional Development'] },
-  { id:'o5', title:'National Coding Challenge 2026', org:'Ghana Tech Council', category:'Competition', location:'Remote', description:'48-hour hackathon open to all university students. Cash prizes and fast-track interview opportunities for winners.', requirements:'Must be enrolled at an accredited university. Teams of 1–4.', deadline:'2026-09-05', posted:'2026-07-20', externalUrl:'#', featured:false, tags:['Technology','Competition'] },
-  { id:'o6', title:'Women in Tech Scholarship', org:'Tech Foundation West Africa', category:'Scholarship', location:'On-site', description:'Full scholarship covering tuition and a living stipend for female students in STEM fields at accredited West African universities.', requirements:'Female student enrolled in a STEM programme, minimum Level 200.', deadline:'2026-09-20', posted:'2026-07-15', externalUrl:'#', featured:false, tags:['Technology','Scholarship','STEM'] },
-  { id:'o7', title:'Finance & Investment Analyst (Graduate)', org:'Ecobank Ghana', category:'Job', location:'On-site', description:'Entry-level analyst position for recent graduates in Finance, Economics or Business. Rotational programme across four departments.', requirements:'Degree in Finance, Economics or related field. Graduated 2024–2026.', deadline:'2026-08-20', posted:'2026-07-25', externalUrl:'#', featured:false, tags:['Finance','Job','Banking'] },
-  { id:'o8', title:'DevFest Accra 2026', org:'Google Developer Groups', category:'Event', location:'On-site', description:'Annual developer festival with talks, workshops, and networking. Speakers from Google and leading African tech companies.', requirements:'Open to all. Free registration required.', deadline:'2026-10-25', posted:'2026-08-10', externalUrl:'#', featured:false, tags:['Technology','Networking'] },
-  { id:'o9', title:'Andela Learning Community', org:'Andela', category:'Certification', location:'Remote', description:'Free 6-week cohort-based learning programme for software engineers. Covers modern web development and career readiness.', requirements:'Some coding experience required. Apply with a brief motivation statement.', deadline:'2026-08-01', posted:'2026-06-15', externalUrl:'#', featured:false, tags:['Technology','Software','Learning'] }
-];
-
+var OPPORTUNITIES = [];
 var saved = {};
 var activeTab = 'all';
 var searchQ = '', filterCat = '', filterLoc = '', filterDeadline = '';
 var sortBy = 'recommended';
+var db = null;
+var currentUid = null;
+var currentRole = 'student';
+var currentUserName = '';
 
 var $ = function(id){ return document.getElementById(id); };
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function catClass(c){ return 'cat-'+c.toLowerCase().replace(/\s+/g,'-'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function catClass(c){ return 'cat-'+String(c||'').toLowerCase().replace(/\s+/g,'-'); }
 
 function deadlineStatus(dl){
   if(!dl) return null;
@@ -293,6 +358,50 @@ function deadlineStatus(dl){
   if(days<0) return {label:'Expired', cls:'deadline-expired', expired:true};
   if(days<=7) return {label:'Closing in '+days+' day'+(days!==1?'s':''), cls:'deadline-soon', expired:false};
   return {label:'Deadline: '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), cls:'deadline-ok', expired:false};
+}
+
+function loadSavedFromStorage() {
+  if (!currentUid) return;
+  try {
+    saved = JSON.parse(localStorage.getItem('mb_saved_opps_' + currentUid) || '{}');
+  } catch(e) { saved = {}; }
+}
+
+function persistSavedToStorage() {
+  if (!currentUid) return;
+  try {
+    localStorage.setItem('mb_saved_opps_' + currentUid, JSON.stringify(saved));
+  } catch(e) {}
+}
+
+async function loadOpportunitiesFromFirestore() {
+  if (!db) return;
+  try {
+    var snapshot = await db.collection('opportunities').get();
+    var list = [];
+    snapshot.forEach(function(doc) {
+      var d = doc.data();
+      list.push({
+        id: doc.id,
+        title: d.title || '',
+        org: d.org || '',
+        category: d.category || 'Job',
+        location: d.location || 'Remote',
+        description: d.description || '',
+        requirements: d.requirements || '',
+        deadline: d.deadline || null,
+        posted: d.posted || (d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+        externalUrl: d.externalUrl || '#',
+        createdBy: d.createdBy || null,
+        creatorName: d.creatorName || '',
+        tags: Array.isArray(d.tags) ? d.tags : (typeof d.tags === 'string' ? d.tags.split(',').map(function(s){return s.trim();}).filter(Boolean) : [])
+      });
+    });
+    OPPORTUNITIES = list;
+  } catch (error) {
+    console.error('Failed to load opportunities from Firestore:', error);
+    OPPORTUNITIES = [];
+  }
 }
 
 function filterOpps(){
@@ -318,7 +427,7 @@ function filterOpps(){
 
 function renderCard(o){
   var dl = deadlineStatus(o.deadline);
-  var isSaved = saved[o.id];
+  var isSaved = !!saved[o.id];
   var dlHtml = dl ? '<span class="opp-deadline '+dl.cls+'">'+esc(dl.label)+'</span>' : '';
   var saveBtn = '<button class="opp-save-btn'+(isSaved?' saved':'')+'" data-opp-id="'+o.id+'" title="'+(isSaved?'Unsave':'Save')+'" type="button">'+(isSaved?'🔖':'🏷️')+'</button>';
   var actionBtn = dl && dl.expired
@@ -341,11 +450,13 @@ function renderCard(o){
 
 function renderGrid(){
   var grid=$('oppGrid'), count=$('oppCount');
-  var list = activeTab==='saved' ? OPPORTUNITIES.filter(function(o){return saved[o.id];}) : filterOpps();
-  $('savedCount').textContent = Object.keys(saved).length;
+  var list = activeTab==='saved' ? OPPORTUNITIES.filter(function(o){return !!saved[o.id];}) : filterOpps();
+  var savedKeys = Object.keys(saved).filter(function(k){ return saved[k]; });
+  $('savedCount').textContent = savedKeys.length;
   if(!list.length){
-    var msg = activeTab==='saved' ? '<h3>No saved opportunities yet.</h3><p>Save opportunities you want to come back to later.</p><button class="btn btn-secondary" onclick="switchTab(\'all\')" type="button">Explore Opportunities</button>'
-      : '<h3>No results found.</h3><p>Try a different search or adjust your filters.</p><button class="btn btn-outline" id="clearFromEmpty" type="button">Clear filters</button>';
+    var msg = activeTab==='saved' 
+      ? '<h3>No saved opportunities yet.</h3><p>Save opportunities you want to come back to later.</p><button class="btn btn-secondary" onclick="switchTab(\'all\')" type="button">Explore Opportunities</button>'
+      : '<h3>No opportunities available yet.</h3><p>Try adjusting your search or filters' + (currentRole==='mentor'||currentRole==='admin' ? ', or post a new opportunity to get started.' : '.') + '</p>' + (searchQ||filterCat||filterLoc||filterDeadline ? '<button class="btn btn-outline" id="clearFromEmpty" type="button">Clear filters</button>' : '');
     grid.innerHTML='<div class="opp-empty"><div class="opp-empty-icon">💼</div>'+msg+'</div>';
     var ce=$('clearFromEmpty'); if(ce) ce.addEventListener('click',clearFilters);
     count.textContent='0 results';
@@ -365,6 +476,7 @@ function bindCardBtns(){
       e.stopPropagation();
       var id=btn.dataset.oppId;
       saved[id] = !saved[id];
+      persistSavedToStorage();
       renderGrid();
     });
   });
@@ -373,6 +485,9 @@ function bindCardBtns(){
 function openDetail(id){
   var o=OPPORTUNITIES.find(function(x){return x.id===id;}); if(!o) return;
   var dl=deadlineStatus(o.deadline);
+  var isOwnerOrAdmin = o.createdBy === currentUid || currentRole === 'admin';
+  var deleteBtnHtml = isOwnerOrAdmin ? '<button class="btn btn-outline delete-opp-btn" data-opp-id="'+o.id+'" style="color:#ef4444;border-color:#ef4444;margin-left:auto;" type="button">Delete</button>' : '';
+
   $('oppDetailBody').innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem;">'
     +'<div><span class="opp-cat-badge '+catClass(o.category)+'" style="font-size:.72rem;">'+esc(o.category)+'</span></div>'
@@ -384,16 +499,41 @@ function openDetail(id){
     +(o.requirements?'<div style="background:#f8f9fc;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;"><p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:0 0 .4rem;">Requirements</p><p style="font-size:.82rem;color:#444455;margin:0;line-height:1.65;">'+esc(o.requirements)+'</p></div>':'')
     +'<div class="detail-row"><span class="dl">Location</span><span class="dv">'+esc(o.location)+'</span></div>'
     +(o.deadline?'<div class="detail-row"><span class="dl">Deadline</span><span class="dv">'+new Date(o.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</span></div>':'')
-    +'<div class="detail-row"><span class="dl">Posted</span><span class="dv">'+new Date(o.posted).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</span></div>'
-    +'<div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;">'
+    +'<div class="detail-row"><span class="dl">Posted</span><span class="dv">'+fmtDate(o.posted)+'</span></div>'
+    +'<div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;align-items:center;">'
     +(dl&&dl.expired
       ? '<p style="font-size:.82rem;color:#6b7280;margin:0;">This opportunity is no longer available.</p>'
       : '<a href="'+(o.externalUrl&&o.externalUrl!=='#'?esc(o.externalUrl):'#')+'" class="btn btn-secondary" target="_blank" rel="noopener"'+(!o.externalUrl||o.externalUrl==='#'?' onclick="return false;"':'')+'>Apply on External Website →</a>')
     +'<button class="btn btn-outline opp-save-btn'+(saved[o.id]?' saved':'')+'" data-opp-id="'+o.id+'" type="button">'+(saved[o.id]?'🔖 Saved':'🏷️ Save')+'</button>'
+    + deleteBtnHtml
     +'</div>';
+
   $('oppDetailBody').querySelectorAll('.opp-save-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){ saved[btn.dataset.oppId]=!saved[btn.dataset.oppId]; renderGrid(); openDetail(id); });
+    btn.addEventListener('click',function(){
+      saved[btn.dataset.oppId]=!saved[btn.dataset.oppId];
+      persistSavedToStorage();
+      renderGrid();
+      openDetail(id);
+    });
   });
+
+  var dBtn = $('oppDetailBody').querySelector('.delete-opp-btn');
+  if (dBtn) {
+    dBtn.addEventListener('click', async function() {
+      if (!confirm('Are you sure you want to delete this opportunity?')) return;
+      try {
+        await db.collection('opportunities').doc(id).delete();
+        $('oppDetailModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        await refreshOpportunities();
+        showToast('Opportunity deleted');
+      } catch (err) {
+        console.error('Failed to delete opportunity:', err);
+        alert('Failed to delete opportunity: ' + err.message);
+      }
+    });
+  }
+
   $('oppDetailModal').classList.remove('hidden'); document.body.style.overflow='hidden';
 }
 
@@ -410,15 +550,26 @@ function switchTab(tab){
   renderGrid();
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+async function refreshOpportunities() {
+  await loadOpportunitiesFromFirestore();
+  renderGrid();
+}
+
+document.addEventListener('DOMContentLoaded', async function(){
   var session={};
   try{session=JSON.parse(sessionStorage.getItem('mb_session')||'{}');}catch(e){}
-  var role=session.role||'student', name=session.name||(role==='mentor'?'Grace Akoto':'Amina Boateng');
-  if(!session.role){window.location.replace('auth.html');return;}
-  var inits=name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-  $('sidebarInitials').textContent=inits; $('sidebarName').textContent=name; $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee'; $('headerAvatar').textContent=inits;
+  if(!session.uid || !session.role){window.location.replace('auth.html');return;}
 
-  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  currentRole = session.role;
+  currentUid = session.uid;
+  currentUserName = session.name || 'User';
+
+  loadSavedFromStorage();
+
+  var inits = currentUserName.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  $('sidebarInitials').textContent=inits; $('sidebarName').textContent=currentUserName; $('sidebarRole').textContent=currentRole==='mentor'?'Mentor':currentRole==='admin'?'Admin':'Mentee'; $('headerAvatar').textContent=inits;
+
+  var dashUrl=currentRole==='mentor'?'mentor-dashboard.html':currentRole==='admin'?'../admin/dashboard.html':'student-dashboard.html';
   var links=[
     {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
     {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities',active:true},
@@ -426,6 +577,11 @@ document.addEventListener('DOMContentLoaded', function(){
     {href:'notifications.html',icon:'🔔',label:'Notifications'},{href:'settings.html',icon:'⚙️',label:'Settings'}
   ];
   $('sidebarNav').innerHTML=links.map(function(l){return '<a href="'+l.href+'"'+(l.active?' class="active"':'')+'><span class="db-nav-icon">'+l.icon+'</span>'+l.label+'</a>';}).join('');
+
+  if (currentRole === 'mentor' || currentRole === 'admin') {
+    var postBtn = $('postOppBtn');
+    if (postBtn) postBtn.classList.remove('hidden');
+  }
 
   var menuBtn=$('menuBtn'),sidebar=$('dbSidebar'),overlay=$('sidebarOverlay');
   if(menuBtn) menuBtn.addEventListener('click',function(){sidebar.classList.toggle('open');overlay.classList.toggle('open');});
@@ -443,7 +599,18 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   })();
 
-  // Search
+  // Initialize Firebase & Load Opportunities
+  try {
+    await initializeFirebaseConfig();
+    db = getFirestore();
+    await refreshOpportunities();
+  } catch(error) {
+    console.error('Failed to initialize Firebase for opportunities:', error);
+    OPPORTUNITIES = [];
+    renderGrid();
+  }
+
+  // Search & Filter listeners
   var deb; $('oppSearch').addEventListener('input',function(){ clearTimeout(deb); searchQ=$('oppSearch').value.trim(); deb=setTimeout(renderGrid,250); });
   $('filterCat').addEventListener('change',function(){filterCat=$('filterCat').value;renderGrid();});
   $('filterLoc').addEventListener('change',function(){filterLoc=$('filterLoc').value;renderGrid();});
@@ -458,15 +625,98 @@ document.addEventListener('DOMContentLoaded', function(){
   // Modal close
   $('oppDetailClose').addEventListener('click',function(){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';});
   $('oppDetailModal').addEventListener('click',function(e){if(e.target===$('oppDetailModal')){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';}});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'){$('oppDetailModal').classList.add('hidden');document.body.style.overflow='';}});
+  
+  if ($('createOppClose')) $('createOppClose').addEventListener('click', function(){ $('createOppModal').classList.add('hidden'); document.body.style.overflow=''; });
+  if ($('createOppModal')) $('createOppModal').addEventListener('click', function(e){ if(e.target===$('createOppModal')){ $('createOppModal').classList.add('hidden'); document.body.style.overflow=''; } });
 
-  // Load
-  setTimeout(renderGrid,400);
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      $('oppDetailModal').classList.add('hidden');
+      if ($('createOppModal')) $('createOppModal').classList.add('hidden');
+      document.body.style.overflow='';
+    }
+  });
+
+  // Post Opportunity Modal Open
+  if ($('postOppBtn')) {
+    $('postOppBtn').addEventListener('click', function() {
+      $('createOppModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  // Publish Opportunity Form Submit
+  if ($('saveOppBtn')) {
+    $('saveOppBtn').addEventListener('click', async function() {
+      var btn = $('saveOppBtn'), fb = $('createOppFeedback');
+      var title = $('oppTitleInput').value.trim();
+      var org = $('oppOrgInput').value.trim();
+      var desc = $('oppDescInput').value.trim();
+
+      if (!title || !org || !desc) {
+        fb.textContent = 'Please fill in all required fields (*).';
+        fb.style.color = '#ef4444';
+        return;
+      }
+
+      btn.textContent = 'Publishing…'; btn.disabled = true;
+
+      var tagsInput = $('oppTagsInput').value.trim();
+      var tagsList = tagsInput ? tagsInput.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+
+      var newOpp = {
+        title: title,
+        org: org,
+        category: $('oppCatInput').value,
+        location: $('oppLocInput').value,
+        deadline: $('oppDeadlineInput').value || null,
+        description: desc,
+        requirements: $('oppReqInput').value.trim(),
+        externalUrl: $('oppUrlInput').value.trim() || '#',
+        tags: tagsList,
+        createdBy: currentUid,
+        creatorName: currentUserName,
+        posted: new Date().toISOString().split('T')[0],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection('opportunities').add(newOpp);
+        $('createOppModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        btn.textContent = 'Publish Opportunity'; btn.disabled = false;
+        
+        $('oppTitleInput').value = '';
+        $('oppOrgInput').value = '';
+        $('oppDescInput').value = '';
+        $('oppReqInput').value = '';
+        $('oppUrlInput').value = '';
+        $('oppTagsInput').value = '';
+        $('oppDeadlineInput').value = '';
+        fb.textContent = '';
+
+        await refreshOpportunities();
+        showToast('Opportunity published successfully!');
+      } catch (err) {
+        console.error('Failed to post opportunity:', err);
+        fb.textContent = 'Failed to publish: ' + err.message;
+        fb.style.color = '#ef4444';
+        btn.textContent = 'Publish Opportunity'; btn.disabled = false;
+      }
+    });
+  }
 
   // URL param
   var urlParams=new URLSearchParams(window.location.search);
   if(urlParams.get('saved')==='1') setTimeout(function(){switchTab('saved');},450);
 });
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1E202F;color:#fff;padding:.75rem 1.5rem;border-radius:12px;font-size:.875rem;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(26,0,26,0.2);';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); },3000);
+}
 </script>
 
 <!-- LOGOUT CONFIRMATION MODAL -->
@@ -483,3 +733,4 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </body>
 </html>
+

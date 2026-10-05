@@ -252,6 +252,45 @@ service cloud.firestore {
     }
 
     // ================================================================
+    // GOALS AND TRACKING
+    // ================================================================
+    
+    match /goals/{goalId} {
+      // Students can read their own goals; mentors and admins can read goals
+      allow read: if isSignedIn() && 
+                    (resource.data.uid == request.auth.uid || isMentor() || isAdmin());
+      
+      // Users can create goals for themselves
+      allow create: if isSignedIn() && 
+                      request.resource.data.uid == request.auth.uid;
+      
+      // Goal owners, mentors, or admins can update goals
+      allow update: if isSignedIn() && 
+                      (resource.data.uid == request.auth.uid || isMentor() || isAdmin());
+      
+      // Goal owners or admins can delete goals
+      allow delete: if isSignedIn() && 
+                      (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // ================================================================
+    // OPPORTUNITIES
+    // ================================================================
+    
+    match /opportunities/{oppId} {
+      // Public read access for all signed-in users
+      allow read: if isSignedIn();
+      
+      // Mentors and admins can create opportunities
+      allow create: if isSignedIn() && (isMentor() || isAdmin());
+      
+      // Mentors can update/delete opportunities they created, admins can update/delete any
+      allow update, delete: if isSignedIn() && 
+                              ((isMentor() && resource.data.createdBy == request.auth.uid) || isAdmin());
+    }
+
+
+    // ================================================================
     // ANALYTICS AND ADMIN
     // ================================================================
     

@@ -47,7 +47,7 @@ class MentorBridgeMessaging {
 
       // Set up auth state listener
       this.auth.onAuthStateChanged(this._handleAuthStateChange);
-      this.currentUser = this.auth.currentUser;
+      this._syncCurrentUser();
 
       if (this.currentUser) {
         await this._setupUserConversations();
@@ -64,12 +64,36 @@ class MentorBridgeMessaging {
   }
 
   /**
+   * Sync current user from Firebase Auth or sessionStorage
+   */
+  _syncCurrentUser() {
+    if (this.auth && this.auth.currentUser) {
+      this.currentUser = this.auth.currentUser;
+      return this.currentUser;
+    }
+    try {
+      const session = JSON.parse(sessionStorage.getItem('mb_session') || '{}');
+      if (session && session.uid) {
+        this.currentUser = {
+          uid: session.uid,
+          email: session.email || '',
+          name: session.name || 'User',
+          displayName: session.name || 'User',
+          role: session.role || 'student'
+        };
+        return this.currentUser;
+      }
+    } catch (e) {}
+    return this.currentUser;
+  }
+
+  /**
    * Handle authentication state changes
    */
   async _handleAuthStateChange(user) {
-    this.currentUser = user;
+    this.currentUser = user || this._syncCurrentUser();
 
-    if (user) {
+    if (this.currentUser) {
       await this._setupUserConversations();
     } else {
       this._cleanupListeners();
@@ -133,6 +157,7 @@ class MentorBridgeMessaging {
    * Create a new conversation between users
    */
   async createConversation(participantIds, initialMessage = null) {
+    this._syncCurrentUser();
     if (!this.initialized || !this.currentUser) {
       throw new Error('Messaging service not initialized or user not authenticated');
     }
@@ -251,21 +276,15 @@ class MentorBridgeMessaging {
    * Get user's conversations
    */
   async getConversations() {
+    this._syncCurrentUser();
     if (!this.initialized || !this.currentUser) {
       throw new Error('Messaging service not initialized or user not authenticated');
     }
 
     try {
-      // Return cached conversations if available
-      if (this.conversationCache.size > 0) {
-        return Array.from(this.conversationCache.values())
-          .sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-      }
-
       // Fetch from Firestore
       const snapshot = await this.db.collection('conversations')
         .where('participants', 'array-contains', this.currentUser.uid)
-        .orderBy('lastMessageAt', 'desc')
         .get();
 
       const conversations = snapshot.docs.map(doc => ({
@@ -274,6 +293,9 @@ class MentorBridgeMessaging {
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         lastMessageAt: doc.data().lastMessageAt?.toDate() || new Date()
       }));
+
+      // Sort by lastMessageAt descending in memory (avoids requiring a composite index)
+      conversations.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
 
       // Cache conversations
       conversations.forEach(conv => {
@@ -296,6 +318,7 @@ class MentorBridgeMessaging {
    * Send a message in a conversation
    */
   async sendMessage(conversationId, text, type = this.MessageTypes.TEXT, metadata = {}) {
+    this._syncCurrentUser();
     if (!this.initialized || !this.currentUser) {
       throw new Error('Messaging service not initialized or user not authenticated');
     }
@@ -306,7 +329,7 @@ class MentorBridgeMessaging {
       const message = {
         conversationId: conversationId,
         senderId: this.currentUser.uid,
-        senderName: this.currentUser.displayName || 'Unknown User',
+        senderName: this.currentUser.displayName || this.currentUser.name || 'Unknown User',
         text: text,
         type: type,
         sentAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -367,6 +390,7 @@ class MentorBridgeMessaging {
    * Get messages for a conversation with real-time updates
    */
   listenToMessages(conversationId, callback, limit = 50) {
+    this._syncCurrentUser();
     if (!this.initialized || !this.currentUser) {
       throw new Error('Messaging service not initialized or user not authenticated');
     }

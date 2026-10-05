@@ -447,7 +447,7 @@
       <div class="card kpi loading">
         <div class="kpi-top">
           <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="kpi-title">Completed Programs</div>
+          <div class="kpi-title">Completed Sessions</div>
         </div>
         <div class="kpi-value">--</div>
         <div class="kpi-trend">Loading...</div>
@@ -459,14 +459,12 @@
       <div class="panel">
         <div class="panel-head">
           <h3>My Mentees</h3>
-          <a class="view-all" href="#mentees">View All</a>
+          <a class="view-all" href="coming-soon.html">View All</a>
         </div>
         <div id="menteesContent">
           <div class="empty-state">
             <div class="empty-state-icon">👥</div>
-            <div class="empty-state-title">No mentees yet</div>
-            <div class="empty-state-text">When students join your mentorship program, they'll appear here.</div>
-            <button class="btn-action">Share Your Profile</button>
+            <div class="empty-state-title">Loading...</div>
           </div>
         </div>
       </div>
@@ -474,7 +472,7 @@
       <div class="panel">
         <div class="panel-head">
           <h3>Upcoming Sessions</h3>
-          <a class="view-all" href="#sessions">View All</a>
+          <a class="view-all" href="sessions.html">View All</a>
         </div>
         <div id="sessionsContent">
           <div class="empty-state">
@@ -554,7 +552,7 @@
   async function loadUserData() {
     try {
       const session = JSON.parse(sessionStorage.getItem('mb_session') || '{}');
-      if (!session.userId) {
+      if (!session.uid) {
         window.location.href = './auth.html';
         return;
       }
@@ -588,18 +586,25 @@
   // Load dashboard data from Firebase
   async function loadDashboardData() {
     try {
-      // Load KPI data
-      await loadKPIData();
-      
-      // Load mentees
-      await loadMentees();
-      
-      // Load sessions
-      await loadSessions();
-      
-      // Load activity
-      await loadActivity();
-      
+      // Fetch this mentor's sessions once, share across all four sections
+      const snapshot = await db.collection('sessions')
+        .where('mentorId', '==', currentUser.uid)
+        .get();
+      const sessions = snapshot.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          ...d,
+          requestedAt: d.requestedAt?.toDate() || null,
+          scheduledAt: d.scheduledAt?.toDate() || null
+        };
+      });
+
+      await calculateRealKPIs(sessions);
+      await loadMentees(sessions);
+      await loadSessions(sessions);
+      await loadActivity(sessions);
+
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       loadDemoData();
@@ -610,7 +615,7 @@
   async function loadKPIData() {
     try {
       // Try to get stats from Firestore
-      const statsDoc = await db.collection('mentorStats').doc(currentUser.userId).get();
+      const statsDoc = await db.collection('mentorStats').doc(currentUser.uid).get();
       
       if (statsDoc.exists) {
         const stats = statsDoc.data();
@@ -625,65 +630,50 @@
     }
   }
 
-  // Calculate real KPIs from Firestore
-  async function calculateRealKPIs() {
+  // Calculate real KPIs from Firestore — derived from the sessions collection,
+  // since mentor-student relationships live on session documents (mentorId/studentId),
+  // not as a field on the user record.
+  async function calculateRealKPIs(sessionsCache) {
     try {
-      // Count mentees assigned to this mentor
-      const menteesSnapshot = await db.collection('users')
-        .where('mentorId', '==', currentUser.userId)
-        .where('role', '==', 'mentee')
-        .get();
-      const totalMentees = menteesSnapshot.size;
+      const sessions = sessionsCache || await db.collection('sessions')
+        .where('mentorId', '==', currentUser.uid)
+        .get().then(snap => snap.docs.map(d => {
+          const data = d.data();
+          return { id: d.id, ...data, scheduledAt: data.scheduledAt?.toDate() || null };
+        }));
 
-      // Count upcoming sessions
       const now = new Date();
-      const sessionsSnapshot = await db.collection('sessions')
-        .where('mentorId', '==', currentUser.userId)
-        .where('scheduledTime', '>=', now)
-        .where('status', '==', 'scheduled')
-        .get();
-      const upcomingSessions = sessionsSnapshot.size;
+      const distinctMentees = new Set(sessions.map(s => s.studentId));
+      const activeStatuses = ['accepted', 'in_progress'];
+      const activeMentees = new Set(sessions.filter(s => activeStatuses.includes(s.status)).map(s => s.studentId));
+      const upcomingSessions = sessions.filter(s => s.status === 'accepted' && s.scheduledAt && s.scheduledAt > now).length;
+      const completedSessions = sessions.filter(s => s.status === 'completed').length;
 
-      // Count active mentorships
-      const activeMentorships = await db.collection('users')
-        .where('mentorId', '==', currentUser.userId)
-        .where('role', '==', 'mentee')
-        .where('status', '==', 'active')
-        .get();
-      const activeMentorshipsCount = activeMentorships.size;
-
-      // Count completed programs
-      const completedSnapshot = await db.collection('users')
-        .where('mentorId', '==', currentUser.userId)
-        .where('role', '==', 'mentee')
-        .where('programStatus', '==', 'completed')
-        .get();
-      const completedPrograms = completedSnapshot.size;
-
-      const stats = {
-        totalMentees,
+      updateKPIs({
+        totalMentees: distinctMentees.size,
         upcomingSessions,
-        activeMentorships: activeMentorshipsCount,
-        completedPrograms
-      };
+        activeMentorships: activeMentees.size,
+        completedPrograms: completedSessions
+      });
 
-      updateKPIs(stats);
-      
+      return sessions;
+
     } catch (error) {
       console.error('Error calculating KPIs:', error);
       updateKPIs({ totalMentees: 0, upcomingSessions: 0, activeMentorships: 0, completedPrograms: 0 });
+      return [];
     }
   }
 
-  // Update KPI cards
+  // Update KPI cards — real values only, no fabricated trend percentages
   function updateKPIs(stats) {
     const kpiCards = document.querySelectorAll('.kpi');
-    
+
     const kpiData = [
-      { title: 'Total Mentees', value: stats.totalMentees || 0, trend: '+20%', trendUp: true },
-      { title: 'Upcoming Sessions', value: stats.upcomingSessions || 0, trend: '+50%', trendUp: true },
-      { title: 'Active Mentorships', value: stats.activeMentorships || 0, trend: '+33%', trendUp: true },
-      { title: 'Completed Programs', value: stats.completedPrograms || 0, trend: '+67%', trendUp: true }
+      { value: stats.totalMentees || 0, sub: 'Distinct students you\'ve had sessions with' },
+      { value: stats.upcomingSessions || 0, sub: 'Accepted sessions scheduled ahead' },
+      { value: stats.activeMentorships || 0, sub: 'Currently active or in-progress' },
+      { value: stats.completedPrograms || 0, sub: 'Sessions marked completed' }
     ];
 
     kpiCards.forEach((card, index) => {
@@ -691,33 +681,39 @@
         const data = kpiData[index];
         card.classList.remove('loading');
         card.querySelector('.kpi-value').textContent = data.value;
-        card.querySelector('.kpi-trend').innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="${data.trendUp ? 'up' : 'down'}">
-            <path d="${data.trendUp ? 'M7 17L17 7M17 7H9M17 7v8' : 'M17 7L7 17M7 17h8M7 17V9'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          ${data.trend} <span class="sub">vs last month</span>
-        `;
-        card.querySelector('.kpi-trend').className = `kpi-trend ${data.trendUp ? 'up' : 'down'}`;
+        const trendEl = card.querySelector('.kpi-trend');
+        if (trendEl) {
+          trendEl.innerHTML = `<span class="sub">${data.sub}</span>`;
+          trendEl.className = 'kpi-trend';
+        }
       }
     });
   }
 
-  // Load mentees
-  async function loadMentees() {
+  // Load mentees — derived from real sessions (distinct students this mentor has sessions with)
+  async function loadMentees(sessionsCache) {
     try {
-      const menteesSnapshot = await db.collection('users')
-        .where('mentorId', '==', currentUser.userId)
-        .where('role', '==', 'mentee')
-        .limit(5)
-        .get();
+      const sessions = sessionsCache || await db.collection('sessions')
+        .where('mentorId', '==', currentUser.uid)
+        .get().then(snap => snap.docs.map(d => ({ id: d.id, ...d.data() })));
 
-      const mentees = menteesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+      const byStudent = new Map();
+      sessions.forEach(s => {
+        if (!s.studentId) return;
+        const existing = byStudent.get(s.studentId);
+        if (!existing || (s.requestedAt?.seconds || 0) > (existing.requestedAt?.seconds || 0)) {
+          byStudent.set(s.studentId, s);
+        }
+      });
+
+      const mentees = Array.from(byStudent.values()).slice(0, 5).map(s => ({
+        name: s.studentName || 'Student',
+        email: s.studentEmail || '',
+        status: s.status || 'pending'
       }));
 
       renderMentees(mentees);
-      
+
     } catch (error) {
       console.error('Error loading mentees:', error);
       renderMentees([]);
@@ -733,8 +729,7 @@
         <div class="empty-state">
           <div class="empty-state-icon">👥</div>
           <div class="empty-state-title">No mentees yet</div>
-          <div class="empty-state-text">When students join your mentorship program, they'll appear here.</div>
-          <button class="btn-action">Share Your Profile</button>
+          <div class="empty-state-text">When students book a session with you, they'll appear here.</div>
         </div>
       `;
       return;
@@ -745,7 +740,6 @@
         <thead>
           <tr>
             <th>Mentee</th>
-            <th>Program Stage</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -754,7 +748,6 @@
 
     mentees.forEach(mentee => {
       const initials = (mentee.name || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-      const stage = mentee.programStage || 'Not Started';
       const status = mentee.status || 'pending';
       
       tableHTML += `
@@ -766,12 +759,6 @@
                 <div class="name-primary">${mentee.name || 'Unknown'}</div>
                 <div class="name-secondary">${mentee.email || 'No email'}</div>
               </div>
-            </div>
-          </td>
-          <td>
-            <div class="stage-cell">
-              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
-              ${stage}
             </div>
           </td>
           <td>
@@ -789,24 +776,23 @@
     container.innerHTML = tableHTML;
   }
 
-  // Load sessions
-  async function loadSessions() {
+  // Load sessions — real upcoming, accepted sessions for this mentor
+  async function loadSessions(sessionsCache) {
     try {
       const now = new Date();
-      const sessionsSnapshot = await db.collection('sessions')
-        .where('mentorId', '==', currentUser.userId)
-        .where('scheduledTime', '>=', now)
-        .where('status', '==', 'scheduled')
-        .orderBy('scheduledTime', 'asc')
-        .limit(3)
-        .get();
+      const sessions = sessionsCache || await db.collection('sessions')
+        .where('mentorId', '==', currentUser.uid)
+        .get().then(snap => snap.docs.map(d => {
+          const data = d.data();
+          return { id: d.id, ...data, scheduledAt: data.scheduledAt?.toDate() || null };
+        }));
 
-      const sessions = sessionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const upcoming = sessions
+        .filter(s => s.status === 'accepted' && s.scheduledAt && s.scheduledAt > now)
+        .sort((a, b) => a.scheduledAt - b.scheduledAt)
+        .slice(0, 3);
 
-      renderSessions(sessions);
+      renderSessions(upcoming);
       
     } catch (error) {
       console.error('Error loading sessions:', error);
@@ -831,8 +817,8 @@
 
     let sessionsHTML = '';
     sessions.forEach(session => {
-      const date = session.scheduledTime ? new Date(session.scheduledTime.seconds * 1000) : new Date();
-      const menteeName = session.menteeName || 'Mentee';
+      const date = session.scheduledAt || new Date();
+      const studentName = session.studentName || 'Student';
       
       sessionsHTML += `
         <div class="activity-item">
@@ -840,7 +826,7 @@
             <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8"/></svg>
           </div>
           <div class="name-info">
-            <div class="act-title">Session with ${menteeName}</div>
+            <div class="act-title">Session with ${studentName}</div>
             <div class="act-sub">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
             <div class="act-time">${session.topic || 'General mentorship'}</div>
           </div>
@@ -851,21 +837,19 @@
     container.innerHTML = sessionsHTML;
   }
 
-  // Load activity
-  async function loadActivity() {
+  // Load activity — built from real session status history (there is no separate
+  // "activity" collection in the database, so this derives activity from sessions)
+  async function loadActivity(sessionsCache) {
     try {
-      const activitySnapshot = await db.collection('activity')
-        .where('userId', '==', currentUser.userId)
-        .orderBy('timestamp', 'desc')
-        .limit(5)
-        .get();
+      const sessions = sessionsCache || await db.collection('sessions')
+        .where('mentorId', '==', currentUser.uid)
+        .get().then(snap => snap.docs.map(d => {
+          const data = d.data();
+          return { id: d.id, ...data, requestedAt: data.requestedAt?.toDate() || null };
+        }));
 
-      const activities = activitySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      renderActivity(activities);
+      const sorted = [...sessions].sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0)).slice(0, 5);
+      renderActivity(sorted);
       
     } catch (error) {
       console.error('Error loading activity:', error);
@@ -874,10 +858,10 @@
   }
 
   // Render activity
-  function renderActivity(activities) {
+  function renderActivity(sessions) {
     const container = document.getElementById('activityContent');
     
-    if (activities.length === 0) {
+    if (sessions.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">📊</div>
@@ -888,9 +872,18 @@
       return;
     }
 
+    const statusText = {
+      pending: 'requested a session with you',
+      accepted: 'session accepted',
+      declined: 'session declined',
+      completed: 'session completed',
+      cancelled: 'session cancelled'
+    };
+
     let activityHTML = '';
-    activities.forEach(activity => {
-      const date = activity.timestamp ? new Date(activity.timestamp.seconds * 1000) : new Date();
+    sessions.forEach(session => {
+      const date = session.requestedAt || new Date();
+      const title = `${session.studentName || 'A student'} ${statusText[session.status] || session.status || ''}`;
       
       activityHTML += `
         <div class="activity-item">
@@ -898,8 +891,8 @@
             <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="name-info">
-            <div class="act-title">${activity.title || 'Activity'}</div>
-            <div class="act-sub">${activity.description || ''}</div>
+            <div class="act-title">${title}</div>
+            <div class="act-sub">${session.topic || ''}</div>
             <div class="act-time">${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
           </div>
         </div>
@@ -948,32 +941,34 @@
   // Navigation handling
   function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item[data-tab]');
-    
+
+    // Where each tab actually goes. Tabs with no page yet go to coming-soon.
+    const destinations = {
+      dashboard: null, // already here
+      mentees: 'coming-soon.html',
+      sessions: 'sessions.html',
+      profile: 'mentor-profile.html',
+      resources: 'resource-centre.html',
+      messages: 'messages.html',
+      reports: 'coming-soon.html',
+      settings: 'settings.html'
+    };
+
     navItems.forEach(item => {
       item.addEventListener('click', (e) => {
         e.preventDefault();
         const tab = item.dataset.tab;
-        
-        // Update active state
+        const destination = destinations[tab];
+
+        if (destination) {
+          window.location.href = destination;
+          return;
+        }
+
+        // Update active state for the dashboard tab itself
         navItems.forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
-        
-        // Update page title
-        const titles = {
-          dashboard: 'Dashboard',
-          mentees: 'My Mentees',
-          sessions: 'Sessions',
-          profile: 'My Profile',
-          resources: 'Resources',
-          messages: 'Messages',
-          reports: 'Reports',
-          settings: 'Settings'
-        };
-        
-        document.getElementById('pageTitle').textContent = titles[tab] || 'Dashboard';
-        
-        // For now, just show dashboard content
-        // In future, implement tab content switching
+        document.getElementById('pageTitle').textContent = 'Dashboard';
       });
     });
   }

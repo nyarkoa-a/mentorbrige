@@ -247,7 +247,6 @@ class AuthUIIntegrationService {
       this.authState = 'loading';
       await this.updateUIForAuthState();
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
         const profileDoc = await window.mentorBridgeAuth.db
           .collection('users').doc(user.uid).get();
         if (profileDoc.exists) {
@@ -396,18 +395,14 @@ class AuthUIIntegrationService {
     if (!this.currentUser || !this.userProfile) return;
 
     // Update user avatar
-    const avatarElement = this.uiElements.get('user-avatar');
-    if (avatarElement) {
-      const initials = this.getUserInitials(this.userProfile.name);
-      if (avatarElement.tagName === 'IMG') {
-        // If it's an image element, we could set a profile picture URL
-        // For now, we'll replace with initials div
-        avatarElement.outerHTML = `<div class="db-user-avatar-initials">${initials}</div>`;
-      } else {
-        avatarElement.textContent = initials;
-        avatarElement.title = this.userProfile.name;
+    const initials = this.getUserInitials(this.userProfile.name);
+    ['sidebarInitials', 'sidebarAvatar', 'headerAvatar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = initials;
+        el.title = this.userProfile.name || '';
       }
-    }
+    });
 
     // Update user name
     const nameElement = this.uiElements.get('user-name');

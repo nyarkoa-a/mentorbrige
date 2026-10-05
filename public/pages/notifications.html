@@ -33,18 +33,18 @@
     .db-sidebar-brand img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
     .db-sidebar-brand span { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFFFFF 40%, #60A5FA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .db-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
-    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
-    .db-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
-    .db-nav a.active { background: rgba(43, 45, 66,0.12); color: #2B2D42; font-weight: 600; }
-    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2B2D42; border-radius: 0 2px 2px 0; }
+    .db-nav a { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 0.15s, color 0.15s; position: relative; }
+    .db-nav a:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+    .db-nav a.active { background: rgba(27, 98, 222, 0.25); color: #ffffff; font-weight: 600; }
+    .db-nav a.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #3B82F6; border-radius: 0 3px 3px 0; }
     .db-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
     .db-sidebar-footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.5rem; }
     .db-user-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
-    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: rgba(43, 45, 66,0.2); color: #2B2D42; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(43, 45, 66,0.4); }
-    .db-user-info strong { display: block; color: #fff; font-size: 0.875rem; font-weight: 600; }
-    .db-user-info span { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
-    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.5); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
-    .db-logout-btn:hover { color: #fff; }
+    .db-user-avatar-initials { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1B62DE 0%, #0D4BC2 100%); color: #ffffff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .db-user-info strong { display: block; color: #ffffff; font-size: 0.875rem; font-weight: 600; }
+    .db-user-info span { color: rgba(255,255,255,0.55); font-size: 0.72rem; }
+    .db-logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.6); font-size: 0.8rem; background: none; border: none; cursor: pointer; padding: 0.4rem 0; font-family: inherit; transition: color 0.15s; }
+    .db-logout-btn:hover { color: #ffffff; }
     .db-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
     .db-sidebar-overlay.open { display: block; }
     .db-main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -54,7 +54,7 @@
     .db-welcome h1 { font-family: 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 700; color: #1E202F; margin: 0; }
     .db-welcome p { font-size: 0.78rem; color: #6b7280; margin: 0.1rem 0 0; }
     .db-header-right { display: flex; align-items: center; gap: 0.75rem; }
-    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(43, 45, 66,0.15); color: #2B2D42; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(43, 45, 66,0.35); cursor: pointer; }
+    .db-header-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #1B62DE 0%, #0D4BC2 100%); color: #ffffff; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(27, 98, 222, 0.25); cursor: pointer; box-shadow: 0 2px 6px rgba(27,98,222,0.2); }
     .db-content { padding: 2rem; flex: 1; max-width: 780px; }
 
     /* ── Notification styles ── */
@@ -256,33 +256,26 @@ async function initializeNotifications() {
     notificationsService = window.mentorBridgeNotifications;
     await notificationsService.initialize();
 
-    // Set up real-time listener
-    notificationsService.setEventCallbacks({
-      onNotificationReceived: function(notifications) {
-        NOTIFS = notificationsService.convertToLegacyFormat ? 
-                 notificationsService.convertToLegacyFormat(notifications) : 
-                 convertFirebaseNotifications(notifications);
-        renderNotifs();
-      },
-      onUnreadCountChange: function(count) {
-        $('unreadCount').textContent = count;
-      }
-    });
-
-    // Load initial notifications
+    // Load real notifications and real unread count. (The real service has no
+    // public live-callback subscription method, so this re-fetches after any
+    // action — such as marking one read — rather than listening continuously.)
     try {
-      const result = await notificationsService.getNotifications(50);
+      const result = await notificationsService.getNotifications({ limit: 50 });
       const notifications = result.notifications || result;
       NOTIFS = convertFirebaseNotifications(notifications);
       renderNotifs();
+      const count = await notificationsService.getUnreadCount();
+      if ($('unreadCount')) $('unreadCount').textContent = count;
     } catch(error) {
-      console.warn('Could not load notifications, using fallback data:', error);
-      loadFallbackNotifications();
+      console.error('Could not load real notifications, showing empty state:', error);
+      NOTIFS = [];
+      renderNotifs();
     }
 
   } catch(error) {
     console.error('Failed to initialize Firebase notifications:', error);
-    loadFallbackNotifications();
+    NOTIFS = [];
+    renderNotifs();
   }
 }
 
@@ -296,7 +289,7 @@ function convertFirebaseNotifications(firebaseNotifications) {
       title: notification.title,
       desc: notification.message,
       ts: notification.createdAt ? notification.createdAt.getTime() : Date.now(),
-      read: notification.read || false,
+      read: !!notification.readAt,
       href: getNotificationHref(notification)
     };
   });
@@ -359,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function(){
   $('sidebarRole').textContent=role==='mentor'?'Mentor':role==='admin'?'Admin':'Mentee';
   $('headerAvatar').textContent=inits;
 
-  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'admin-dashboard.html':'student-dashboard.html';
+  var dashUrl=role==='mentor'?'mentor-dashboard.html':role==='admin'?'../admin/dashboard.html':'student-dashboard.html';
   var links=[
     {href:dashUrl,icon:'🏠',label:'Dashboard'},{href:'sessions.html',icon:'📅',label:'Sessions'},
     {href:'goals.html',icon:'🎯',label:'Goals & Progress'},{href:'opportunities.html',icon:'💼',label:'Opportunities'},
@@ -400,12 +393,11 @@ document.addEventListener('DOMContentLoaded', function(){
     if(notificationsService) {
       try {
         await notificationsService.markAllAsRead();
-        // NOTIFS will be updated via real-time listener
-      } catch(error) {
-        console.error('Failed to mark all notifications as read:', error);
-        // Fallback to local update
         NOTIFS.forEach(function(n){n.read=true;});
         renderNotifs();
+        if ($('unreadCount')) $('unreadCount').textContent = '0';
+      } catch(error) {
+        console.error('Failed to mark all notifications as read:', error);
       }
     } else {
       // Fallback for demo mode

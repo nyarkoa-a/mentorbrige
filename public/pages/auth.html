@@ -480,10 +480,7 @@
   <!-- RIGHT PANEL -->
   <div class="auth-right">
 
-    <div class="auth-tabs" role="tablist">
-      <button class="auth-tab active" id="tab-signup" role="tab" aria-selected="true" onclick="switchPanel('signup')">Create Account</button>
-      <button class="auth-tab" id="tab-login" role="tab" aria-selected="false" onclick="switchPanel('login')">Login</button>
-    </div>
+    <!-- Authentication Panels -->
 
     <!-- SIGN UP PANEL -->
     <div class="panel active" id="panel-signup">
@@ -777,9 +774,13 @@
 
   function switchPanel(p) {
     ['signup','login'].forEach(function(n) {
-      document.getElementById('panel-'+n).classList.toggle('active', n===p);
-      document.getElementById('tab-'+n).classList.toggle('active', n===p);
-      document.getElementById('tab-'+n).setAttribute('aria-selected', String(n===p));
+      var panel = document.getElementById('panel-'+n);
+      if (panel) panel.classList.toggle('active', n===p);
+      var tab = document.getElementById('tab-'+n);
+      if (tab) {
+        tab.classList.toggle('active', n===p);
+        tab.setAttribute('aria-selected', String(n===p));
+      }
     });
   }
 
@@ -909,9 +910,6 @@
         // Demo mode - simulate successful registration
         console.log('Using demo mode for registration');
         
-        // Simulate loading delay
-        await new Promise(function(resolve) { setTimeout(resolve, 1500); });
-        
         // Create demo user
         var demoUser = {
           uid: 'demo-user-' + Date.now(),
@@ -1019,41 +1017,33 @@
         // Use real Firebase authentication
         var fbCred = await firebase.auth().signInWithEmailAndPassword(email, pass);
         
-        // Load user profile from Firestore
+        // Load user profile from Firestore (with 800ms race timeout for instant login)
         try {
-          var profileDoc = await firebase.firestore().collection('users').doc(fbCred.user.uid).get();
-          var profile;
-          
-          if (profileDoc.exists) {
-            profile = profileDoc.data();
-          } else {
-            // Fallback profile if not found
-            profile = {
-              uid: fbCred.user.uid,
-              email: fbCred.user.email,
-              name: fbCred.user.displayName || '',
-              role: 'student'
-            };
-          }
+          var docPromise = firebase.firestore().collection('users').doc(fbCred.user.uid).get();
+          var timeoutPromise = new Promise(function(res) { setTimeout(function(){ res(null); }, 800); });
+          var profileDoc = await Promise.race([docPromise, timeoutPromise]);
+          var profile = (profileDoc && profileDoc.exists) ? profileDoc.data() : {
+            uid: fbCred.user.uid,
+            email: fbCred.user.email,
+            name: fbCred.user.displayName || email.split('@')[0],
+            role: 'student'
+          };
           
           saveSession(fbCred.user, profile);
           var userRole = profile.role || 'student';
-          window.location.href = userRole === 'mentor' ? 'mentor-dashboard.html' : userRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+          window.location.replace(userRole === 'mentor' ? 'mentor-dashboard.html' : userRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+          return;
           
         } catch (profileError) {
           console.error('Profile load error:', profileError);
-          // Continue anyway with basic session
-          saveSession(fbCred.user, { role: 'student', email: fbCred.user.email, name: fbCred.user.displayName });
-          window.location.href = 'student-dashboard.html';
+          saveSession(fbCred.user, { role: 'student', email: fbCred.user.email, name: fbCred.user.displayName || email.split('@')[0] });
+          window.location.replace('student-dashboard.html');
+          return;
         }
       } else {
-        // Demo mode - simulate successful login
+        // Demo mode - instant login
         console.log('Using demo mode for email/password login');
         
-        // Simulate loading delay
-        await new Promise(function(resolve) { setTimeout(resolve, 1000); });
-        
-        // Create demo user based on email
         var demoUser = {
           uid: 'demo-user-' + Date.now(),
           email: email,
@@ -1061,7 +1051,6 @@
           emailVerified: true
         };
         
-        // Determine role based on email for demo purposes
         var demoRole = 'student';
         if (email.includes('mentor') || email.includes('admin')) {
           demoRole = email.includes('admin') ? 'admin' : 'mentor';
@@ -1080,13 +1069,9 @@
         };
         
         saveSession(demoUser, demoProfile);
-        
-        // Show success message
-        console.log('Demo login successful as', demoRole);
-        
-        // Redirect to appropriate dashboard
-        window.location.href = demoRole === 'mentor' ? 'mentor-dashboard.html' : 
-                             demoRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html';
+        window.location.replace(demoRole === 'mentor' ? 'mentor-dashboard.html' : 
+                               demoRole === 'admin' ? 'admin-dashboard.html' : 'student-dashboard.html');
+        return;
       }
       
     } catch(err) {
@@ -1202,11 +1187,8 @@
           window.location.href = selectedRole === 'mentor' ? 'mentor-dashboard.html' : 'student-dashboard.html';
         }
       } else {
-        // Demo mode - simulate successful Google login
+        // Demo mode - instant Google login
         console.log('Using demo mode for Google authentication');
-        
-        // Simulate loading delay
-        await new Promise(function(resolve) { setTimeout(resolve, 1500); });
         
         // Create demo user
         var demoUser = {
