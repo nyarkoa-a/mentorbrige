@@ -52,7 +52,11 @@ body {
   padding: 0 0 32px;
 }
 
-.brand .brand-accent {
+.brand .mentor {
+  color: var(--ink);
+}
+
+.brand .bridge {
   color: var(--blue);
 }
 
