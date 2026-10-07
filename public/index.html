@@ -1176,7 +1176,7 @@
 
   // Show fallback data if Firebase fails
   function showFallbackData() {
-    console.log('Using fallback data');
+    console.log('=== showFallbackData called ===');
     try {
       updateStatistics({ mentees: 2500, mentors: 300, sessions: 1200, satisfaction: 98 });
       
@@ -1398,6 +1398,7 @@
   // Initialize everything when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('=== DOMContentLoaded, calling showFallbackData ===');
       initializeObserver();
       // Show fallback data immediately to ensure mentors are always visible
       showFallbackData();
@@ -1411,6 +1412,7 @@
       }, 100);
     });
   } else {
+    console.log('=== DOM already loaded, calling showFallbackData ===');
     initializeObserver();
     // Show fallback data immediately to ensure mentors are always visible
     showFallbackData();
