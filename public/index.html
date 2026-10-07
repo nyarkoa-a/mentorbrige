@@ -1386,15 +1386,27 @@
       initializeObserver();
       // Show fallback data immediately to ensure mentors are always visible
       showFallbackData();
-      // Try to load Firebase data in background
-      initializeLandingPage();
+      // Try to load Firebase data in background (non-blocking)
+      setTimeout(() => {
+        try {
+          initializeLandingPage();
+        } catch (error) {
+          console.error('Firebase initialization error:', error);
+        }
+      }, 100);
     });
   } else {
     initializeObserver();
     // Show fallback data immediately to ensure mentors are always visible
     showFallbackData();
-    // Try to load Firebase data in background
-    initializeLandingPage();
+    // Try to load Firebase data in background (non-blocking)
+    setTimeout(() => {
+      try {
+        initializeLandingPage();
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+      }
+    }, 100);
   }
 </script>
 
