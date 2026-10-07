@@ -1115,31 +1115,43 @@
   // Render testimonial cards
   function renderTestimonials(testimonials) {
     const container = document.getElementById('testimonial-grid-container');
-    
-    if (testimonials.length === 0) {
+
+    if (!container) {
+      console.error('Testimonial container not found');
+      return;
+    }
+
+    if (!testimonials || testimonials.length === 0) {
       container.innerHTML = '<div class="no-testimonials">No testimonials available at this time.</div>';
       return;
     }
 
-    container.innerHTML = testimonials.map((testimonial, index) => {
-      const initials = getInitials(testimonial.authorName || 'User');
-      const avatarUrl = testimonial.authorPhoto || `./assets/student_mentee.jpg`;
-      const name = testimonial.authorName || 'Anonymous';
-      const role = testimonial.authorRole || testimonial.authorType || 'User';
+    try {
+      container.innerHTML = testimonials.map((testimonial, index) => {
+        const initials = getInitials(testimonial.authorName || 'User');
+        const avatarUrl = testimonial.authorPhoto || `./assets/student_mentee.jpg`;
+        const name = testimonial.authorName || 'Anonymous';
+        const role = testimonial.authorRole || testimonial.authorType || 'User';
 
-      return `
-        <div class="testimonial-card fade-in" style="animation-delay: ${index * 0.1}s">
-          <p class="quote">"${testimonial.text || testimonial.quote || testimonial.content || ''}"</p>
-          <div class="testi-person">
-            <img src="${avatarUrl}" alt="${name}" class="testi-avatar">
-            <div><div class="testi-name">${name}</div><div class="testi-role">${role}</div></div>
+        return `
+          <div class="testimonial-card fade-in" style="animation-delay: ${index * 0.1}s">
+            <p class="quote">"${testimonial.text || testimonial.quote || testimonial.content || ''}"</p>
+            <div class="testi-person">
+              <img src="${avatarUrl}" alt="${name}" class="testi-avatar">
+              <div><div class="testi-name">${name}</div><div class="testi-role">${role}</div></div>
+            </div>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
 
-    // Reinitialize observer for new elements
-    initializeObserver();
+      console.log(`Rendered ${testimonials.length} testimonials successfully`);
+
+      // Reinitialize observer for new elements
+      initializeObserver();
+    } catch (error) {
+      console.error('Error rendering testimonials:', error);
+      container.innerHTML = '<div class="error-message">Error rendering testimonials. Please refresh the page.</div>';
+    }
   }
 
   // Helper functions
@@ -1283,7 +1295,8 @@
         authorPhoto: './assets/mentor_leader.jpg'
       }
     ];
-    
+
+    console.log('Rendering fallback testimonials:', fallbackTestimonials.length);
     renderTestimonials(fallbackTestimonials);
     } catch (error) {
       console.error('Error showing fallback data:', error);
