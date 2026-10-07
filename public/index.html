@@ -978,50 +978,60 @@
   function renderMentors(mentors) {
     const container = document.getElementById('mentor-grid-container');
     
-    if (mentors.length === 0) {
+    if (!container) {
+      console.error('Mentor container not found');
+      return;
+    }
+    
+    if (!mentors || mentors.length === 0) {
       container.innerHTML = '<div class="no-mentors">No mentors available at this time.</div>';
       return;
     }
 
-    container.innerHTML = mentors.map((mentor, index) => {
-      const initials = getInitials(mentor.name || mentor.displayName || 'Mentor');
-      const avatarUrl = mentor.photoURL || `./assets/mentor_leader.jpg`;
-      const category = getCategory(mentor.expertise || mentor.skills || []);
-      const rating = calculateRating(mentor.rating || mentor.averageRating || 0);
-      const sessions = mentor.sessionCount || mentor.totalSessions || 0;
-      const bio = mentor.bio || mentor.description || 'Experienced professional ready to help you grow.';
-      const tags = (mentor.skills || mentor.expertise || []).slice(0, 3).map(skill => 
-        `<span class="mentor-tag">${skill}</span>`
-      ).join('');
+    try {
+      container.innerHTML = mentors.map((mentor, index) => {
+        const initials = getInitials(mentor.name || mentor.displayName || 'Mentor');
+        const avatarUrl = mentor.photoURL || `./assets/mentor_leader.jpg`;
+        const category = getCategory(mentor.expertise || mentor.skills || []);
+        const rating = calculateRating(mentor.rating || mentor.averageRating || 0);
+        const sessions = mentor.sessionCount || mentor.totalSessions || 0;
+        const bio = mentor.bio || mentor.description || 'Experienced professional ready to help you grow.';
+        const tags = (mentor.skills || mentor.expertise || []).slice(0, 3).map(skill => 
+          `<span class="mentor-tag">${skill}</span>`
+        ).join('');
 
-      return `
-        <div class="mentor-card fade-in" data-category="${category}" style="animation-delay: ${index * 0.1}s">
-          <div class="mentor-top">
-            <img src="${avatarUrl}" alt="${mentor.name || mentor.displayName}" class="mentor-avatar">
-            <div class="mentor-name-wrap">
-              <h3>${mentor.name || mentor.displayName || 'Mentor'}</h3>
-              <div class="role">${mentor.title || mentor.position || mentor.company || 'Professional'}</div>
-              <div class="mentor-rating">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
-                ${rating.toFixed(1)} · ${sessions} sessions
+        return `
+          <div class="mentor-card fade-in" data-category="${category}" style="animation-delay: ${index * 0.1}s">
+            <div class="mentor-top">
+              <img src="${avatarUrl}" alt="${mentor.name || mentor.displayName}" class="mentor-avatar">
+              <div class="mentor-name-wrap">
+                <h3>${mentor.name || mentor.displayName || 'Mentor'}</h3>
+                <div class="role">${mentor.title || mentor.position || mentor.company || 'Professional'}</div>
+                <div class="mentor-rating">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+                  ${rating.toFixed(1)} · ${sessions} sessions
+                </div>
               </div>
             </div>
-          </div>
-          <p class="mentor-bio">${bio}</p>
-          <div class="mentor-tags">${tags}</div>
-          <div class="mentor-footer">
-            <div class="mentor-social">
-              ${mentor.linkedin ? `<a href="${mentor.linkedin}" aria-label="LinkedIn" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a2 2 0 11-4-.002 2 2 0 014 .002zM7 8.48H3V21h4zM13.5 8.48h-3.83V21h3.83v-6.3c0-1.66.32-3.27 2.38-3.27 2.03 0 2.05 1.9 2.05 3.38V21H22v-6.94c0-3.66-.79-6.48-5.07-6.48-2.05 0-3.43 1.13-4 2.2h-.05z"/></svg></a>` : ''}
-              ${mentor.twitter ? `<a href="${mentor.twitter}" aria-label="Twitter" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 3H22l-7.2 8.2L23 21h-6.9l-5.4-6.6L4.5 21H1.4l7.7-8.8L1 3h7l4.9 6.1zm-1.2 16h1.9L7.4 5h-2z"/></svg></a>` : ''}
+            <p class="mentor-bio">${bio}</p>
+            <div class="mentor-tags">${tags}</div>
+            <div class="mentor-footer">
+              <div class="mentor-social">
+                ${mentor.linkedin ? `<a href="${mentor.linkedin}" aria-label="LinkedIn" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a2 2 0 11-4-.002 2 2 0 014 .002zM7 8.48H3V21h4zM13.5 8.48h-3.83V21h3.83v-6.3c0-1.66.32-3.27 2.38-3.27 2.03 0 2.05 1.9 2.05 3.38V21H22v-6.94c0-3.66-.79-6.48-5.07-6.48-2.05 0-3.43 1.13-4 2.2h-.05z"/></svg></a>` : ''}
+                ${mentor.twitter ? `<a href="${mentor.twitter}" aria-label="Twitter" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 3H22l-7.2 8.2L23 21h-6.9l-5.4-6.6L4.5 21H1.4l7.7-8.8L1 3h7l4.9 6.1zm-1.2 16h1.9L7.4 5h-2z"/></svg></a>` : ''}
+              </div>
+              <a class="mentor-connect" href="./pages/mentor-directory.html?mentor=${mentor.id}">View profile <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             </div>
-            <a class="mentor-connect" href="./pages/mentor-directory.html?mentor=${mentor.id}">View profile <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
 
-    // Reinitialize observer for new elements
-    initializeObserver();
+      // Reinitialize observer for new elements
+      initializeObserver();
+    } catch (error) {
+      console.error('Error rendering mentors:', error);
+      container.innerHTML = '<div class="error-message">Error loading mentors. Please refresh the page.</div>';
+    }
   }
 
   // Load real testimonials from Firestore
@@ -1100,10 +1110,11 @@
   // Show fallback data if Firebase fails
   function showFallbackData() {
     console.log('Using fallback data');
-    updateStatistics({ mentees: 2500, mentors: 300, sessions: 1200, satisfaction: 98 });
-    
-    // Show fallback mentors
-    const fallbackMentors = [
+    try {
+      updateStatistics({ mentees: 2500, mentors: 300, sessions: 1200, satisfaction: 98 });
+      
+      // Show fallback mentors
+      const fallbackMentors = [
       {
         id: 'fallback-1',
         name: 'Dr. Sarah Mensah',
