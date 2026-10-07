@@ -965,24 +965,27 @@
         ...doc.data()
       }));
 
-      renderMentors(mentorsData);
+      // Only render if we got real mentors, otherwise keep fallback
+      if (mentorsData.length > 0) {
+        renderMentors(mentorsData);
+      }
       
     } catch (error) {
       console.error('Error loading mentors:', error);
-      document.getElementById('mentor-grid-container').innerHTML = 
-        '<div class="error-message">Unable to load mentors at this time.</div>';
+      // Don't overwrite fallback data - just log the error
+      // Fallback mentors are already showing from showFallbackData()
     }
   }
 
   // Render mentor cards
   function renderMentors(mentors) {
     const container = document.getElementById('mentor-grid-container');
-    
+
     if (!container) {
       console.error('Mentor container not found');
       return;
     }
-    
+
     if (!mentors || mentors.length === 0) {
       container.innerHTML = '<div class="no-mentors">No mentors available at this time.</div>';
       return;
@@ -992,11 +995,16 @@
       container.innerHTML = mentors.map((mentor, index) => {
         const initials = getInitials(mentor.name || mentor.displayName || 'Mentor');
         const avatarUrl = mentor.photoURL || `./assets/mentor_leader.jpg`;
-        const category = getCategory(mentor.expertise || mentor.skills || []);
+        const skillsArray = Array.isArray(mentor.skills) ? mentor.skills : 
+                           (typeof mentor.skills === 'string' ? [mentor.skills] : []);
+        const expertiseArray = Array.isArray(mentor.expertise) ? mentor.expertise : 
+                              (typeof mentor.expertise === 'string' ? [mentor.expertise] : []);
+        const category = getCategory(expertiseArray.length > 0 ? expertiseArray : skillsArray);
         const rating = calculateRating(mentor.rating || mentor.averageRating || 0);
         const sessions = mentor.sessionCount || mentor.totalSessions || 0;
         const bio = mentor.bio || mentor.description || 'Experienced professional ready to help you grow.';
-        const tags = (mentor.skills || mentor.expertise || []).slice(0, 3).map(skill => 
+        const allSkills = skillsArray.length > 0 ? skillsArray : expertiseArray;
+        const tags = allSkills.slice(0, 3).map(skill =>
           `<span class="mentor-tag">${skill}</span>`
         ).join('');
 
