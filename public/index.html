@@ -1317,28 +1317,17 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       initializeObserver();
-      // Initialize Firebase, but show fallback data after 3 seconds if it fails
+      // Show fallback data immediately to ensure mentors are always visible
+      showFallbackData();
+      // Try to load Firebase data in background
       initializeLandingPage();
-      setTimeout(() => {
-        const mentorsContainer = document.getElementById('mentor-grid-container');
-        const testimonialsContainer = document.getElementById('testimonial-grid-container');
-        if (mentorsContainer && mentorsContainer.innerHTML.includes('Loading')) {
-          console.log('⚠️ Data loading taking too long, using fallback');
-          showFallbackData();
-        }
-      }, 3000);
     });
   } else {
     initializeObserver();
+    // Show fallback data immediately to ensure mentors are always visible
+    showFallbackData();
+    // Try to load Firebase data in background
     initializeLandingPage();
-    setTimeout(() => {
-      const mentorsContainer = document.getElementById('mentor-grid-container');
-      const testimonialsContainer = document.getElementById('testimonial-grid-container');
-      if (mentorsContainer && mentorsContainer.innerHTML.includes('Loading')) {
-        console.log('⚠️ Data loading taking too long, using fallback');
-        showFallbackData();
-      }
-    }, 3000);
   }
 </script>
 
