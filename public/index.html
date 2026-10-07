@@ -54,6 +54,9 @@
   h1,h2,h3{ font-family:'Poppins',sans-serif; color:var(--navy); }
   a{ text-decoration:none; color:inherit; }
   .wrap{ max-width:1160px; margin:0 auto; padding:0 32px; }
+  @media (max-width: 480px) {
+    .wrap{ padding:0 16px; }
+  }
   .btn-primary{
     background:var(--blue); color:#fff; border:none; border-radius:10px;
     padding:13px 24px; font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px;
@@ -80,6 +83,11 @@
   .section-head{ text-align:center; max-width:600px; margin:0 auto 46px; }
   .section-head h2{ font-size:32px; font-weight:700; margin:10px 0 12px; }
   .section-head p{ color:var(--muted); font-size:15px; }
+  @media (max-width: 480px) {
+    .section{ padding:50px 0; }
+    .section-head h2{ font-size:24px; }
+    .section-head p{ font-size:14px; }
+  }
 
   /* ---------------- ANIMATIONS ---------------- */
   .fade-in{ opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -194,15 +202,37 @@
   @keyframes float{ 0%, 100%{ transform: translateY(0); } 50%{ transform: translateY(-10px); } }
   .float-icon{ width:30px; height:30px; border-radius:8px; background:var(--blue-light); color:var(--blue-dark); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
+  @media (max-width: 768px) {
+    .hero-grid{ grid-template-columns:1fr; gap:30px; }
+    .hero h1{ font-size:32px; }
+    .hero p.sub{ font-size:15px; max-width:100%; }
+    .hero-visual{ min-height:280px; order:-1; }
+  }
+  @media (max-width: 480px) {
+    .hero{ padding:40px 0 0; }
+    .hero h1{ font-size:26px; line-height:1.2; }
+    .hero p.sub{ font-size:14px; margin-bottom:20px; }
+    .hero-ctas{ flex-direction:column; width:100%; }
+    .hero-ctas .btn-primary, .hero-ctas .btn-outline{ width:100%; justify-content:center; }
+    .hero-visual{ min-height:220px; }
+    .hero-trust{ gap:16px; }
+  }
+
   /* ---------------- STAT BAR ---------------- */
   .stat-bar{ background:var(--navy); padding:32px 0; }
   .stat-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; text-align:center; }
   .stat-value{ font-family:'Poppins',sans-serif; font-size:30px; font-weight:700; color:#fff; }
   .stat-label{ font-size:12.5px; color:var(--blue-light-text); margin-top:4px; }
   @media (max-width:760px){ .stat-row{ grid-template-columns:1fr 1fr; } }
+  @media (max-width: 480px) {
+    .stat-bar{ padding:24px 0; }
+    .stat-row{ grid-template-columns:1fr; gap:16px; }
+    .stat-value{ font-size:24px; }
+    .stat-label{ font-size:11px; }
+  }
 
   /* ---------------- MENTOR FILTER ---------------- */
-  .mentor-filter{ 
+  .mentor-filter{
     margin-bottom:30px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
   }
   .filter-btn{
@@ -210,6 +240,10 @@
     font-size:13px; font-weight:500; color:var(--navy); cursor:pointer; transition: all 0.3s ease;
   }
   .filter-btn:hover, .filter-btn.active{ background:var(--blue); color:#fff; border-color:var(--blue); }
+  @media (max-width: 480px) {
+    .mentor-filter{ gap:8px; }
+    .filter-btn{ padding:6px 12px; font-size:12px; }
+  }
 
   /* ---------------- LOGO / DEPARTMENTS STRIP ---------------- */
   .dept-strip{ padding:28px 0; border-bottom:1px solid var(--line); }
@@ -233,6 +267,12 @@
   .step-card h3{ font-size:16px; margin-bottom:8px; }
   .step-card p{ font-size:13px; color:var(--muted); }
   @media (max-width:860px){ .steps{ grid-template-columns:1fr 1fr; row-gap:36px; } }
+  @media (max-width: 480px) {
+    .steps{ grid-template-columns:1fr; }
+    .step-num{ width:44px; height:44px; font-size:16px; }
+    .step-card h3{ font-size:14px; }
+    .step-card p{ font-size:12px; }
+  }
 
   /* ---------------- FOR MENTEES / MENTORS ---------------- */
   .split{ background:var(--cream); }
@@ -330,6 +370,14 @@
   .mentor-connect svg{ width:13px; height:13px; }
   .mentors-more{ text-align:center; margin-top:36px; }
   @media (max-width:860px){ .mentor-grid{ grid-template-columns:1fr; } }
+  @media (max-width: 480px) {
+    .mentor-card{ padding:20px; }
+    .mentor-avatar{ width:48px; height:48px; }
+    .mentor-card h3{ font-size:15px; }
+    .mentor-bio{ font-size:12px; }
+    .mentor-footer{ flex-direction:column; align-items:flex-start; gap:12px; }
+    .mentor-connect{ width:100%; justify-content:center; padding:8px 0; }
+  }
 
   /* ---------------- TESTIMONIAL ---------------- */
   .testimonial-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
