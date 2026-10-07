@@ -1043,9 +1043,9 @@
       container.innerHTML = mentors.map((mentor, index) => {
         const initials = getInitials(mentor.name || mentor.displayName || 'Mentor');
         const avatarUrl = mentor.photoURL || `./assets/mentor_leader.jpg`;
-        const skillsArray = Array.isArray(mentor.skills) ? mentor.skills : 
+        const skillsArray = Array.isArray(mentor.skills) ? mentor.skills :
                            (typeof mentor.skills === 'string' ? [mentor.skills] : []);
-        const expertiseArray = Array.isArray(mentor.expertise) ? mentor.expertise : 
+        const expertiseArray = Array.isArray(mentor.expertise) ? mentor.expertise :
                               (typeof mentor.expertise === 'string' ? [mentor.expertise] : []);
         const category = getCategory(expertiseArray.length > 0 ? expertiseArray : skillsArray);
         const rating = calculateRating(mentor.rating || mentor.averageRating || 0);
@@ -1076,17 +1076,16 @@
                 ${mentor.linkedin ? `<a href="${mentor.linkedin}" aria-label="LinkedIn" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a2 2 0 11-4-.002 2 2 0 014 .002zM7 8.48H3V21h4zM13.5 8.48h-3.83V21h3.83v-6.3c0-1.66.32-3.27 2.38-3.27 2.03 0 2.05 1.9 2.05 3.38V21H22v-6.94c0-3.66-.79-6.48-5.07-6.48-2.05 0-3.43 1.13-4 2.2h-.05z"/></svg></a>` : ''}
                 ${mentor.twitter ? `<a href="${mentor.twitter}" aria-label="Twitter" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 3H22l-7.2 8.2L23 21h-6.9l-5.4-6.6L4.5 21H1.4l7.7-8.8L1 3h7l4.9 6.1zm-1.2 16h1.9L7.4 5h-2z"/></svg></a>` : ''}
               </div>
-              <a class="mentor-connect" href="./pages/mentor-directory.html?mentor=${mentor.id}">View profile <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+              <a class="mentor-connect" href="./pages/mentor-directory.html">View profile <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             </div>
           </div>
         `;
       }).join('');
 
-      // Reinitialize observer for new elements
-      initializeObserver();
+      console.log(`Rendered ${mentors.length} mentors successfully`);
     } catch (error) {
       console.error('Error rendering mentors:', error);
-      container.innerHTML = '<div class="error-message">Error loading mentors. Please refresh the page.</div>';
+      container.innerHTML = '<div class="error-message">Error rendering mentors. Please refresh the page.</div>';
     }
   }
 
