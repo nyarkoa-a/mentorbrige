@@ -1285,6 +1285,9 @@
     ];
     
     renderTestimonials(fallbackTestimonials);
+    } catch (error) {
+      console.error('Error showing fallback data:', error);
+    }
   }
 
   // Initialize scroll observer
